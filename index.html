@@ -360,8 +360,8 @@ kbd { font: 600 12px var(--ui); background: var(--dusk-2); border: 1px solid var
 .sb-btn:hover { border-color: var(--shard); }
 .sb-btn.boss { border-left: 3px solid var(--epic); }
 .step:focus-visible, .sb-btn:focus-visible, .sb-toggle input:focus-visible { outline: 2px solid var(--bolt); outline-offset: 2px; }
-#loadoutScreen, #petScreen, #codexScreen { place-items: start center; }
-#petScreen .panel, #codexScreen .panel { margin-block: auto; width: min(780px, 100%); gap: 16px; }
+#loadoutScreen, #petScreen, #codexScreen, #puScreen { place-items: start center; }
+#petScreen .panel, #codexScreen .panel, #puScreen .panel { margin-block: auto; width: min(780px, 100%); gap: 16px; }
 .codex .lo-item { cursor: default; }
 .codex-fusion-label { color: var(--fusion); margin-top: 6px; }
 .lo-item.locked .lo-desc { color: #6a6380; }
@@ -412,6 +412,80 @@ kbd { font: 600 12px var(--ui); background: var(--dusk-2); border: 1px solid var
 .lo-state { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .lo-item.equipped .lo-state, .lo-item.picking .lo-state { color: var(--tier); }
 .lo-empty { margin: 0; color: var(--muted); }
+.pu-panel { --rad: #6dff8a; --rad-2: #2fd65a; --rad-dim: #3dff7a40; position: relative; isolation: isolate; overflow: hidden;
+  background: linear-gradient(180deg, #0b1d10, #060e08) !important; border-color: #3dff7a66 !important;
+  box-shadow: 0 0 0 1px #3dff7a22, 0 0 70px -12px #3dff7a99, inset 0 0 90px -40px #3dff7a88, 0 30px 80px #000c !important; }
+.pu-panel::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: repeating-linear-gradient(0deg, #3dff7a0a 0 1px, transparent 1px 4px); }
+.pu-panel::after { content: ''; position: absolute; inset: -30%; z-index: -2; pointer-events: none;
+  background: radial-gradient(circle at 50% 45%, #3dff7a2e 0%, transparent 55%); animation: radPulse 3.2s ease-in-out infinite; }
+@keyframes radPulse { 0%, 100% { opacity: .55; transform: scale(.96); } 50% { opacity: 1; transform: scale(1.04); } }
+#puScreen { background: radial-gradient(ellipse at center, #0b2412d9 0%, #040a06f2 70%); }
+.pu-panel .eyebrow { color: var(--rad); text-shadow: 0 0 8px var(--rad-2); }
+.pu-panel .lo-title { color: #d8ffd6; text-shadow: 0 0 10px var(--rad-2), 0 0 28px #3dff7a99; }
+.pu-panel .lo-hint { color: #a9d9ae; }
+.pu-panel #puDone { background: var(--rad); color: #04140a; box-shadow: 0 0 18px -2px var(--rad-2); }
+.pu-panel .seg .sb-btn { background: #0d2414; border-color: var(--rad-dim); }
+.pu-panel .seg .sb-btn.on { border-color: var(--rad); color: var(--rad); box-shadow: 0 0 12px -4px var(--rad); }
+.pu-ico { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; color: var(--rad);
+  background: radial-gradient(circle, #3dff7a33, transparent 70%); border: 1px solid var(--rad-dim); box-shadow: 0 0 16px -4px var(--rad-2), inset 0 0 12px -4px var(--rad-2); }
+.pu-ico svg { width: 26px; height: 26px; filter: drop-shadow(0 0 4px var(--rad-2)); }
+/* the main page: one big glowing button per kind */
+.pu-hub { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .pu-hub { grid-template-columns: 1fr; } }
+.pu-kind { display: grid; gap: 10px; justify-items: start; text-align: left; padding: 18px 16px; cursor: pointer; color: #e4ffe2; font: inherit;
+  background: linear-gradient(160deg, #10301a, #091a0e); border: 1px solid var(--rad-dim); border-radius: 8px;
+  box-shadow: 0 0 22px -10px var(--rad-2), inset 0 0 30px -18px var(--rad-2); transition: transform .15s, box-shadow .15s, border-color .15s; }
+.pu-kind:hover, .pu-kind:focus-visible { transform: translateY(-2px); border-color: var(--rad); box-shadow: 0 0 34px -6px var(--rad-2), inset 0 0 36px -14px var(--rad-2); outline: none; }
+.pu-kind b { font: 700 19px var(--display); letter-spacing: .02em; text-shadow: 0 0 10px #3dff7a88; }
+.pu-kind span { font-size: 13px; color: #a9d9ae; }
+.pu-kind small { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--rad); }
+.pu-pips { display: flex; gap: 5px; }
+.pu-pips i { width: 22px; height: 6px; border-radius: 3px; background: #ffffff14; box-shadow: inset 0 0 0 1px var(--rad-dim); }
+.pu-pips i.on { background: var(--tier); box-shadow: 0 0 8px var(--tier); }
+/* a kind's page: the kind in the middle, its four slots branching off it */
+.pu-back { justify-self: start; font: 600 13px var(--ui); color: var(--rad); background: transparent; border: 1px solid var(--rad-dim); border-radius: 4px; padding: 6px 12px; cursor: pointer; }
+.pu-back:hover, .pu-back:focus-visible { border-color: var(--rad); box-shadow: 0 0 12px -4px var(--rad); outline: none; }
+.pu-page { display: grid; gap: 18px; }
+.pu-tree { position: relative; height: 400px; }
+.pu-links { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; pointer-events: none; }
+.pu-links line { stroke: var(--rad-dim); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.pu-links line.on { stroke: var(--rad); stroke-width: 3; stroke-dasharray: 6 8; filter: drop-shadow(0 0 4px var(--rad-2)); animation: radFlow 0.9s linear infinite; }
+@keyframes radFlow { to { stroke-dashoffset: -14; } }
+.pu-core, .pu-node { position: absolute; transform: translate(-50%, -50%); }
+.pu-core { left: 50%; top: 50%; width: 190px; height: 190px; border-radius: 50%; display: grid; place-content: center; justify-items: center; gap: 6px; text-align: center;
+  background: radial-gradient(circle, #164a24 0%, #0a1f10 62%, #07140b 100%); border: 2px solid var(--rad);
+  box-shadow: 0 0 40px -4px var(--rad-2), inset 0 0 40px -10px var(--rad-2); }
+.pu-core .pu-trefoil { position: absolute; inset: 18px; opacity: .13; color: var(--rad); animation: radSpin 24s linear infinite; }
+@keyframes radSpin { to { transform: rotate(360deg); } }
+.pu-core b { font: 700 17px var(--display); color: #e4ffe2; text-shadow: 0 0 10px var(--rad-2); position: relative; }
+.pu-core small { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--rad); position: relative; }
+.pu-node { width: 200px; min-height: 92px; display: grid; gap: 3px; align-content: center; text-align: left; padding: 10px 12px; cursor: pointer; color: #e4ffe2; font: inherit;
+  background: linear-gradient(160deg, color-mix(in srgb, var(--tier) 16%, #0d2414), #08150c); border: 1px solid var(--rad-dim); border-left: 3px solid var(--tier); border-radius: 6px;
+  box-shadow: 0 0 20px -8px var(--tier); }
+.pu-node:hover, .pu-node:focus-visible { border-color: var(--rad); border-left-color: var(--tier); outline: none; box-shadow: 0 0 26px -6px var(--rad-2); }
+.pu-node small { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--rad); }
+.pu-node b { font-weight: 700; font-size: 14px; }
+.pu-node span { font-size: 12px; color: #b9dcbc; line-height: 1.35; }
+.pu-node.empty { --tier: var(--rad-dim); background: #07120a; border-style: dashed; box-shadow: none; }
+.pu-node.empty b { color: #7fa985; font-weight: 600; }
+.pu-node.target { border-color: var(--rad); border-style: solid; box-shadow: 0 0 0 2px var(--rad), 0 0 30px -4px var(--rad-2); }
+@media (max-width: 640px) {
+  .pu-tree { height: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .pu-links { display: none; }
+  .pu-core, .pu-node { position: relative; left: auto !important; top: auto !important; transform: none; }
+  .pu-core { grid-column: 1 / -1; justify-self: center; width: 150px; height: 150px; }
+  .pu-node { width: auto; }
+}
+.pu-coll { display: grid; gap: 8px; }
+.pu-coll .bar-label { color: var(--rad); }
+.pu-panel .lo-item { background: #0c1f12; border-color: #3dff7a2e; border-left-color: var(--tier); color: #e4ffe2; }
+.pu-panel .lo-item:hover:not(:disabled) { border-color: var(--rad); border-left-color: var(--tier); box-shadow: 0 0 16px -6px var(--rad-2); }
+.pu-panel .lo-item.equipped { background: color-mix(in srgb, var(--rad) 12%, #0c1f12); box-shadow: inset 0 0 0 1px var(--rad-dim); }
+.pu-panel .lo-item .lo-desc { color: #b9dcbc; }
+.pu-panel .lo-item.locked { opacity: .5; }
+@media (prefers-reduced-motion: reduce) { .pu-panel::after, .pu-core .pu-trefoil, .pu-links line.on { animation: none; } .pu-kind { transition: none; } }
+.lo-item.full { opacity: .55; cursor: default; }
 #petSlotsSec { gap: 8px; }
 .slot-info { min-width: 0; font-size: 14px; }
 .slot-name {
@@ -455,6 +529,10 @@ kbd { font: 600 12px var(--ui); background: var(--dusk-2); border: 1px solid var
 .dmg-row .dmg-amt { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 6ch; text-align: right; }
 .dmg-row .dmg-bar { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
 .dmg-row .dmg-bar i { display: block; height: 100%; background: var(--c, var(--shard)); }
+.dmg-row.dmg-sub { margin-left: 18px; font-size: 13px; color: var(--muted); }
+.dmg-row.dmg-sub .dmg-name span { color: var(--bone); }
+.dmg-row.dmg-sub .dmg-bar { height: 3px; }
+.dmg-row.dmg-sub .dmg-bar i { opacity: .7; }
 .dmg-empty { color: var(--muted); font-size: 14px; margin: 0; }
 .sound { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 16px; align-items: center; font-size: 14px; max-width: 420px; }
 .sound .sb-toggle { grid-column: 1 / -1; }
@@ -598,6 +676,7 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
       <button class="btn ghost" id="dungeonBtn" type="button">Dungeon</button>
       <button class="btn ghost" id="labBtn" type="button">Labyrinth</button>
       <button class="btn ghost" id="petsBtn" type="button">Pets</button>
+      <button class="btn ghost" id="puBtn" type="button">Power-ups</button>
       <button class="btn ghost" id="codexBtn" type="button">Abilities</button>
       <button class="btn ghost" id="padSetupBtn" type="button">Controller setup</button>
     </div>
@@ -647,6 +726,7 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
       <div class="sb-row" id="sbBosses"><span>Summon a boss</span></div>
     </div>
     <div class="lo-section"><div class="bar-label">Pet</div><div class="sb-row" id="loPet"></div></div>
+    <div class="lo-section"><div class="bar-label">Power-ups</div><div class="sb-row" id="loPU"></div></div>
     <div class="lo-section"><div class="bar-label">Active · keys 1 to 3</div><div class="lo-slots" id="loActive"></div></div>
     <div class="lo-section"><div class="bar-label">Passive · always on</div><div class="lo-slots" id="loPassive"></div></div>
     <div class="lo-section"><div class="bar-label" id="loCount">Collection</div><div class="lo-grid" id="loCollection"></div></div>
@@ -706,6 +786,18 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
       <div class="pad-list" id="petSlots"></div>
       <div class="sb-row"><button class="sb-btn" id="petReset" type="button">Reset pets</button></div>
     </div>
+  </div>
+</section>
+
+<section class="screen" id="puScreen" hidden>
+  <div class="panel pu-panel">
+    <div class="lo-head">
+      <div><div class="eyebrow">Upgrades · handle with care</div><h2 class="lo-title">Power-ups</h2></div>
+      <button class="btn" id="puDone" type="button">Done</button>
+    </div>
+    <div class="seg" id="puWho" hidden><button class="sb-btn" type="button">Player 1</button><button class="sb-btn" type="button">Player 2</button></div>
+    <p class="lo-hint" id="puHint"></p>
+    <div id="puBody"></div>
   </div>
 </section>
 
@@ -1221,7 +1313,7 @@ const ABILITIES = [
   { id: 'rebound', kind: 'passive', tier: 'rare', name: 'Rebound Bolts', desc: l => `Bolts bounce off the edge of the arena and off walls instead of stopping, and fly ${20 * l}% farther.` },
   { id: 'trail', kind: 'passive', tier: 'rare', name: 'Ember Trail', desc: l => `You leave a trail of fire as you move. It lasts ${(1.5 + 0.3 * l).toFixed(1)} s and burns monsters standing in it for ${(0.3 + 0.1 * l).toFixed(1)}x damage about 3 times a second.` },
   { id: 'static', kind: 'passive', tier: 'rare', name: 'Static Field', desc: l => `Every 1.5 s, sparks zap the ${1 + l} nearest monsters within 5.5 m of you for ${(1.2 + 0.3 * l).toFixed(1)}x damage each.` },
-  { id: 'saws', kind: 'passive', tier: 'epic', name: 'Ricochet Saws', desc: l => `${l} saw${l > 1 ? 's' : ''} bounce${l > 1 ? '' : 's'} around inside a 6 m circle around you, cutting monsters for 2.5x damage.` },
+  { id: 'saws', kind: 'passive', tier: 'epic', name: 'Ricochet Saws', desc: l => `${l} saw${l > 1 ? 's' : ''} bounce${l > 1 ? '' : 's'} around inside a 6 m circle around you, cutting monsters for 3x damage.` },
   { id: 'blast', kind: 'passive', tier: 'epic', name: 'Volatile Bolts', desc: l => `Bolts explode on hit, splashing ${30 + 10 * l}% damage to monsters within ${(1.5 + 0.5 * l).toFixed(1)} m.` },
   { id: 'thorns', kind: 'passive', tier: 'common', name: 'Thorn Mail', desc: l => `When you take damage, thorns burst out and hit monsters within 3.2 m for ${2 + 0.5 * l}x damage.` },
   { id: 'phantom', kind: 'passive', tier: 'rare', name: 'Phantom Step', desc: l => `Dash cooldown is ${10 * l}% shorter, and dashing through monsters hits them for ${2 + 0.5 * l}x damage.` },
@@ -1295,6 +1387,21 @@ function recompute() {
   S.bounceKeep = arc ? 0.9 : 0.8;
   S.blastR = Math.max(blast ? 1.5 + 0.5 * blast : 0, arc ? 2 + 0.5 * arc : 0);
   S.blastPct = Math.max(blast ? 0.3 + 0.1 * blast : 0, arc ? 0.4 + 0.1 * arc : 0);
+  // power-ups
+  if (PU('pu_whetstone')) S.damage *= 1.15;
+  if (PU('pu_stoutheart')) S.maxHp += 30;
+  if (PU('pu_fleetfeet')) S.speed *= 1.1;
+  if (PU('pu_hairtrigger')) S.fireRate *= 1.12;
+  if (PU('pu_hawkeye')) S.crit += 0.1;
+  S.critMul = PU('pu_hawkeye') ? 3 : 2.5;
+  if (PU('pu_extraedge') && E('orbit')) S.orbit += 1;
+  if (PU('pu_sparesaw') && S.saws) S.saws += 1;
+  if (PU('pu_thunderhead') && E('bounce')) { S.bounce += 1; S.bounceKeep = 1; }
+  if (PU('pu_frostbite') && E('frost')) S.slow = Math.min(0.85, S.slow + 0.15);
+  S.slowT = PU('pu_frostbite') && E('frost') ? 3.2 : 1.6;
+  if (PU('pu_biggerbang') && E('blast')) S.blastR *= 1.5;
+  if (PU('pu_lodestar')) S.magnet *= 1.5;
+  if (PU('pu_quickstep')) S.dashCd *= 0.75;
   if (dungeon && D) { S.damage *= 1 + D.might; S.maxHp += D.vigor; }
   if (ffOn()) S.maxHp *= 10;
   P.hp = Math.min(P.hp, S.maxHp);
@@ -1350,6 +1457,65 @@ const BOX_ODDS = {
 let petSave = { owned: [], equipped: null, asc: {} };
 try { Object.assign(petSave, JSON.parse(localStorage.getItem('shardfall-pets')) || {}); } catch (_) {}
 petSave.asc ||= {};
+
+/* ---------- power-ups ---------- */
+// Found in boxes as rarely as pets and kept forever. Four slots for each kind: ones that boost an active
+// ability, ones that boost a passive ability, and ones that just make you stronger. They help every player.
+const PU_KINDS = { active: 'Active ability', passive: 'Passive ability', stat: 'Character' };
+const POWERUPS = [
+  { id: 'pu_wildfire', kind: 'active', for: 'nova', tier: 'common', name: 'Wildfire Core', desc: 'Ember Nova hits 30% harder and reaches 1.5 m farther.' },
+  { id: 'pu_volley', kind: 'active', for: 'barrage', tier: 'rare', name: 'Endless Volley', desc: 'Bolt Barrage fires 50% more bolts.' },
+  { id: 'pu_supercoil', kind: 'active', for: 'storm', tier: 'common', name: 'Supercoil', desc: 'Storm Coil jumps to 3 more monsters and hits 25% harder.' },
+  { id: 'pu_twinstar', kind: 'active', for: 'meteor', tier: 'epic', name: 'Twin Star', desc: 'Starfall drops a second meteor right beside the first, for 60% of the damage.' },
+  { id: 'pu_afterimage', kind: 'active', for: 'blink', tier: 'common', name: 'Afterimage', desc: 'Blink’s bursts deal 2x as much, and nothing can hurt you for 1 s after you land.' },
+  { id: 'pu_deepfreeze', kind: 'active', for: 'glacier', tier: 'rare', name: 'Deep Freeze', desc: 'Glacial Burst freezes 50% longer and hits everything it freezes for 2x damage.' },
+  { id: 'pu_cyclone', kind: 'active', for: 'whirl', tier: 'common', name: 'Cyclone', desc: 'Whirlwind spins 50% longer and hits 25% harder.' },
+  { id: 'pu_aftershock', kind: 'active', for: 'tremor', tier: 'rare', name: 'Aftershock', desc: 'Tremor stomps out 2 extra shockwaves.' },
+  { id: 'pu_overclock', kind: 'active', for: 'sentry', tier: 'epic', name: 'Overclocked Totem', desc: 'Sentry Totem shoots twice as fast and stays 4 s longer.' },
+  { id: 'pu_quickhands', kind: 'active', tier: 'legendary', name: 'Quick Hands', desc: 'Every active ability recharges 20% faster.' },
+  { id: 'pu_hardbounce', kind: 'passive', for: 'rebound', tier: 'rare', name: 'Hard Bounce', desc: 'Rebound Bolts deal 1.5x damage once they’ve bounced.' },
+  { id: 'pu_extraedge', kind: 'passive', for: 'orbit', tier: 'common', name: 'Extra Edge', desc: 'Orbiting Blades get one extra blade.' },
+  { id: 'pu_sparesaw', kind: 'passive', for: 'saws', tier: 'epic', name: 'Spare Saw', desc: 'Ricochet Saws get one extra saw.' },
+  { id: 'pu_hotembers', kind: 'passive', for: 'trail', tier: 'common', name: 'Hotter Embers', desc: 'Ember Trail burns 2x as hard.' },
+  { id: 'pu_overload', kind: 'passive', for: 'static', tier: 'rare', name: 'Overload', desc: 'Static Field zaps every 1 s instead of 1.5 s, and hits 2 more monsters.' },
+  { id: 'pu_lockon', kind: 'passive', for: 'homing', tier: 'common', name: 'Lock-On', desc: 'Seeker Bolts turn twice as sharply.' },
+  { id: 'pu_frostbite', kind: 'passive', for: 'frost', tier: 'common', name: 'Frostbite', desc: 'Rime Bolts slow monsters 15% more, for twice as long.' },
+  { id: 'pu_spikes', kind: 'passive', for: 'thorns', tier: 'common', name: 'Spiked Plating', desc: 'Thorn Mail hits twice as hard and reaches 2 m farther.' },
+  { id: 'pu_biggerbang', kind: 'passive', for: 'blast', tier: 'rare', name: 'Bigger Bang', desc: 'Volatile Bolts’ explosions are 50% wider.' },
+  { id: 'pu_thunderhead', kind: 'passive', for: 'bounce', tier: 'legendary', name: 'Thunderhead', desc: 'Chain Lightning bounces once more and loses no damage when it bounces.' },
+  { id: 'pu_stoutheart', kind: 'stat', tier: 'common', name: 'Stout Heart', desc: '+30 max health.' },
+  { id: 'pu_whetstone', kind: 'stat', tier: 'rare', name: 'Whetstone', desc: 'Everything you do deals 15% more damage.' },
+  { id: 'pu_fleetfeet', kind: 'stat', tier: 'common', name: 'Fleet Feet', desc: 'Move 10% faster.' },
+  { id: 'pu_hairtrigger', kind: 'stat', tier: 'rare', name: 'Hair Trigger', desc: 'Fire 12% faster.' },
+  { id: 'pu_hawkeye', kind: 'stat', tier: 'epic', name: 'Hawk Eye', desc: '+10% crit chance, and crits deal 3x damage instead of 2.5x.' },
+  { id: 'pu_lodestar', kind: 'stat', tier: 'common', name: 'Lodestar', desc: 'Shards fly to you from 50% farther away.' },
+  { id: 'pu_fang', kind: 'stat', tier: 'rare', name: 'Vampire Fang', desc: 'Heal 1 health for every monster you kill.' },
+  { id: 'pu_quickstep', kind: 'stat', tier: 'rare', name: 'Quickstep', desc: 'Your dash recharges 25% faster.' },
+  { id: 'pu_ironskin', kind: 'stat', tier: 'epic', name: 'Iron Skin', desc: 'Take 15% less damage from everything.' },
+  { id: 'pu_secondwind', kind: 'stat', tier: 'legendary', name: 'Second Wind', desc: 'Slowly heal 1.5 health every second.' },
+].map(p => ({ ...p, isPU: true }));
+const PUD = Object.fromEntries(POWERUPS.map(p => [p.id, p]));
+const emptyPU = () => ({ owned: [], slots: { active: [null, null, null, null], passive: [null, null, null, null], stat: [null, null, null, null] } });
+function cleanPU(pu) {
+  const c = emptyPU();
+  c.owned = (pu?.owned || []).filter(id => PUD[id]);
+  for (const k in c.slots) c.slots[k] = c.slots[k].map((_, i) => { const id = pu?.slots?.[k]?.[i]; return id && PUD[id]?.kind === k && c.owned.includes(id) ? id : null; });
+  return c;
+}
+petSave.pu = cleanPU(petSave.pu);
+// each player has their own: Player 1 from the active save, Player 2 from the save they brought (none without one)
+const puSaveOf = pl => pl === P2 ? p2Save() : petSave;
+const puData = sv => sv ? (sv.pu?.slots ? sv.pu : (sv.pu = cleanPU(sv.pu))) : emptyPU();
+// sandbox: every power-up is there to try, in each player's own slots that don't touch the real ones
+let sbPU = [emptyPU().slots, emptyPU().slots];
+const puSlots = (pl = P1) => sandbox ? sbPU[pl === P2 ? 1 : 0] : puData(puSaveOf(pl)).slots;
+const puOwned = (id, pl = P1) => sandbox || puData(puSaveOf(pl)).owned.includes(id);
+let puOn = [new Set(), new Set()];
+const PU = id => puOn[curPl === P2 ? 1 : 0].has(id);
+function refreshPU() {
+  puOn = [P1, P2].map(pl => new Set(pl === P2 && !coop ? [] : Object.values(puSlots(pl)).flat().filter(Boolean)));
+  if (typeof recompute === 'function') for (const pl of coop ? [P1, P2] : [P1]) withPlayer(pl, recompute);
+}
 // Ascension: a few pets have a stronger form. Find the pet 2 more times, reach wave 20 with it,
 // then beat the trial, where the ascended pet itself is the boss.
 const ASCEND = {
@@ -1828,8 +1994,8 @@ function duoThrow(p, h, e, mul) {
   const j = buildJunk();
   j.position.set(h.x, 1.3, h.z); scene.add(j);
   const d = Math.hypot(e.pos.x - h.x, e.pos.z - h.z);
-  // thrown at where the monster is now; if it moves, the junk misses
-  p.throws.push({ g: j, x: h.x, z: h.z, tx: e.pos.x, tz: e.pos.z, mul, t: 0, dur: Math.max(0.18, d / 24), sx: h.x, sz: h.z, spin: rand(8, 16) });
+  // thrown at where the monster is now; if it moves, the junk misses (except mid-charge, when it homes in)
+  p.throws.push({ e: p.rush > 0 ? e : null, who: h.i, g: j, x: h.x, z: h.z, tx: e.pos.x, tz: e.pos.z, mul, t: 0, dur: Math.max(0.18, d / 24), sx: h.x, sz: h.z, spin: rand(8, 16) });
   // the throwing arm swings forward
   h.throwT = 0.2;
   sfx('tick');
@@ -1868,7 +2034,7 @@ function updateDuo(p, dt, active) {
         for (const e of enemies) {
           if (e.dead || h.hit.has(e) || Math.hypot(e.pos.x - h.x, e.pos.z - h.z) > e.r + 0.8) continue;
           h.hit.add(e);
-          damageEnemy(e, S.damage * 5, e.pos.x - h.x, e.pos.z - h.z, 6);
+          withSrc('pet:duo:' + h.i, () => damageEnemy(e, S.damage * 5, e.pos.x - h.x, e.pos.z - h.z, 6));
           burst(e.pos.x, 1, e.pos.z, DUO[h.i].shirt, 8, 5); sfx('hit');
         }
         if (!h.hitMate && ffHit(h.x, h.z, 0.9, S.damage * 5)) h.hitMate = true;
@@ -1889,24 +2055,24 @@ function updateDuo(p, dt, active) {
     h.g.position.set(h.x, Math.abs(Math.sin(h.step)) * 0.08, h.z);
     h.g.rotation.y += (((h.face - h.g.rotation.y + Math.PI * 3) % TAU) - Math.PI) * Math.min(1, dt * 12);
   }
-  // the junk arcs through the air to where it was aimed and hits whatever is there when it lands
+  // the junk arcs through the air toward where it was aimed and hits the first monster it touches on the way
   for (let i = p.throws.length - 1; i >= 0; i--) {
     const j = p.throws[i];
     j.t += dt;
-    const { tx, tz } = j;
+    if (j.e && !j.e.dead) { j.tx = j.e.pos.x; j.tz = j.e.pos.z; }
     const k = Math.min(1, j.t / j.dur);
-    j.x = j.sx + (tx - j.sx) * k; j.z = j.sz + (tz - j.sz) * k;
+    j.x = j.sx + (j.tx - j.sx) * k; j.z = j.sz + (j.tz - j.sz) * k;
     j.g.position.set(j.x, 1.3 - 0.5 * k + Math.sin(k * Math.PI) * 1.4, j.z);
     j.g.rotation.x += dt * j.spin; j.g.rotation.z += dt * j.spin * 0.6;
-    if (k >= 1) {
-      const e = active && enemies.find(o => !o.dead && Math.hypot(o.pos.x - tx, o.pos.z - tz) < o.r + 0.5);
-      if (e) {
-        damageEnemy(e, S.damage * j.mul, tx - j.sx, tz - j.sz, 3);
-        burst(tx, 1, tz, 0xffd36e, 6, 4);
-      } else burst(tx, 0.2, tz, 0xcfc8b8, 4, 2);   // a miss: it just thuds into the ground
-      if (active) ffHit(tx, tz, 0.7, S.damage * j.mul);
-      j.g.parent?.remove(j.g); p.throws.splice(i, 1);
-    }
+    const e = active && enemies.find(o => !o.dead && !o.hidden && Math.hypot(o.pos.x - j.x, o.pos.z - j.z) < o.r + 0.4);
+    if (e) {
+      withSrc('pet:duo:' + j.who, () => damageEnemy(e, S.damage * j.mul, j.tx - j.sx, j.tz - j.sz, 3));
+      burst(j.x, 1, j.z, 0xffd36e, 6, 4);
+    } else if (active && ffHit(j.x, j.z, 0.5, S.damage * j.mul)) {
+      burst(j.x, 1, j.z, 0xffd36e, 6, 4);
+    } else if (k >= 1) burst(j.x, 0.2, j.z, 0xcfc8b8, 4, 2);   // a miss: it just thuds into the ground
+    else continue;
+    j.g.parent?.remove(j.g); p.throws.splice(i, 1);
   }
   p.pos.set(ox, 0, oz);
 }
@@ -2200,7 +2366,7 @@ function updateOnePet(p, dt, active) {
   if (p.parts.ring) p.parts.ring.rotation.z += dt * 3;
   if (p.parts.core) p.parts.core.rotation.y += dt * 2;
   if (p.parts.halo) p.parts.halo.rotation.z += dt * (p.beam ? 9 : 1.2);
-}function updatePet(dt, active) { for (const p of [pet, pet2]) if (p) withWorld(worldOf(p.owner || P1), () => withPlayer(p.owner || P1, () => withSrc('pet', () => updateOnePet(p, dt, active)))); }
+}function updatePet(dt, active) { for (const p of [pet, pet2]) if (p) withWorld(worldOf(p.owner || P1), () => withPlayer(p.owner || P1, () => withSrc('pet:' + p.id + (p.asc ? '+' : ''), () => updateOnePet(p, dt, active)))); }
 
 
 /* ---------- monsters ---------- */
@@ -2224,7 +2390,7 @@ const TYPES = {
   brute:   { hp: 150,  speed: 2.1, dmg: 22, r: 1.25, sy: 0.9,  color: 0xa8434f, emissive: 0x000000, shards: 9,  geo: 'dodeca', horns: true, label: 'Brute', intro: 'Slow and tough, and hits very hard up close' },
   king:     { hp: 1400, speed: 2.4, dmg: 30, r: 2.6, sy: 0.9, color: 0x5a2a6e, emissive: 0x1a0626, shards: 60,  geo: 'dodeca', horns: true, crown: true, boss: true, name: 'The Hollow King', intro: 'Slams send out shockwave rings. Enraged, he slams three times in a row' },
   brood:    { hp: 1800, speed: 2.0, dmg: 26, r: 2.3, sy: 0.7, color: 0x9a7a32, emissive: 0x1a1000, shards: 70,  geo: 'blob', boss: true, name: 'The Brood Mother', intro: 'Lobs acid, hatches skitters, and channels a Brood Call that floods the arena with monsters' },
-  darklord: { hp: 4200, speed: 2.0, dmg: 30, r: 2.3, sy: 1.25, color: 0x2a1838, emissive: 0x3a0a4a, shards: 130, geo: 'octa', float: true, horns: true, crown: true, boss: true, name: 'The Dark Lord', intro: 'Commands storms of dark bolts: rings that close in from every edge of the arena, and a rain from the sky that leaves only a few spots safe' },
+  darklord: { hp: 4200, speed: 2.0, dmg: 21, r: 2.3, sy: 1.25, color: 0x2a1838, emissive: 0x3a0a4a, shards: 130, geo: 'octa', float: true, horns: true, crown: true, boss: true, name: 'The Dark Lord', intro: 'Commands storms of dark bolts: rings that close in from every edge of the arena, and a rain from the sky that leaves only a few spots safe' },
   capyboss:  { hp: 1900, speed: 2.6, dmg: 24, r: 2.2, sy: 0.8, color: 0xa0703c, emissive: 0x000000, shards: 0, geo: 'blob', noEyes: true, model: 'capy', modelScale: 4.4, boss: true, name: 'The Capybara Horde', intro: 'A giant capybara that charges across the arena, belly-flops onto you, and sends its whole herd bouncing your way' },
   owlboss:   { hp: 1700, speed: 3.0, dmg: 24, r: 1.8, sy: 1.0, color: 0x9fd8ff, emissive: 0x0a2236, shards: 0, geo: 'octa', float: true, noEyes: true, model: 'owl', modelScale: 3.2, boss: true, name: 'The Blizzard Owl', intro: 'Dives out of the sky onto you, throws fans of ice feathers, and freezes the ground in a ring around you' },
   drakeboss: { hp: 1900, speed: 3.2, dmg: 26, r: 1.9, sy: 1.0, color: 0x6fb8ff, emissive: 0x0a2a44, shards: 0, geo: 'octa', float: true, noEyes: true, model: 'drake', modelScale: 3.0, boss: true, name: 'The Tempest Drake', intro: 'Calls lightning down around you, breathes a long line of storms, and swoops across the arena' },
@@ -2488,7 +2654,7 @@ function fireBolt(x, z, a, y = 1.15, extra) {
   m.position.set(x + Math.sin(a) * 0.8, y, z + Math.cos(a) * 0.8);
   scene.add(m);
   bolts.push({ m, vx: Math.sin(a) * 28, vz: Math.cos(a) * 28, life: 0.95 * (1 + 0.2 * (S.rebound || 0)) * (1 + 0.2 * (S.reach || 0)), pierce: S.pierce, bounce: S.bounce, keep: S.bounceKeep, mul: 1, hit: new Set(), owner: curPl, src: dmgSrc || 'bolts',
-    home: S.homing ? 0.5 + S.homing : 0, rebound: S.rebound > 0, ...extra });
+    home: S.homing ? (0.5 + S.homing) * (PU('pu_lockon') ? 2 : 1) : 0, rebound: S.rebound > 0, ...extra });
 }
 function shoot(who = P) {
   const n = S.projectiles, base = Math.atan2(who.face.x, who.face.z);
@@ -2614,13 +2780,13 @@ function killEnemy(e) {
   let v = Math.round(e.shards * (hasPet('cat') ? 1.25 : 1) * (coop ? 2 : 1));
   while (v > 0) { const gv = v >= 10 ? 5 : 1; dropGem(e.pos.x, e.pos.z, gv); v -= gv; }
   kills++;
-  withPlayer(e.lastHit || P1, () => { if (S.vamp) P.hp = Math.min(S.maxHp, P.hp + S.vamp); });
+  withPlayer(e.lastHit || P1, () => { const heal = (S.vamp || 0) + (PU('pu_fang') ? 1 : 0); if (heal && P.hp > 0) P.hp = Math.min(S.maxHp, P.hp + heal); });
   if (e.boss) { banner(`${TYPES[e.type].name.replace('The ', '')} slain`, `+${e.shards} shards`); shake = 0.6; ring(e.pos.x, e.pos.z, 0.5, 10, 0.7, 0xc77dff); }
 }
 function hitByBolt(e, b) {
   const crit = Math.random() < S.crit;
-  const dmg = S.damage * b.mul * (crit ? 2.5 : 1);
-  if (S.slow && !e.dead) { e.slowT = 1.6; e.slowAmt = S.slow; }
+  const dmg = S.damage * b.mul * (crit ? S.critMul || 2.5 : 1);
+  if (S.slow && !e.dead) { e.slowT = S.slowT || 1.6; e.slowAmt = S.slow; }
   damageEnemy(e, dmg, b.vx, b.vz, 3);
   sfx(crit ? 'crit' : 'hit');
   if (crit) burst(b.m.position.x, 1.1, b.m.position.z, 0xffe08a, 6, 5);
@@ -2644,10 +2810,12 @@ function hurtPlayer(d) {
     ring(P.pos.x, P.pos.z, 0.5, 2, 0.3, 0x9fd8ff); burst(P.pos.x, 1, P.pos.z, 0x9fd8ff, 12, 5); sfx('shatter');
     return;
   }
+  if (PU('pu_ironskin')) d *= 0.85;
   P.hp -= d; P.invuln = 0.4; shake = 0.35; P.kick = 1;
   if (S.thorns) {
-    withSrc('thorns', () => areaDamage(P.pos.x, P.pos.z, 3.2, S.damage * (2 + 0.5 * S.thorns), 8));
-    ring(P.pos.x, P.pos.z, 0.4, 3.2, 0.25, 0x8fbf4a);
+    const sp = PU('pu_spikes'), tr = sp ? 5.2 : 3.2;   // Spiked Plating power-up: twice as hard, 2 m farther
+    withSrc('thorns', () => areaDamage(P.pos.x, P.pos.z, tr, S.damage * (2 + 0.5 * S.thorns) * (sp ? 2 : 1), 8));
+    ring(P.pos.x, P.pos.z, 0.4, tr, 0.25, 0x8fbf4a);
     burst(P.pos.x, 0.8, P.pos.z, 0x8fbf4a, 10, 6);
   } sfx('hurt');
   const h = $('#hurt'); h.classList.remove('on'); void h.offsetWidth; h.classList.add('on');
@@ -2656,7 +2824,7 @@ function hurtPlayer(d) {
   if (myPet && myPet.id === 'phoenix' && !P.phoenixUsed) {
     P.phoenixUsed = true; P.hp = S.maxHp * 0.5; P.invuln = 2;
     ring(P.pos.x, P.pos.z, 0.5, 7, 0.7, 0xff8a3d); burst(P.pos.x, 1, P.pos.z, 0xff8a3d, 50, 10);
-    withSrc('pet', () => areaDamage(P.pos.x, P.pos.z, 7, S.damage * 4, 14));
+    withSrc('pet:phoenix', () => areaDamage(P.pos.x, P.pos.z, 7, S.damage * 4, 14));
     banner(coop ? `${who} is reborn in flame` : 'Reborn in flame', 'The phoenix brought you back');
     sfx('cast', 'nova');
     return;
@@ -3627,6 +3795,14 @@ function fillCard(a) {
   card.style.setProperty('--tier', TIER_COLOR[a ? a.tier : 'common']);
   choices.innerHTML = ''; choices.hidden = true; claimBtn.hidden = false; revealMode = 'claim';
   claimBtn.textContent = 'Claim';
+  if (a && a.isPU) {
+    const t = puCardText(a);
+    $('#cardRarity').textContent = t.rarity;
+    $('#cardName').textContent = a.name;
+    $('#cardDesc').textContent = a.desc;
+    lvl.textContent = t.lvl;
+    return;
+  }
   if (a && a.isPet) {
     const forP2 = boxOpener === P2 && p2Save();
     const curId = forP2 ? p2Save().equipped : petSave.equipped, cur = curId && PET[curId];
@@ -3703,6 +3879,12 @@ function rollAbility(luck) {
     const pets = PETS.filter(p => p.tier === tier && (!mine.includes(p.id) || (ASCEND[p.id] && (sv.asc?.[p.id]?.dupes || 0) < 2)));
     if (pets.length) return pets[Math.floor(Math.random() * pets.length)];
   }
+  // and, separately, the same chance it's a power-up of that rarity you don't have yet
+  if (!sandbox && Math.random() < (luck?.pet ?? od?.pet ?? PET_CHANCE)) {
+    const have = puData(boxOpener === P2 && p2Save() ? p2Save() : petSave).owned;
+    const pus = POWERUPS.filter(p => p.tier === tier && !have.includes(p.id));
+    if (pus.length) return pus[Math.floor(Math.random() * pus.length)];
+  }
   const open = a => {
     if (a.fusion) return false;
     const f = fusedInto(a.id);
@@ -3719,9 +3901,37 @@ function rollAbility(luck) {
   // rolling half of a fusion you've made levels up the fusion instead
   return fusedInto(got.id) || got;
 }
+// a power-up from a box: it joins your collection, and goes straight into a free slot of its kind if there is one
+// it goes to whoever opened the box (Player 2 without a save of their own finds them for Player 1's)
+const puFinder = pl => pl === P2 && p2Save() ? P2 : P1;
+const puFreeSlot = (a, pl) => puSlots(puFinder(pl))[a.kind].indexOf(null);
+function puCardText(a, pl = boxOpener) {
+  const free = puFreeSlot(a, pl);
+  return {
+    rarity: `${a.tier} · ${PU_KINDS[a.kind].toLowerCase()} power-up`,
+    lvl: free >= 0 ? `New power-up! It goes into ${PU_KINDS[a.kind].toLowerCase()} power-up slot ${free + 1}, and stays with you in every run.`
+      : `New power-up! Your ${PU_KINDS[a.kind].toLowerCase()} power-up slots are full, so it goes to your collection. Swap it in from Power-ups.`,
+  };
+}
+function takePU(a, pl = boxOpener) {
+  const who = puFinder(pl), pu = puData(puSaveOf(who));
+  if (!pu.owned.includes(a.id)) pu.owned.push(a.id);
+  const free = puFreeSlot(a, who);
+  if (free >= 0) pu.slots[a.kind][free] = a.id;
+  if (who === P2) saveSlots(); else savePets();
+  refreshPU(); renderPetBtn();
+  const name = coop ? (who === P2 ? 'Player 2' : 'Player 1') : 'you';
+  banner(`${a.name} ${free >= 0 ? 'powers ' + name + ' up' : 'added'}`, free >= 0 ? PUD[a.id].desc : 'Equip it from Power-ups');
+}
 function claim(ri) {
   if (state !== 'reveal' || $('#card').hidden) return;
   const a = pendingAbility;
+  if (a && a.isPU) {
+    takePU(a);
+    ring(P.pos.x, P.pos.z, 0.5, 3.5, 0.5, TIER_HEX[a.tier]);
+    finishReveal();
+    return;
+  }
   if (a && a.isPet) {
     const sv2 = boxOpener === P2 ? p2Save() : null;
     if (petDupe(sv2 || petSave, a.id)) {
@@ -3924,14 +4134,14 @@ function renderLoadout() {
 /* ---------- active abilities ---------- */
 const ACTIVE = {
   nova(l) {
-    const rad = 5 + 0.6 * l;
+    const wild = PU('pu_wildfire'), rad = 5 + 0.6 * l + (wild ? 1.5 : 0);
     ring(P.pos.x, P.pos.z, 0.5, rad, 0.45, 0xff8a3d);
     burst(P.pos.x, 0.6, P.pos.z, 0xff8a3d, 22, 9);
-    areaDamage(P.pos.x, P.pos.z, rad, S.damage * (2 + 0.5 * l), 11);
+    areaDamage(P.pos.x, P.pos.z, rad, S.damage * (2 + 0.5 * l) * (wild ? 1.3 : 1), 11);
     shake = Math.max(shake, 0.2);
   },
   barrage(l) {
-    const n = 16 + 4 * l;
+    const n = Math.round((16 + 4 * l) * (PU('pu_volley') ? 1.5 : 1));
     for (let i = 0; i < n; i++) fireBolt(P.pos.x, P.pos.z, i / n * TAU);
     pLight.intensity = 5;
   },
@@ -3954,25 +4164,29 @@ const ACTIVE = {
     for (const [x, z] of [[sx, sz], [P.pos.x, P.pos.z]]) {
       ring(x, z, 0.3, 2.6, 0.35, 0x6fe3d6);
       burst(x, 1, z, 0x6fe3d6, 12, 6);
-      areaDamage(x, z, 2.6, S.damage * 1.5, 6);
+      areaDamage(x, z, 2.6, S.damage * 1.5 * (PU('pu_afterimage') ? 2 : 1), 6);
     }
-    P.invuln = Math.max(P.invuln, 0.4);
+    P.invuln = Math.max(P.invuln, PU('pu_afterimage') ? 1 : 0.4);
   },
   glacier(l) {
-    const rad = 7.5 + 0.5 * l, dur = 3 + 0.3 * l;
+    const deep = PU('pu_deepfreeze'), rad = 7.5 + 0.5 * l, dur = (3 + 0.3 * l) * (deep ? 1.5 : 1);
     ring(P.pos.x, P.pos.z, 0.5, rad, 0.5, 0x9fd8ff);
     burst(P.pos.x, 0.5, P.pos.z, 0x9fd8ff, 24, 8);
     for (const e of enemies) {
       if (e.dead) continue;
       const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z;
-      if (dx * dx + dz * dz < (rad + e.r) ** 2) { e.freezeT = e.boss ? dur * 0.4 : dur; burst(e.pos.x, 1, e.pos.z, 0xcfeeff, 4, 3); }
+      if (dx * dx + dz * dz < (rad + e.r) ** 2) {
+        e.freezeT = e.boss ? dur * 0.4 : dur; burst(e.pos.x, 1, e.pos.z, 0xcfeeff, 4, 3);
+        if (deep) damageEnemy(e, S.damage * 2, dx, dz, 0);
+      }
     }
   },
   storm(l) {
-    return chainFrom(P.pos.x, P.pos.z, 4 + 2 * l, S.damage * 2, 16);
+    const sc = PU('pu_supercoil');
+    return chainFrom(P.pos.x, P.pos.z, 4 + 2 * l + (sc ? 3 : 0), S.damage * 2 * (sc ? 1.25 : 1), 16);
   },
-  meteor(l, chain = 0, dmgX = 6 + 2 * l) {
-    let x = aimWorld.x, z = aimWorld.z;
+  meteor(l, chain = 0, dmgX = 6 + 2 * l, twin = null) {
+    let x = twin ? twin.x : aimWorld.x, z = twin ? twin.z : aimWorld.z;
     const r0 = Math.hypot(x, z);
     if (r0 > ARENA_R) { x *= ARENA_R / r0; z *= ARENA_R / r0; }
     const r = 3 + 0.7 * l;
@@ -3985,6 +4199,11 @@ const ACTIVE = {
     const rock = new THREE.Mesh(G.dodeca, M_METEOR);
     rock.scale.setScalar(0.6 + 0.4 * l); rock.position.set(x + 7, 20, z - 5); scene.add(rock);
     meteors.push({ src: dmgSrc, x, z, r, dmg: S.damage * dmgX, chainDmg: S.damage * 2.5, owner: P, chain, t: 0, dur: 0.75, disc, edge, rock });
+    // Twin Star power-up: a second, smaller-hitting meteor lands right beside the first
+    if (PU('pu_twinstar') && !twin) {
+      const a = rand(0, TAU);
+      ACTIVE.meteor(l, 0, dmgX * 0.6, { x: x + Math.sin(a) * r * 1.2, z: z + Math.cos(a) * r * 1.2 });
+    }
   },
   emberbarrage(l) {
     const n = 8 + 2 * l, nova = { r: 2.2 + 0.25 * l, dmg: S.damage * (1.5 + 0.5 * l) };
@@ -4014,9 +4233,9 @@ const ACTIVE = {
     holes.push({ src: dmgSrc, x, z, g, core, disk, disk2, halo, owner: P, t: 0, dur, r, tickT: 0, tick: S.damage * (1 + 0.25 * l), boom: S.damage * (8 + 2 * l) });
     sfx('horizon', dur);
   },
-  tremor(l) { startTremor({ dmg: S.damage * (1.5 + 0.4 * l), max: 7 + 0.5 * l, color: 0xd9b36a, freeze: 0 }); },
+  tremor(l) { startTremor({ dmg: S.damage * (1.5 + 0.4 * l), max: 7 + 0.5 * l, color: 0xd9b36a, freeze: 0, count: PU('pu_aftershock') ? 5 : 3 }); },
   glacialquake(l) { startTremor({ dmg: S.damage * (2 + 0.5 * l), max: 9 + 0.5 * l, color: 0x9fd8ff, freeze: 1.5 + 0.2 * l, count: 4 }); },
-  whirl(l) { P.whirlT = 2.5 + 0.25 * l; P.whirlDmg = S.damage * (1 + 0.25 * l); P.whirlTick = 0; },
+  whirl(l) { const cy = PU('pu_cyclone'); P.whirlT = (2.5 + 0.25 * l) * (cy ? 1.5 : 1); P.whirlDmg = S.damage * (1 + 0.25 * l) * (cy ? 1.25 : 1); P.whirlTick = 0; },
   warp(l) {
     warpT = 4 + 0.5 * l;
     banner('Time Warp', 'Everything slows down');
@@ -4030,7 +4249,7 @@ const ACTIVE = {
     top.position.y = 1.8; g.add(top);
     g.position.set(P.pos.x, 0, P.pos.z); scene.add(g);
     ring(P.pos.x, P.pos.z, 0.3, 2, 0.4, 0x6fe3d6);
-    totems.push({ src: dmgSrc, g, top, x: P.pos.x, z: P.pos.z, t: 8 + l, fireT: 0, rate: 3 + 0.5 * l, owner: P });
+    totems.push({ src: dmgSrc, g, top, x: P.pos.x, z: P.pos.z, t: 8 + l + (PU('pu_overclock') ? 4 : 0), fireT: 0, rate: (3 + 0.5 * l) * (PU('pu_overclock') ? 2 : 1), owner: P });
   },
 };
 function useActive(i) {
@@ -4039,7 +4258,7 @@ function useActive(i) {
   if (!id || (cds[id] || 0) > 0) return;
   const l = L(id);
   if (withSrc(id, () => ACTIVE[id](l)) === false) return;
-  cds[id] = AB[id].cd(l);
+  cds[id] = AB[id].cd(l) * (PU('pu_quickhands') ? 0.8 : 1);
   sfx('cast', id);
   const el = (curPl === P2 ? activeEls2 : activeEls)[i];
   if (el) { el.classList.remove('fired'); void el.offsetWidth; el.classList.add('fired'); }
@@ -4124,6 +4343,10 @@ addEventListener('keydown', e => {
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
   if (state === 'pets') {
     if (k === 'escape') closePets();
+    return;
+  }
+  if (state === 'powerups') {
+    if (k === 'escape') closePU();
     return;
   }
   if (state === 'codex') {
@@ -4315,7 +4538,7 @@ function pollPad(dt) {
     const scr = openScreen(), el = document.activeElement;
     if (scr && el && el !== scr && scr.contains(el)) el.click(); else navFocus(0, 0);
   } else if (hit(B.back) || hit(B.loadout)) {
-    if (state === 'loadout') closeLoadout(); else if (state === 'paused') pause(false); else if (state === 'padsetup') closePadSetup(); else if (state === 'pets') closePets(); else if (state === 'codex') closeCodex(); else if (state === 'players') closePlayers();
+    if (state === 'loadout') closeLoadout(); else if (state === 'paused') pause(false); else if (state === 'padsetup') closePadSetup(); else if (state === 'pets') closePets(); else if (state === 'powerups') closePU(); else if (state === 'codex') closeCodex(); else if (state === 'players') closePlayers();
   } else if (hit(B.pause)) {
     if (state === 'paused') pause(false); else if (state === 'loadout') closeLoadout(); else if (state === 'title') begin('normal');
   }
@@ -4614,6 +4837,7 @@ function begin(mode) {
   leaveDungeon();
   sandbox = mode === 'sandbox'; dungeon = mode === 'dungeon'; godMode = false; sbWave = 1;
   dmgLog = [{}, {}];
+  refreshPU();
   trial = typeof mode === 'string' && mode.startsWith('ascend:') ? mode.slice(7) : null;
   lab = mode === 'lab';
   sandboxPet = petSave.equipped; sandboxAsc = false;
@@ -4705,7 +4929,7 @@ const dungeonOpen = () => progress.dungeon || !!p2Save()?.dungeon;
 function syncActiveSave() {
   try {
     if (activeSlot < 0 || !petSlots[activeSlot]) return;
-    petSlots[activeSlot] = { ...petSlots[activeSlot], owned: [...petSave.owned], equipped: petSave.equipped, asc: JSON.parse(JSON.stringify(petSave.asc || {})), dungeon: progress.dungeon, bestFloor: progress.bestFloor, abilities: [...codex], at: Date.now() };
+    petSlots[activeSlot] = { ...petSlots[activeSlot], owned: [...petSave.owned], equipped: petSave.equipped, asc: JSON.parse(JSON.stringify(petSave.asc || {})), pu: cleanPU(petSave.pu), dungeon: progress.dungeon, bestFloor: progress.bestFloor, abilities: [...codex], at: Date.now() };
     localStorage.setItem('shardfall-pet-slots', JSON.stringify(petSlots));
   } catch (_) {}   // the slots aren't set up yet during start-up
 }
@@ -4713,6 +4937,7 @@ function applySave(sl) {
   petSave.owned = (sl.owned || []).filter(id => PET[id]);
   petSave.equipped = petSave.owned.includes(sl.equipped) ? sl.equipped : null;
   petSave.asc = JSON.parse(JSON.stringify(sl.asc || {}));
+  petSave.pu = cleanPU(sl.pu); refreshPU();
   progress.dungeon = !!sl.dungeon; progress.bestFloor = sl.bestFloor || 0;
   codex = new Set((sl.abilities || []).filter(id => AB[id]));
   try { localStorage.setItem('shardfall-codex', JSON.stringify([...codex])); } catch (_) {}
@@ -4732,7 +4957,7 @@ function slotAction(kind, i) {
     activeSlot = i; applySave(petSlots[i]);
     slotMsg = `Started a new save in ${slotLabel(i)}: no pets, and the dungeon is locked until you reach wave 10.`;
   } else if (kind === 'save') {
-    petSlots[i] = { owned: [...petSave.owned], equipped: petSave.equipped, asc: JSON.parse(JSON.stringify(petSave.asc || {})), at: Date.now(), dungeon: progress.dungeon, bestFloor: progress.bestFloor, abilities: [...codex] };
+    petSlots[i] = { owned: [...petSave.owned], equipped: petSave.equipped, asc: JSON.parse(JSON.stringify(petSave.asc || {})), pu: cleanPU(petSave.pu), at: Date.now(), dungeon: progress.dungeon, bestFloor: progress.bestFloor, abilities: [...codex] };
     activeSlot = i;
     slotMsg = `Copied your current progress into ${slotLabel(i)}. It's now the save you're playing.`;
   } else if (kind === 'load') {
@@ -4854,7 +5079,144 @@ let petReturn = 'title';
 function renderPetBtn() {
   const n = petSave.owned.length;
   $('#petsBtn').textContent = `Pets ${n} / ${PETS.length}`;
+  $('#puBtn').textContent = `Power-ups ${petSave.pu.owned.length} / ${POWERUPS.length}`;
 }
+// Power-ups screen: four slots for each kind; click a power-up to slot it in, click a slot to take it out
+let puReturn = 'title', puWho = P1;
+function openPU(who = P1) {
+  if (state !== 'title' && state !== 'loadout') return;
+  puReturn = state; state = 'powerups';
+  puWho = who === P2 && coop ? P2 : P1; puView = null;
+  renderPU();
+  $('#puScreen').hidden = false;
+  $('#puDone').focus({ preventScroll: true });
+}
+function closePU(all) {
+  if (state !== 'powerups') return;
+  if (puView && all !== true) { const k = puView; puView = null; renderPU(); $(`#puBody .pu-kind[data-kind="${k}"]`)?.focus({ preventScroll: true }); return; }
+  $('#puScreen').hidden = true;
+  state = puReturn;
+  if (state === 'loadout') { renderLoadout(); $('#loadoutClose').focus({ preventScroll: true }); }
+  else $('#puBtn').focus({ preventScroll: true });
+}
+function setPUSlot(kind, i, id) {
+  puSlots(puWho)[kind][i] = id;
+  if (!sandbox) { if (puWho === P2) saveSlots(); else savePets(); }
+  refreshPU();
+  renderPU();
+}
+const PU_ICONS = {
+  active: '<path d="M13 2 4 14h7l-2 8 9-12h-7z" fill="currentColor"/>',
+  passive: '<circle cx="12" cy="12" r="3" fill="currentColor"/><ellipse cx="12" cy="12" rx="10" ry="4.2" fill="none" stroke="currentColor" stroke-width="1.6"/><ellipse cx="12" cy="12" rx="10" ry="4.2" fill="none" stroke="currentColor" stroke-width="1.6" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4.2" fill="none" stroke="currentColor" stroke-width="1.6" transform="rotate(-60 12 12)"/>',
+  stat: '<path d="M12 21s-7.5-4.6-9.3-9.2C1.4 8.4 3.6 5 7 5c2 0 3.3 1.1 5 3 1.7-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 16.4 12 21 12 21z" fill="currentColor"/>',
+};
+const PU_BLURB = { active: 'Supercharge your active abilities', passive: 'Mutate your passive abilities', stat: 'Make your body stronger' };
+const puIcon = kind => `<span class="pu-ico"><svg viewBox="0 0 24 24" aria-hidden="true">${PU_ICONS[kind]}</svg></span>`;
+// the radiation symbol behind the middle of a kind's page
+const TREFOIL = (() => {
+  const pt = (a, r) => `${(50 + Math.sin(a) * r).toFixed(2)} ${(50 - Math.cos(a) * r).toFixed(2)}`;
+  const blade = c => { const a0 = c - Math.PI / 6, a1 = c + Math.PI / 6; return `M${pt(a0, 15)} L${pt(a0, 48)} A48 48 0 0 1 ${pt(a1, 48)} L${pt(a1, 15)} A15 15 0 0 0 ${pt(a0, 15)}Z`; };
+  return `<svg class="pu-trefoil" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="9" fill="currentColor"/><path fill="currentColor" d="${[0, 2, 4].map(k => blade(k * Math.PI / 3)).join(' ')}"/></svg>`;
+})();
+const PU_SPOTS = [[17, 20], [83, 20], [17, 80], [83, 80]];   // where the four slots sit around the middle (in %)
+let puView = null, puTarget = -1;
+function renderPU() {
+  const who = puWho, noSave = !sandbox && !puSaveOf(who);
+  const found = puData(puSaveOf(who)).owned.length;
+  // co-op: switch between the two players' power-ups
+  const seg = $('#puWho');
+  seg.hidden = !coop;
+  seg.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', (i === 1) === (who === P2)));
+  $('#puHint').textContent = noSave
+    ? 'Player 2 has no save of their own, so they have no power-ups. Pick a save for Player 2 in Players to give them theirs; until then, the power-ups they find go to Player 1.'
+    : sandbox
+    ? 'Sandbox: every power-up is here to try. What you slot in here doesn’t change your real power-ups.'
+    : puView ? 'Click a power-up below to slot it in (pick an empty slot first to choose where it goes). Click a slot to take its power-up out.'
+    : `${coop ? (who === P2 ? 'Player 2: ' : 'Player 1: ') : ''}${found} of ${POWERUPS.length} found. Whenever a box rolls a rarity, there’s a 4% chance it gives you a power-up of that rarity you don’t have yet (the same odds as a pet).`;
+  if (noSave) { $('#puBody').replaceChildren(); return; }
+  const sl = puSlots(who);
+  if (!puView) {
+    // the main page: three glowing buttons
+    const hub = document.createElement('div');
+    hub.className = 'pu-hub';
+    for (const [kind, label] of Object.entries(PU_KINDS)) {
+      const all = POWERUPS.filter(p => p.kind === kind), have = all.filter(p => puOwned(p.id, who)).length;
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'pu-kind'; b.dataset.kind = kind;
+      b.innerHTML = `${puIcon(kind)}<b>${label}</b><span>${PU_BLURB[kind]}</span><small>${have} of ${all.length} found · ${sl[kind].filter(Boolean).length} of 4 slotted</small><span class="pu-pips"></span>`;
+      for (const id of sl[kind]) { const i = document.createElement('i'); if (id) { i.className = 'on'; i.style.setProperty('--tier', TIER_COLOR[PUD[id].tier]); } b.querySelector('.pu-pips').append(i); }
+      b.addEventListener('click', () => { puView = kind; puTarget = -1; renderPU(); $('#puBody .pu-back').focus({ preventScroll: true }); });
+      hub.append(b);
+    }
+    $('#puBody').replaceChildren(hub);
+    return;
+  }
+  const kind = puView, slots = sl[kind], used = slots.filter(Boolean).length;
+  if (puTarget >= 0 && slots[puTarget]) puTarget = -1;
+  const page = document.createElement('div');
+  page.className = 'pu-page';
+  const back = document.createElement('button');
+  back.type = 'button'; back.className = 'pu-back'; back.textContent = '← All power-ups';
+  back.addEventListener('click', () => { puView = null; renderPU(); $(`#puBody .pu-kind[data-kind="${kind}"]`)?.focus({ preventScroll: true }); });
+  // the kind in the middle, with its four slots branching off it
+  const tree = document.createElement('div');
+  tree.className = 'pu-tree';
+  tree.innerHTML = `<svg class="pu-links" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">${PU_SPOTS.map(([x, y], i) => `<line x1="50" y1="50" x2="${x}" y2="${y}" class="${slots[i] ? 'on' : ''}"/>`).join('')}</svg>`
+    + `<div class="pu-core">${TREFOIL}${puIcon(kind)}<b>${PU_KINDS[kind]}</b><small>${used} of 4 slotted</small></div>`;
+  slots.forEach((id, i) => {
+    const d = id && PUD[id], n = document.createElement('button');
+    n.type = 'button';
+    n.className = 'pu-node' + (d ? '' : ' empty') + (puTarget === i ? ' target' : '');
+    n.style.left = PU_SPOTS[i][0] + '%'; n.style.top = PU_SPOTS[i][1] + '%';
+    if (d) {
+      n.style.setProperty('--tier', TIER_COLOR[d.tier]);
+      n.innerHTML = `<small>Slot ${i + 1} · ${d.tier}</small><b></b><span></span>`;
+      n.querySelector('b').textContent = d.name; n.querySelector('span').textContent = d.desc;
+      n.setAttribute('aria-label', `Slot ${i + 1}: ${d.name}. Click to take it out.`);
+      n.addEventListener('click', () => { puTarget = i; setPUSlot(kind, i, null); });
+    } else {
+      n.innerHTML = `<small>Slot ${i + 1}</small><b>Empty</b><span>${puTarget === i ? 'Now pick a power-up below' : 'Click, then pick a power-up below'}</span>`;
+      n.addEventListener('click', () => { puTarget = puTarget === i ? -1 : i; renderPU(); $(`#puBody .pu-node:nth-of-type(${i + 1})`)?.focus({ preventScroll: true }); });
+    }
+    tree.append(n);
+  });
+  // your power-ups of this kind, ready to slot in
+  const coll = document.createElement('div');
+  coll.className = 'pu-coll';
+  const all = POWERUPS.filter(p => p.kind === kind), tiers = ['common', 'rare', 'epic', 'legendary'];
+  coll.innerHTML = `<div class="bar-label">Your ${PU_KINDS[kind].toLowerCase()} power-ups · ${all.filter(p => puOwned(p.id, who)).length} of ${all.length} found</div>`;
+  const grid = document.createElement('div');
+  grid.className = 'lo-grid';
+  for (const d of all.sort((a, b) => tiers.indexOf(a.tier) - tiers.indexOf(b.tier))) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.style.setProperty('--tier', TIER_COLOR[d.tier]);
+    const have = puOwned(d.id, who), on = slots.includes(d.id), full = used >= 4;
+    if (!have) {
+      b.className = 'lo-item locked';
+      b.innerHTML = `<span class="mono">?</span><span class="lo-name">Locked</span><span class="lo-desc"></span><span class="lo-state">${d.tier} power-up</span>`;
+      b.disabled = true;
+    } else {
+      b.className = 'lo-item' + (on ? ' equipped' : full ? ' full' : '');
+      b.innerHTML = '<span class="mono"></span><span class="lo-name"></span><span class="lo-desc"></span><span class="lo-state"></span>';
+      b.querySelector('.mono').textContent = mono(d.name);
+      b.querySelector('.lo-name').textContent = d.name;
+      b.querySelector('.lo-desc').textContent = d.desc;
+      b.querySelector('.lo-state').textContent = `${d.tier} · ` + (on ? `In slot ${slots.indexOf(d.id) + 1} · click to take out` : full ? 'Slots full · take one out first' : 'Click to slot in');
+      b.addEventListener('click', () => {
+        if (on) setPUSlot(kind, slots.indexOf(d.id), null);
+        else if (!full) { const at = puTarget >= 0 && !slots[puTarget] ? puTarget : slots.indexOf(null); puTarget = -1; setPUSlot(kind, at, d.id); }
+      });
+    }
+    grid.append(b);
+  }
+  coll.append(grid);
+  page.append(back, tree, coll);
+  $('#puBody').replaceChildren(page);
+}
+$('#puBtn').addEventListener('click', () => openPU(P1));
+$('#puWho').querySelectorAll('button').forEach((b, i) => b.addEventListener('click', () => { puWho = i ? P2 : P1; renderPU(); }));
+$('#puDone').addEventListener('click', () => closePU(true));
 function openPets() {
   if (state !== 'title' && state !== 'loadout') return;
   petReturn = state; state = 'pets'; slotArmed = null; slotMsg = '';
@@ -4974,6 +5336,14 @@ function renderLoPet() {
   btn.type = 'button'; btn.className = 'sb-btn'; btn.textContent = 'Change pet';
   btn.addEventListener('click', openPets);
   box.append(now, btn);
+  const lw = loPlayer === P2 ? P2 : P1, pubox = $('#loPU'), on = [...puOn[lw === P2 ? 1 : 0]].map(id => PUD[id]);
+  const pnow = document.createElement('span');
+  pnow.className = 'mode-note';
+  pnow.textContent = on.length ? on.map(d => d.name).join(' · ') : 'No power-ups slotted in.';
+  const pbtn = document.createElement('button');
+  pbtn.type = 'button'; pbtn.className = 'sb-btn'; pbtn.textContent = 'Change power-ups';
+  pbtn.addEventListener('click', () => openPU(lw));
+  pubox.replaceChildren(pnow, pbtn);
 }
 /* ---------- dungeon ---------- */
 // Each run builds a fresh floor: a maze of rooms on a grid with a boss at the far end,
@@ -6815,8 +7185,8 @@ function toTitle() {
 const DMG_KIND_COLOR = { bolts: 'var(--bolt)', active: 'var(--shard)', passive: 'var(--rare)', pet: 'var(--legendary)' };
 function dmgLabel(src, pl) {
   if (src === 'bolts') return { name: 'Bolts', kind: 'bolts' };
-  if (src === 'pet') { const p = pl === P2 ? pet2 : pet; return { name: p ? p.def.name : 'Pet', kind: 'pet' }; }
   if (src === 'blades') return { name: AB.halo && L('halo') && !L('orbit') ? AB.halo.name : 'Orbiting Blades', kind: 'passive' };
+  if (src === 'pets') return { name: 'Pets', kind: 'pet' };
   const a = AB[src];
   return { name: a ? a.name : src, kind: a?.kind === 'active' ? 'active' : 'passive' };
 }
@@ -6826,7 +7196,18 @@ function renderDmgMeter() {
   box.replaceChildren(...who.map(([pl, i, title]) => {
     const sec = document.createElement('div');
     sec.className = 'dmg-meter';
-    const rows = Object.entries(dmgLog[i]).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    // every pet's damage is gathered into one Pets row, with each pet listed inside it
+    const pets = {};
+    for (const [src, v] of Object.entries(dmgLog[i])) if (src.startsWith('pet:') && v > 0) {
+      const [, id, part] = src.split(':');
+      const p = pets[id] ||= { v: 0, parts: {} };
+      p.v += v;
+      if (part !== undefined) p.parts[part] = (p.parts[part] || 0) + v;
+    }
+    const rows = Object.entries(dmgLog[i]).filter(([src, v]) => v > 0 && !src.startsWith('pet:'));
+    const petTotal = Object.values(pets).reduce((t, p) => t + p.v, 0);
+    if (petTotal > 0) rows.push(['pets', petTotal]);
+    rows.sort((a, b) => b[1] - a[1]);
     const total = rows.reduce((t, [, v]) => t + v, 0);
     const h = document.createElement('h3');
     h.innerHTML = `${title ? title + ' · ' : ''}Damage this run <b></b>`;
@@ -6844,11 +7225,26 @@ function renderDmgMeter() {
       r.style.setProperty('--c', DMG_KIND_COLOR[kind]);
       r.innerHTML = '<span class="dmg-name"><span></span><small></small></span><span class="dmg-pct"></span><span class="dmg-amt"></span><span class="dmg-bar"><i></i></span>';
       r.querySelector('.dmg-name span').textContent = name;
-      r.querySelector('.dmg-name small').textContent = kind === 'bolts' ? '' : kind;
+      r.querySelector('.dmg-name small').textContent = kind === 'bolts' || src === 'pets' ? '' : kind;
       r.querySelector('.dmg-pct').textContent = (pct >= 10 ? Math.round(pct) : pct.toFixed(1)) + '%';
       r.querySelector('.dmg-amt').textContent = Math.round(v).toLocaleString();
       r.querySelector('.dmg-bar i').style.width = pct + '%';
       list.append(r);
+      if (src === 'pets') for (const [id, p] of Object.entries(pets).sort((a, b) => b[1].v - a[1].v)) {
+        const base = id.replace('+', ''), sub = document.createElement('div');
+        sub.className = 'dmg-row dmg-sub';
+        sub.style.setProperty('--c', DMG_KIND_COLOR.pet);
+        sub.innerHTML = '<span class="dmg-name"><span></span><small></small></span><span class="dmg-pct"></span><span class="dmg-amt"></span><span class="dmg-bar"><i></i></span>';
+        sub.querySelector('.dmg-name span').textContent = id.endsWith('+') ? ASCEND[base].name : PET[base]?.name || base;
+        // Remy and Benji: how the damage splits between the two of them
+        const split = Object.entries(p.parts).sort((a, b) => b[1] - a[1]).map(([k, v]) => `${base === 'duo' ? DUO[k].name : k} ${Math.round(v / p.v * 100)}%`).join(' · ');
+        sub.querySelector('.dmg-name small').textContent = split;
+        const sp = p.v / petTotal * 100;
+        sub.querySelector('.dmg-pct').textContent = (sp >= 10 ? Math.round(sp) : sp.toFixed(1)) + '%';
+        sub.querySelector('.dmg-amt').textContent = Math.round(p.v).toLocaleString();
+        sub.querySelector('.dmg-bar i').style.width = sp + '%';
+        list.append(sub);
+      }
     }
     sec.append(h, list);
     return sec;
@@ -6970,6 +7366,7 @@ function tickWhirl(dt) {
 }
 function tickAbilities(dt) {
   for (const id in cds) cds[id] = Math.max(0, cds[id] - dt);
+  if (PU('pu_secondwind') && P.hp > 0 && !P.down) P.hp = Math.min(S.maxHp, P.hp + 1.5 * dt);
   if (P.regenT > 0) {
     P.regenT -= dt; P.hp = Math.min(S.maxHp, P.hp + P.regen * dt);
     if (Math.random() < dt * 14) burst(P.pos.x + rand(-0.5, 0.5), 0.3, P.pos.z + rand(-0.5, 0.5), 0x7fe08a, 1, 1);
@@ -7013,7 +7410,7 @@ function tickAutoPassives(dt) {
       f.m.material.opacity = 0.5 * Math.max(0, 1 - f.t / f.dur);
       if (tick) for (const e of enemies) {
         if (e.dead || hit.has(e) || Math.hypot(e.pos.x - f.x, e.pos.z - f.z) > 1.1 + e.r) continue;
-        hit.add(e); withSrc('trail', () => damageEnemy(e, S.damage * (0.3 + 0.1 * S.trail)));
+        hit.add(e); withSrc('trail', () => damageEnemy(e, S.damage * (0.3 + 0.1 * S.trail) * (PU('pu_hotembers') ? 2 : 1)));
         if (Math.random() < 0.3) burst(e.pos.x, 0.4, e.pos.z, 0xff7a2f, 2, 2);
       }
       if (f.t >= f.dur) { scene.remove(f.m); f.m.material.dispose(); P.trail.splice(i, 1); }
@@ -7023,9 +7420,9 @@ function tickAutoPassives(dt) {
   if (S.static) {
     P.staticT = (P.staticT ?? 1.5) - dt;
     if (P.staticT <= 0) {
-      P.staticT = 1.5;
+      P.staticT = PU('pu_overload') ? 1 : 1.5;
       const near = enemies.filter(e => !e.dead && !e.hidden && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 5.5 + e.r)
-        .sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z)).slice(0, 1 + S.static);
+        .sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z)).slice(0, 1 + S.static + (PU('pu_overload') ? 2 : 0));
       for (const e of near) { zap([{ x: P.pos.x, z: P.pos.z }, { x: e.pos.x, z: e.pos.z }]); withSrc('static', () => damageEnemy(e, S.damage * (1.2 + 0.3 * S.static), e.pos.x - P.pos.x, e.pos.z - P.pos.z, 2)); }
       ffZap(P.pos.x, P.pos.z, 5.5, S.damage * (1.2 + 0.3 * S.static));
       if (near.length) sfx('zap');
@@ -7051,7 +7448,7 @@ function tickAutoPassives(dt) {
       if (e.dead || Math.hypot(e.pos.x - sw.x, e.pos.z - sw.z) > e.r + 0.6) continue;
       if (T - (sw.hits.get(e) ?? -9) < 0.45) continue;
       sw.hits.set(e, T);
-      withSrc('saws', () => damageEnemy(e, S.damage * 2.5, e.pos.x - sw.x, e.pos.z - sw.z, 3));
+      withSrc('saws', () => damageEnemy(e, S.damage * 3, e.pos.x - sw.x, e.pos.z - sw.z, 3));
       burst(sw.x, 0.9, sw.z, 0xcfd3da, 3, 3); sfx('hit');
     }
     if (sw.hits.size > 80) sw.hits.clear();
@@ -7066,7 +7463,7 @@ function ffAutoPassives(dt) {
   const near = (x, z, r) => Math.hypot(o.pos.x - x, o.pos.z - z) < r;
   let dmg = 0;
   for (const b of blades) if (near(b.position.x, b.position.z, 0.9)) dmg = Math.max(dmg, b.userData.dmg || S.damage * 2);
-  for (const sw of P.saws || []) if (near(sw.x, sw.z, 1)) dmg = Math.max(dmg, S.damage * 2.5);
+  for (const sw of P.saws || []) if (near(sw.x, sw.z, 1)) dmg = Math.max(dmg, S.damage * 3);
   if (S.trail) for (const f of P.trail || []) if (near(f.x, f.z, 1.2)) dmg = Math.max(dmg, S.damage * (0.3 + 0.1 * S.trail));
   if (dmg) { P.ffT = 0.35; hurtWho(o, Math.round(dmg)); }
 }
@@ -7178,6 +7575,10 @@ function fillHalfCard(pl, card) {
   if (!a) {
     rarity = 'Overflow'; name = 'Full Restore'; desc = 'Every ability is at level V. The box restores all your health instead.';
     opts.push({ label: 'Claim' });
+  } else if (a.isPU) {
+    const t = puCardText(a, pl);
+    rarity = t.rarity; name = a.name; desc = a.desc; lvl = t.lvl;
+    opts.push({ label: 'Claim' });
   } else if (a.isPet) {
     const sv = pl === P2 ? p2Save() : null, curId = sv ? sv.equipped : petSave.equipped, cur = curId && PET[curId];
     rarity = `${a.tier} · pet`; name = a.name; desc = a.desc; lvl = 'New pet! Pets stay with you in every run.';
@@ -7236,7 +7637,8 @@ function claimFor(pl, ri) {
   if (!here(pl)) return withWorld(worldOf(pl), () => claimFor(pl, ri));
   const a = pl.pending;
   withPlayer(pl, () => {
-    if (a && a.isPet) {
+    if (a && a.isPU) takePU(a, pl);
+    else if (a && a.isPet) {
       const sv2 = pl === P2 ? p2Save() : null;
       if (petDupe(sv2 || petSave, a.id)) { sv2 ? saveSlots() : savePets(); renderPetBtn(); }
       else if (sv2) {
@@ -7431,7 +7833,10 @@ function updateWorld(dt, pass) {
         if (!pointInWall(px, z)) b.vx = -b.vx; else if (!pointInWall(x, pz)) b.vz = -b.vz; else { b.vx = -b.vx; b.vz = -b.vz; }
         b.m.position.x = px; b.m.position.z = pz; hit = true;
       }
-      if (hit) { b.m.rotation.y = Math.atan2(b.vx, b.vz); burst(b.m.position.x, 1.15, b.m.position.z, 0x6fe3d6, 2, 2); }
+      if (hit) {
+        b.m.rotation.y = Math.atan2(b.vx, b.vz); burst(b.m.position.x, 1.15, b.m.position.z, 0x6fe3d6, 2, 2);
+        if (!b.hardBounced && puOn[b.owner === P2 ? 1 : 0].has('pu_hardbounce')) { b.hardBounced = true; b.mul *= 1.5; }   // the bolt owner's Hard Bounce power-up
+      }
     }
     if (!dead && (dungeon || lab)) dead = boltHitsWall(b);
     if (!dead && mirrors.length && mirrorBolt(b, mirrors, dt)) { b.nova = null; dead = true; }
@@ -7962,6 +8367,7 @@ if (touchMode) {
   $('#touch').hidden = false; document.body.classList.add('touch-on');
   $('#controlsDesk').hidden = true; $('#controlsTouch').hidden = false;
 }
+refreshPU();
 recompute();
 P.hp = S.maxHp;
 spawnBox(); spawnBox();
