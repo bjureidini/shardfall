@@ -444,6 +444,18 @@ kbd { font: 600 12px var(--ui); background: var(--dusk-2); border: 1px solid var
 .pet-now .pet-dot::after { width: 11px; height: 11px; }
 .pet-now span { color: var(--muted); font-size: 13px; }
 .pet-now b { color: var(--bone); }
+.dmg-meter { display: grid; gap: 14px; }
+.dmg-meter h3 { margin: 0; font: 700 13px var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.dmg-meter h3 b { color: var(--bone); font-variant-numeric: tabular-nums; }
+.dmg-list { display: grid; gap: 8px; }
+.dmg-row { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 4px 12px; align-items: baseline; font-size: 14px; }
+.dmg-row .dmg-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dmg-row .dmg-name small { color: var(--muted); font-size: 11px; letter-spacing: .1em; text-transform: uppercase; margin-left: 6px; }
+.dmg-row .dmg-pct { font-weight: 700; font-variant-numeric: tabular-nums; }
+.dmg-row .dmg-amt { color: var(--muted); font-variant-numeric: tabular-nums; min-width: 6ch; text-align: right; }
+.dmg-row .dmg-bar { grid-column: 1 / -1; height: 4px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.dmg-row .dmg-bar i { display: block; height: 100%; background: var(--c, var(--shard)); }
+.dmg-empty { color: var(--muted); font-size: 14px; margin: 0; }
 .sound { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px 16px; align-items: center; font-size: 14px; max-width: 420px; }
 .sound .sb-toggle { grid-column: 1 / -1; }
 .sound input[type="range"] { width: 100%; accent-color: var(--shard); }
@@ -604,9 +616,11 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
     </div>
     <div class="btn-row">
       <button class="btn" id="resumeBtn" type="button">Resume</button>
+      <button class="btn ghost" id="dmgBtn" type="button" aria-expanded="false" aria-controls="dmgMeter">Damage</button>
       <button class="btn ghost" id="padSetupBtn2" type="button">Controller setup</button>
       <button class="btn ghost" id="quitBtn" type="button">Quit to title</button>
     </div>
+    <div class="dmg-meter" id="dmgMeter" hidden></div>
   </div>
 </section>
 
@@ -1322,7 +1336,7 @@ const PETS = [
   { id: 'seraph', tier: 'legendary', name: 'Void Seraph', color: 0xff4fa3, hover: 2.4,
     desc: 'Fires void bolts for 0.8x damage. Every 20th attack it unleashes an Annihilation Beam for 2 s that follows your aim and hits everything in its path for 3x damage every 0.25 s, growing stronger every wave.' },
   { id: 'duo', tier: 'legendary', name: 'Remy and Benji', color: 0x4fa3ff, hover: 0,
-    desc: 'Two friends who run circles around you, each throwing random junk at the monster nearest them every 0.5 s for 2.5x damage. Every 15 s they charge outward, throwing 3x as fast and hitting everything in their way for 5x damage.' },
+    desc: 'Two friends who run circles around you, each throwing random junk at the monster nearest them every 0.5 s for 2x damage. Every 15 s they charge outward, throwing 3x as fast and hitting everything in their way for 5x damage.' },
 ].map(p => ({ ...p, isPet: true }));
 const PET = Object.fromEntries(PETS.map(p => [p.id, p]));
 const PET_CHANCE = 0.04;
@@ -1814,7 +1828,8 @@ function duoThrow(p, h, e, mul) {
   const j = buildJunk();
   j.position.set(h.x, 1.3, h.z); scene.add(j);
   const d = Math.hypot(e.pos.x - h.x, e.pos.z - h.z);
-  p.throws.push({ g: j, x: h.x, z: h.z, e, mul, t: 0, dur: Math.max(0.18, d / 24), sx: h.x, sz: h.z, spin: rand(8, 16) });
+  // thrown at where the monster is now; if it moves, the junk misses
+  p.throws.push({ g: j, x: h.x, z: h.z, tx: e.pos.x, tz: e.pos.z, mul, t: 0, dur: Math.max(0.18, d / 24), sx: h.x, sz: h.z, spin: rand(8, 16) });
   // the throwing arm swings forward
   h.throwT = 0.2;
   sfx('tick');
@@ -1862,7 +1877,7 @@ function updateDuo(p, dt, active) {
       h.cd -= dt;
       if (h.cd <= 0) {
         const e = nearestEnemy({ x: h.x, z: h.z }, 15);
-        if (e) { duoThrow(p, h, e, 2.5); h.cd = DUO_THROW / (p.rush > 0 ? 3 : 1); } else h.cd = 0.15;
+        if (e) { duoThrow(p, h, e, 2); h.cd = DUO_THROW / (p.rush > 0 ? 3 : 1); } else h.cd = 0.15;
       }
     }
     h.step += dt * (d > 0.05 ? (p.rush > 0 ? 22 : 14) : 0);
@@ -1874,21 +1889,21 @@ function updateDuo(p, dt, active) {
     h.g.position.set(h.x, Math.abs(Math.sin(h.step)) * 0.08, h.z);
     h.g.rotation.y += (((h.face - h.g.rotation.y + Math.PI * 3) % TAU) - Math.PI) * Math.min(1, dt * 12);
   }
-  // the junk arcs through the air toward its target and hits on landing
+  // the junk arcs through the air to where it was aimed and hits whatever is there when it lands
   for (let i = p.throws.length - 1; i >= 0; i--) {
     const j = p.throws[i];
     j.t += dt;
-    const e = j.e, tx = e.dead ? j.lx ?? j.sx : e.pos.x, tz = e.dead ? j.lz ?? j.sz : e.pos.z;
-    if (!e.dead) { j.lx = tx; j.lz = tz; }
+    const { tx, tz } = j;
     const k = Math.min(1, j.t / j.dur);
     j.x = j.sx + (tx - j.sx) * k; j.z = j.sz + (tz - j.sz) * k;
     j.g.position.set(j.x, 1.3 - 0.5 * k + Math.sin(k * Math.PI) * 1.4, j.z);
     j.g.rotation.x += dt * j.spin; j.g.rotation.z += dt * j.spin * 0.6;
     if (k >= 1) {
-      if (active && !e.dead) {
+      const e = active && enemies.find(o => !o.dead && Math.hypot(o.pos.x - tx, o.pos.z - tz) < o.r + 0.5);
+      if (e) {
         damageEnemy(e, S.damage * j.mul, tx - j.sx, tz - j.sz, 3);
         burst(tx, 1, tz, 0xffd36e, 6, 4);
-      }
+      } else burst(tx, 0.2, tz, 0xcfc8b8, 4, 2);   // a miss: it just thuds into the ground
       if (active) ffHit(tx, tz, 0.7, S.damage * j.mul);
       j.g.parent?.remove(j.g); p.throws.splice(i, 1);
     }
@@ -2185,7 +2200,7 @@ function updateOnePet(p, dt, active) {
   if (p.parts.ring) p.parts.ring.rotation.z += dt * 3;
   if (p.parts.core) p.parts.core.rotation.y += dt * 2;
   if (p.parts.halo) p.parts.halo.rotation.z += dt * (p.beam ? 9 : 1.2);
-}function updatePet(dt, active) { for (const p of [pet, pet2]) if (p) withWorld(worldOf(p.owner || P1), () => withPlayer(p.owner || P1, () => updateOnePet(p, dt, active))); }
+}function updatePet(dt, active) { for (const p of [pet, pet2]) if (p) withWorld(worldOf(p.owner || P1), () => withPlayer(p.owner || P1, () => withSrc('pet', () => updateOnePet(p, dt, active)))); }
 
 
 /* ---------- monsters ---------- */
@@ -2363,7 +2378,7 @@ function startTremor({ dmg, max, color, freeze, count = 3 }) {
     const m = new THREE.Mesh(G.ring, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0, depthWrite: false }));
     m.rotation.x = -Math.PI / 2; m.position.set(P.pos.x, 0.07, P.pos.z); m.scale.setScalar(0.5);
     scene.add(m);
-    pwaves.push({ m, x: P.pos.x, z: P.pos.z, r: 0.5, max, speed: 13, dmg, freeze, color, delay: i * 0.35, hit: new Set(), started: false, owner: P });
+    pwaves.push({ src: dmgSrc, m, x: P.pos.x, z: P.pos.z, r: 0.5, max, speed: 13, dmg, freeze, color, delay: i * 0.35, hit: new Set(), started: false, owner: P });
   }
   shake = Math.max(shake, 0.25);
 }
@@ -2472,7 +2487,7 @@ function fireBolt(x, z, a, y = 1.15, extra) {
   if (extra?.big) m.scale.multiplyScalar(2.4);
   m.position.set(x + Math.sin(a) * 0.8, y, z + Math.cos(a) * 0.8);
   scene.add(m);
-  bolts.push({ m, vx: Math.sin(a) * 28, vz: Math.cos(a) * 28, life: 0.95 * (1 + 0.2 * (S.rebound || 0)) * (1 + 0.2 * (S.reach || 0)), pierce: S.pierce, bounce: S.bounce, keep: S.bounceKeep, mul: 1, hit: new Set(), owner: curPl,
+  bolts.push({ m, vx: Math.sin(a) * 28, vz: Math.cos(a) * 28, life: 0.95 * (1 + 0.2 * (S.rebound || 0)) * (1 + 0.2 * (S.reach || 0)), pierce: S.pierce, bounce: S.bounce, keep: S.bounceKeep, mul: 1, hit: new Set(), owner: curPl, src: dmgSrc || 'bolts',
     home: S.homing ? 0.5 + S.homing : 0, rebound: S.rebound > 0, ...extra });
 }
 function shoot(who = P) {
@@ -2530,6 +2545,9 @@ function areaDamage(x, z, rad, dmg, kb) {
     if (dx * dx + dz * dz < (rad + e.r) ** 2) damageEnemy(e, dmg, dx, dz, kb);
   }
 }
+// damage meter: who dealt each hit (bolts, an active ability, a passive or the pet), per player, for this run
+let dmgSrc = null, dmgLog = [{}, {}];
+function withSrc(src, fn) { const was = dmgSrc; dmgSrc = src; try { return fn(); } finally { dmgSrc = was; } }
 function damageEnemy(e, amt, kx, kz, force) {
   if (e.dead || e.invuln || e.hidden) return;
   if (e.shielded) amt *= 0.1;
@@ -2541,7 +2559,9 @@ function damageEnemy(e, amt, kx, kz, force) {
   }
   if (e.channelT > 0) e.channelDmg += amt;
   if (e.unstableT > 0) e.unstableDmg = (e.unstableDmg || 0) + amt;
-  roundDmg[curPl === P2 ? 1 : 0] += Math.max(0, Math.min(amt, e.hp));
+  const dealt = Math.max(0, Math.min(amt, e.hp));
+  roundDmg[curPl === P2 ? 1 : 0] += dealt;
+  if (dmgSrc) { const log = dmgLog[curPl === P2 ? 1 : 0]; log[dmgSrc] = (log[dmgSrc] || 0) + dealt; }
   e.hp -= amt; e.flash = 0.08; e.lastHit = curPl;
   if (kx !== undefined && !e.boss && !e.anchored) {
     const l = Math.hypot(kx, kz) || 1, f = (force || 4) / (e.type === 'brute' ? 3 : 1);
@@ -2626,7 +2646,7 @@ function hurtPlayer(d) {
   }
   P.hp -= d; P.invuln = 0.4; shake = 0.35; P.kick = 1;
   if (S.thorns) {
-    areaDamage(P.pos.x, P.pos.z, 3.2, S.damage * (2 + 0.5 * S.thorns), 8);
+    withSrc('thorns', () => areaDamage(P.pos.x, P.pos.z, 3.2, S.damage * (2 + 0.5 * S.thorns), 8));
     ring(P.pos.x, P.pos.z, 0.4, 3.2, 0.25, 0x8fbf4a);
     burst(P.pos.x, 0.8, P.pos.z, 0x8fbf4a, 10, 6);
   } sfx('hurt');
@@ -2636,7 +2656,7 @@ function hurtPlayer(d) {
   if (myPet && myPet.id === 'phoenix' && !P.phoenixUsed) {
     P.phoenixUsed = true; P.hp = S.maxHp * 0.5; P.invuln = 2;
     ring(P.pos.x, P.pos.z, 0.5, 7, 0.7, 0xff8a3d); burst(P.pos.x, 1, P.pos.z, 0xff8a3d, 50, 10);
-    areaDamage(P.pos.x, P.pos.z, 7, S.damage * 4, 14);
+    withSrc('pet', () => areaDamage(P.pos.x, P.pos.z, 7, S.damage * 4, 14));
     banner(coop ? `${who} is reborn in flame` : 'Reborn in flame', 'The phoenix brought you back');
     sfx('cast', 'nova');
     return;
@@ -3964,7 +3984,7 @@ const ACTIVE = {
     edge.scale.setScalar(r); disc.scale.setScalar(0.01);
     const rock = new THREE.Mesh(G.dodeca, M_METEOR);
     rock.scale.setScalar(0.6 + 0.4 * l); rock.position.set(x + 7, 20, z - 5); scene.add(rock);
-    meteors.push({ x, z, r, dmg: S.damage * dmgX, chainDmg: S.damage * 2.5, owner: P, chain, t: 0, dur: 0.75, disc, edge, rock });
+    meteors.push({ src: dmgSrc, x, z, r, dmg: S.damage * dmgX, chainDmg: S.damage * 2.5, owner: P, chain, t: 0, dur: 0.75, disc, edge, rock });
   },
   emberbarrage(l) {
     const n = 8 + 2 * l, nova = { r: 2.2 + 0.25 * l, dmg: S.damage * (1.5 + 0.5 * l) };
@@ -3991,7 +4011,7 @@ const ACTIVE = {
     halo.rotation.x = -Math.PI / 2; halo.position.y = -1.15; halo.scale.setScalar(r);
     g.position.set(x, 1.2, z); g.scale.setScalar(0.01);
     scene.add(g);
-    holes.push({ x, z, g, core, disk, disk2, halo, owner: P, t: 0, dur, r, tickT: 0, tick: S.damage * (1 + 0.25 * l), boom: S.damage * (8 + 2 * l) });
+    holes.push({ src: dmgSrc, x, z, g, core, disk, disk2, halo, owner: P, t: 0, dur, r, tickT: 0, tick: S.damage * (1 + 0.25 * l), boom: S.damage * (8 + 2 * l) });
     sfx('horizon', dur);
   },
   tremor(l) { startTremor({ dmg: S.damage * (1.5 + 0.4 * l), max: 7 + 0.5 * l, color: 0xd9b36a, freeze: 0 }); },
@@ -4010,7 +4030,7 @@ const ACTIVE = {
     top.position.y = 1.8; g.add(top);
     g.position.set(P.pos.x, 0, P.pos.z); scene.add(g);
     ring(P.pos.x, P.pos.z, 0.3, 2, 0.4, 0x6fe3d6);
-    totems.push({ g, top, x: P.pos.x, z: P.pos.z, t: 8 + l, fireT: 0, rate: 3 + 0.5 * l, owner: P });
+    totems.push({ src: dmgSrc, g, top, x: P.pos.x, z: P.pos.z, t: 8 + l, fireT: 0, rate: 3 + 0.5 * l, owner: P });
   },
 };
 function useActive(i) {
@@ -4018,7 +4038,7 @@ function useActive(i) {
   const id = slots.active[i];
   if (!id || (cds[id] || 0) > 0) return;
   const l = L(id);
-  if (ACTIVE[id](l) === false) return;
+  if (withSrc(id, () => ACTIVE[id](l)) === false) return;
   cds[id] = AB[id].cd(l);
   sfx('cast', id);
   const el = (curPl === P2 ? activeEls2 : activeEls)[i];
@@ -4593,6 +4613,7 @@ function begin(mode) {
   clearAll();
   leaveDungeon();
   sandbox = mode === 'sandbox'; dungeon = mode === 'dungeon'; godMode = false; sbWave = 1;
+  dmgLog = [{}, {}];
   trial = typeof mode === 'string' && mode.startsWith('ascend:') ? mode.slice(7) : null;
   lab = mode === 'lab';
   sandboxPet = petSave.equipped; sandboxAsc = false;
@@ -6790,8 +6811,58 @@ function toTitle() {
   $('#startScreen').hidden = false;
   state = 'title';
 }
+// the pause screen's damage breakdown: what share of your damage each weapon dealt this run
+const DMG_KIND_COLOR = { bolts: 'var(--bolt)', active: 'var(--shard)', passive: 'var(--rare)', pet: 'var(--legendary)' };
+function dmgLabel(src, pl) {
+  if (src === 'bolts') return { name: 'Bolts', kind: 'bolts' };
+  if (src === 'pet') { const p = pl === P2 ? pet2 : pet; return { name: p ? p.def.name : 'Pet', kind: 'pet' }; }
+  if (src === 'blades') return { name: AB.halo && L('halo') && !L('orbit') ? AB.halo.name : 'Orbiting Blades', kind: 'passive' };
+  const a = AB[src];
+  return { name: a ? a.name : src, kind: a?.kind === 'active' ? 'active' : 'passive' };
+}
+function renderDmgMeter() {
+  const box = $('#dmgMeter');
+  const who = coop ? [[P1, 0, 'Player 1'], [P2, 1, 'Player 2']] : [[P1, 0, '']];
+  box.replaceChildren(...who.map(([pl, i, title]) => {
+    const sec = document.createElement('div');
+    sec.className = 'dmg-meter';
+    const rows = Object.entries(dmgLog[i]).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    const total = rows.reduce((t, [, v]) => t + v, 0);
+    const h = document.createElement('h3');
+    h.innerHTML = `${title ? title + ' · ' : ''}Damage this run <b></b>`;
+    h.querySelector('b').textContent = Math.round(total).toLocaleString();
+    const list = document.createElement('div');
+    list.className = 'dmg-list';
+    if (!rows.length) {
+      const p = document.createElement('p'); p.className = 'dmg-empty'; p.textContent = 'No damage dealt yet.';
+      list.append(p);
+    }
+    for (const [src, v] of rows) {
+      const { name, kind } = dmgLabel(src, pl), pct = v / total * 100;
+      const r = document.createElement('div');
+      r.className = 'dmg-row';
+      r.style.setProperty('--c', DMG_KIND_COLOR[kind]);
+      r.innerHTML = '<span class="dmg-name"><span></span><small></small></span><span class="dmg-pct"></span><span class="dmg-amt"></span><span class="dmg-bar"><i></i></span>';
+      r.querySelector('.dmg-name span').textContent = name;
+      r.querySelector('.dmg-name small').textContent = kind === 'bolts' ? '' : kind;
+      r.querySelector('.dmg-pct').textContent = (pct >= 10 ? Math.round(pct) : pct.toFixed(1)) + '%';
+      r.querySelector('.dmg-amt').textContent = Math.round(v).toLocaleString();
+      r.querySelector('.dmg-bar i').style.width = pct + '%';
+      list.append(r);
+    }
+    sec.append(h, list);
+    return sec;
+  }));
+}
+function showDmgMeter(on) {
+  $('#dmgMeter').hidden = !on;
+  $('#dmgBtn').setAttribute('aria-expanded', String(on));
+  $('#dmgBtn').textContent = on ? 'Hide damage' : 'Damage';
+  if (on) renderDmgMeter();
+}
+$('#dmgBtn').addEventListener('click', () => showDmgMeter($('#dmgMeter').hidden));
 function pause(on) {
-  if (on && state === 'play') { state = 'paused'; $('#pauseScreen').hidden = false; $('#resumeBtn').focus({ preventScroll: true }); }
+  if (on && state === 'play') { state = 'paused'; showDmgMeter(false); $('#pauseScreen').hidden = false; $('#resumeBtn').focus({ preventScroll: true }); }
   else if (!on && state === 'paused') { state = 'play'; $('#pauseScreen').hidden = true; }
 }
 function gameOver() {
@@ -6891,7 +6962,7 @@ function tickWhirl(dt) {
   P.whirlFx.rotation.y += dt * 14;
   mesh.rotation.y = T * 22;
   P.whirlTick -= dt;
-  if (P.whirlTick <= 0) { P.whirlTick = 0.33; areaDamage(P.pos.x, P.pos.z, 2.8, P.whirlDmg, 5); }
+  if (P.whirlTick <= 0) { P.whirlTick = 0.33; withSrc('whirl', () => areaDamage(P.pos.x, P.pos.z, 2.8, P.whirlDmg, 5)); }
   for (let i = shots.length - 1; i >= 0; i--) {
     const sh = shots[i];
     if (Math.hypot(sh.m.position.x - P.pos.x, sh.m.position.z - P.pos.z) < 2.8) { burst(sh.m.position.x, 1.2, sh.m.position.z, 0x6fe3d6, 4, 3); scene.remove(sh.m); shots.splice(i, 1); }
@@ -6942,7 +7013,7 @@ function tickAutoPassives(dt) {
       f.m.material.opacity = 0.5 * Math.max(0, 1 - f.t / f.dur);
       if (tick) for (const e of enemies) {
         if (e.dead || hit.has(e) || Math.hypot(e.pos.x - f.x, e.pos.z - f.z) > 1.1 + e.r) continue;
-        hit.add(e); damageEnemy(e, S.damage * (0.3 + 0.1 * S.trail));
+        hit.add(e); withSrc('trail', () => damageEnemy(e, S.damage * (0.3 + 0.1 * S.trail)));
         if (Math.random() < 0.3) burst(e.pos.x, 0.4, e.pos.z, 0xff7a2f, 2, 2);
       }
       if (f.t >= f.dur) { scene.remove(f.m); f.m.material.dispose(); P.trail.splice(i, 1); }
@@ -6955,7 +7026,7 @@ function tickAutoPassives(dt) {
       P.staticT = 1.5;
       const near = enemies.filter(e => !e.dead && !e.hidden && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 5.5 + e.r)
         .sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z)).slice(0, 1 + S.static);
-      for (const e of near) { zap([{ x: P.pos.x, z: P.pos.z }, { x: e.pos.x, z: e.pos.z }]); damageEnemy(e, S.damage * (1.2 + 0.3 * S.static), e.pos.x - P.pos.x, e.pos.z - P.pos.z, 2); }
+      for (const e of near) { zap([{ x: P.pos.x, z: P.pos.z }, { x: e.pos.x, z: e.pos.z }]); withSrc('static', () => damageEnemy(e, S.damage * (1.2 + 0.3 * S.static), e.pos.x - P.pos.x, e.pos.z - P.pos.z, 2)); }
       ffZap(P.pos.x, P.pos.z, 5.5, S.damage * (1.2 + 0.3 * S.static));
       if (near.length) sfx('zap');
     }
@@ -6980,7 +7051,7 @@ function tickAutoPassives(dt) {
       if (e.dead || Math.hypot(e.pos.x - sw.x, e.pos.z - sw.z) > e.r + 0.6) continue;
       if (T - (sw.hits.get(e) ?? -9) < 0.45) continue;
       sw.hits.set(e, T);
-      damageEnemy(e, S.damage * 2.5, e.pos.x - sw.x, e.pos.z - sw.z, 3);
+      withSrc('saws', () => damageEnemy(e, S.damage * 2.5, e.pos.x - sw.x, e.pos.z - sw.z, 3));
       burst(sw.x, 0.9, sw.z, 0xcfd3da, 3, 3); sfx('hit');
     }
     if (sw.hits.size > 80) sw.hits.clear();
@@ -7233,7 +7304,7 @@ function updateWorld(dt, pass) {
     if (S.phantom) for (const e of enemies) {
       if (e.dead || P.dashHits.has(e) || Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) > e.r + 0.8) continue;
       P.dashHits.add(e);
-      damageEnemy(e, S.damage * (2 + 0.5 * S.phantom), P.dashDir.x, P.dashDir.z, 4);
+      withSrc('phantom', () => damageEnemy(e, S.damage * (2 + 0.5 * S.phantom), P.dashDir.x, P.dashDir.z, 4));
       burst(e.pos.x, 1, e.pos.z, 0xcfd3ff, 8, 5); sfx('hit');
     }
     P.pos.x += P.dashDir.x * 26 * dt; P.pos.z += P.dashDir.z * 26 * dt;
@@ -7369,7 +7440,7 @@ function updateWorld(dt, pass) {
       const dx = e.pos.x - b.m.position.x, dz = e.pos.z - b.m.position.z;
       if (dx * dx + dz * dz < (e.r + 0.25) ** 2) {
         b.hit.add(e);
-        withPlayer(b.owner || P1, () => { hitByBolt(e, b); if (S.reaction && !e.anchored) chainReaction(b, e); });
+        withPlayer(b.owner || P1, () => { withSrc(b.src, () => hitByBolt(e, b)); if (S.reaction && !e.anchored) withSrc('reaction', () => chainReaction(b, e)); });
         // Chain Lightning: jump to the nearest monster not yet hit, 20% weaker each time
         if (b.bounce > 0) {
           const nx = nearestEnemy(b.m.position, 10, b.hit);
@@ -7393,7 +7464,7 @@ function updateWorld(dt, pass) {
         dead = true;
       }
     }
-    if (dead) { if (b.nova) novaAt(b.m.position.x, b.m.position.z, b.nova.r, b.nova.dmg); scene.remove(b.m); bolts.splice(i, 1); }
+    if (dead) { if (b.nova) withPlayer(b.owner || P1, () => withSrc(b.src, () => novaAt(b.m.position.x, b.m.position.z, b.nova.r, b.nova.dmg))); scene.remove(b.m); bolts.splice(i, 1); }
   }
 
   // enemies
@@ -7494,7 +7565,7 @@ function updateWorld(dt, pass) {
       e.bladeCd -= dt;
       if (e.bladeCd <= 0) for (const b of allBlades) {
         const bx = e.pos.x - b.position.x, bz = e.pos.z - b.position.z;
-        if (bx * bx + bz * bz < (e.r + 0.55) ** 2) { damageEnemy(e, b.userData.dmg || S.damage * 2, bx, bz, 5); e.bladeCd = 0.35;
+        if (bx * bx + bz * bz < (e.r + 0.55) ** 2) { withSrc('blades', () => damageEnemy(e, b.userData.dmg || S.damage * 2, bx, bz, 5)); e.bladeCd = 0.35;
           if (b.userData.freeze && !e.dead) { e.freezeT = Math.max(e.freezeT, e.boss ? 0.4 : 1); burst(e.pos.x, 1, e.pos.z, 0xcfeeff, 4, 3); } burst(b.position.x, 1, b.position.z, 0x6fe3d6, 3, 3); break; }
       }
     }
@@ -7570,7 +7641,7 @@ function updateWorld(dt, pass) {
       const d = Math.hypot(e.pos.x - w.x, e.pos.z - w.z);
       if (Math.abs(d - w.r) < 0.9 + e.r) {
         w.hit.add(e);
-        withPlayer(w.owner || P1, () => damageEnemy(e, w.dmg, e.pos.x - w.x, e.pos.z - w.z, 9));
+        withPlayer(w.owner || P1, () => withSrc(w.src, () => damageEnemy(e, w.dmg, e.pos.x - w.x, e.pos.z - w.z, 9)));
         if (w.freeze && !e.dead) e.freezeT = e.boss ? w.freeze * 0.4 : w.freeze;
       }
     }
@@ -7602,10 +7673,10 @@ function updateWorld(dt, pass) {
     h.tickT -= dt;
     if (h.tickT <= 0) {
       h.tickT = 0.25;
-      withPlayer(h.owner || P1, () => { for (const e of enemies) if (!e.dead && Math.hypot(e.pos.x - h.x, e.pos.z - h.z) < h.r + e.r) damageEnemy(e, h.tick); });
+      withPlayer(h.owner || P1, () => withSrc(h.src, () => { for (const e of enemies) if (!e.dead && Math.hypot(e.pos.x - h.x, e.pos.z - h.z) < h.r + e.r) damageEnemy(e, h.tick); }));
     }
     if (h.t >= h.dur) {
-      withPlayer(h.owner || P1, () => areaDamage(h.x, h.z, h.r * 0.7, h.boom, 16));
+      withPlayer(h.owner || P1, () => withSrc(h.src, () => areaDamage(h.x, h.z, h.r * 0.7, h.boom, 16)));
       ring(h.x, h.z, 0.5, h.r + 2, 0.6, 0xff4fa3);
       ring(h.x, h.z, 0.3, h.r * 0.6, 0.35, 0xffffff);
       burst(h.x, 1.2, h.z, 0xff4fa3, 50, 12); burst(h.x, 1.2, h.z, 0x050008, 20, 8);
@@ -7626,9 +7697,9 @@ function updateWorld(dt, pass) {
     m.rock.position.set(m.x + (1 - k) * 7, 0.5 + (1 - k) * 20, m.z - (1 - k) * 5);
     m.rock.rotation.x += dt * 6;
     if (k >= 1) {
-      withPlayer(m.owner || P1, () => areaDamage(m.x, m.z, m.r, m.dmg, 12));
+      withPlayer(m.owner || P1, () => withSrc(m.src, () => areaDamage(m.x, m.z, m.r, m.dmg, 12)));
       sfx('meteorImpact');
-      if (m.chain) withPlayer(m.owner || P1, () => chainFrom(m.x, m.z, m.chain, m.chainDmg, m.r + 10));
+      if (m.chain) withPlayer(m.owner || P1, () => withSrc(m.src, () => chainFrom(m.x, m.z, m.chain, m.chainDmg, m.r + 10)));
       ring(m.x, m.z, 0.5, m.r + 1.5, 0.45, 0xff8a3d);
       burst(m.x, 0.5, m.z, 0xff8a3d, Math.round(m.r * 8), m.r * 2.5);
       burst(m.x, 0.5, m.z, 0x3a3352, 14, 7);
@@ -7645,7 +7716,7 @@ function updateWorld(dt, pass) {
     t.top.position.y = 1.8 + Math.sin(T * 4) * 0.1;
     if (t.fireT <= 0) {
       const tg = nearestEnemy(t, 14);
-      if (tg) { withPlayer(t.owner || P1, () => fireBolt(t.x, t.z, Math.atan2(tg.pos.x - t.x, tg.pos.z - t.z), 1.8)); sfx('tick'); t.fireT = 1 / t.rate; }
+      if (tg) { withPlayer(t.owner || P1, () => withSrc(t.src, () => fireBolt(t.x, t.z, Math.atan2(tg.pos.x - t.x, tg.pos.z - t.z), 1.8))); sfx('tick'); t.fireT = 1 / t.rate; }
     }
     if (t.t <= 0) { burst(t.x, 1, t.z, 0x6fe3d6, 14, 5); scene.remove(t.g); totems.splice(i, 1); }
   }
