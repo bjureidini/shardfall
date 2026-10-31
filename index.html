@@ -156,6 +156,8 @@ body.split .split-line { display: block; }
   padding: 5px 9px; cursor: pointer;
 }
 .lo-btn:hover { border-color: var(--shard); }
+.bank-btn { justify-self: start; margin-top: 4px; }
+.bank-btn[hidden] { display: none; }
 .lo-btn:focus-visible { outline: 2px solid var(--bolt); outline-offset: 2px; }
 .touch-on .lo-btn kbd { display: none; }
 .touch-on .prompt { bottom: auto; top: calc(130px + env(safe-area-inset-top, 0px)); }
@@ -412,6 +414,61 @@ kbd { font: 600 12px var(--ui); background: var(--dusk-2); border: 1px solid var
 .lo-state { font-size: 11px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
 .lo-item.equipped .lo-state, .lo-item.picking .lo-state { color: var(--tier); }
 .lo-empty { margin: 0; color: var(--muted); }
+#skillScreen { place-items: start center; }
+.sk-panel { margin-block: auto; width: min(1040px, 100%); gap: 16px; }
+.sk-top { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding: 14px 16px; border: 1px solid var(--line); border-radius: 6px; background: var(--dusk-2); }
+.sk-lv { font: 900 34px var(--display); line-height: 1; }
+.sk-lv small { display: block; font: 600 11px var(--ui); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); }
+.sk-stat { font-size: 13px; color: var(--muted); }
+.sk-stat b { color: var(--bone); font-size: 16px; font-variant-numeric: tabular-nums; }
+.sk-stat.pts b { color: var(--shard); }
+.sk-top .btn { padding: 10px 14px; font-size: 13px; }
+.sk-top .btn.armed { border-color: var(--shard); color: var(--shard); }
+.sk-trees { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 860px) { .sk-trees { grid-template-columns: 1fr; } }
+.sk-tree { --bc: var(--shard); position: relative; display: grid; gap: 8px; align-content: start; padding: 14px 12px; border: 1px solid color-mix(in srgb, var(--bc) 40%, var(--line)); border-radius: 8px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bc) 10%, var(--dusk)), var(--dusk)); }
+.sk-tree::before { content: ''; position: absolute; left: 50%; top: 58px; bottom: 18px; width: 2px; background: color-mix(in srgb, var(--bc) 30%, transparent); z-index: 0; }
+.sk-tree > * { position: relative; z-index: 1; }
+.sk-head { display: flex; justify-content: space-between; align-items: baseline; }
+.sk-head b { font: 700 20px var(--display); color: var(--bc); }
+.sk-head span { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.sk-gate { justify-self: center; font: 600 10px var(--ui); letter-spacing: .14em; text-transform: uppercase; color: var(--bc); background: var(--dusk); border: 1px solid color-mix(in srgb, var(--bc) 45%, var(--line)); border-radius: 99px; padding: 3px 10px; }
+.sk-gate.locked { color: var(--muted); border-color: var(--line); }
+.sk-node { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; padding: 8px 10px; border-radius: 5px; background: var(--dusk-2); border: 1px solid var(--line); }
+.sk-node.locked { filter: saturate(.2) brightness(.6); }
+.sk-node b { font-size: 13px; }
+.sk-node span { grid-column: 1; font-size: 12px; color: #cfc8dc; }
+.sk-pips { grid-column: 1; display: flex; gap: 3px; margin-top: 2px; }
+.sk-pips i { width: 14px; height: 4px; border-radius: 2px; background: #ffffff1c; }
+.sk-pips i.on { background: var(--bc); box-shadow: 0 0 6px var(--bc); }
+.sk-plus { grid-row: 1 / span 3; grid-column: 2; width: 34px; height: 34px; border-radius: 4px; border: 1px solid var(--bc); background: color-mix(in srgb, var(--bc) 18%, transparent); color: var(--bone); font: 700 18px var(--ui); cursor: pointer; }
+.sk-plus:disabled { border-color: var(--line); background: transparent; color: var(--muted); cursor: default; }
+.sk-plus:focus-visible, .sk-pow:focus-visible { outline: 2px solid var(--bolt); outline-offset: 2px; }
+.sk-pows { display: grid; gap: 6px; }
+.sk-pow { display: grid; gap: 2px; text-align: left; padding: 9px 10px; border-radius: 5px; font: inherit; color: var(--bone); cursor: pointer;
+  background: var(--dusk); border: 1px dashed color-mix(in srgb, var(--bc) 55%, var(--line)); }
+.sk-pow b { font-size: 13px; }
+.sk-pow span { font-size: 12px; color: #cfc8dc; }
+.sk-pow small { font-size: 10px; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.sk-pow.have { border-style: solid; border-color: var(--bc); background: color-mix(in srgb, var(--bc) 16%, var(--dusk)); box-shadow: 0 0 14px -6px var(--bc); }
+.sk-pow.have small { color: var(--bc); }
+.sk-pow.cap { border-width: 2px; }
+.sk-pow:disabled { cursor: default; }
+.sk-pow:disabled:not(.have) { filter: saturate(.3) brightness(.65); }
+.sk-pow:hover:not(:disabled) { border-color: var(--bc); }
+#pickScreen { place-items: center; }
+.pick-panel { width: min(860px, 100%); text-align: center; justify-items: center; }
+.pick-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; width: 100%; }
+@media (max-width: 680px) { .pick-grid { grid-template-columns: 1fr; } }
+.pick-card { --bc: var(--shard); display: grid; gap: 8px; align-content: start; text-align: left; padding: 18px 16px; border-radius: 8px; cursor: pointer; font: inherit; color: var(--bone);
+  background: linear-gradient(170deg, color-mix(in srgb, var(--bc) 18%, var(--dusk-2)), var(--dusk)); border: 1px solid color-mix(in srgb, var(--bc) 55%, var(--line)); box-shadow: 0 0 24px -12px var(--bc); transition: transform .12s; }
+.pick-card:hover, .pick-card:focus-visible { transform: translateY(-3px); border-color: var(--bc); outline: none; box-shadow: 0 0 30px -8px var(--bc); }
+.pick-card small { font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--bc); }
+.pick-card b { font: 700 18px var(--display); }
+.pick-card span { font-size: 13px; color: #cfc8dc; line-height: 1.4; }
+.pick-card kbd { justify-self: start; }
+@media (prefers-reduced-motion: reduce) { .pick-card { transition: none; } }
 .pu-panel { --rad: #6dff8a; --rad-2: #2fd65a; --rad-dim: #3dff7a40; position: relative; isolation: isolate; overflow: hidden;
   background: linear-gradient(180deg, #0b1d10, #060e08) !important; border-color: #3dff7a66 !important;
   box-shadow: 0 0 0 1px #3dff7a22, 0 0 70px -12px #3dff7a99, inset 0 0 90px -40px #3dff7a88, 0 30px 80px #000c !important; }
@@ -427,6 +484,16 @@ kbd { font: 600 12px var(--ui); background: var(--dusk-2); border: 1px solid var
 .pu-panel #puDone { background: var(--rad); color: #04140a; box-shadow: 0 0 18px -2px var(--rad-2); }
 .pu-panel .seg .sb-btn { background: #0d2414; border-color: var(--rad-dim); }
 .pu-panel .seg .sb-btn.on { border-color: var(--rad); color: var(--rad); box-shadow: 0 0 12px -4px var(--rad); }
+.pu-bank { justify-self: start; display: inline-flex; align-items: center; gap: 8px; padding: 6px 12px; border: 1px solid #ffb54766; border-radius: 4px;
+  background: #ffb5470f; font: 600 13px var(--ui); color: #ffd99a; box-shadow: 0 0 14px -6px #ffb547; }
+.pu-bank[hidden] { display: none; }
+.pu-bank b { font: 700 16px var(--display); color: var(--shard); font-variant-numeric: tabular-nums; }
+.pu-panel .lo-cell .lo-steps { background: #0a1a0f; border-color: #3dff7a2e; }
+.pu-panel .lo-steps span { color: #a9d9ae; }
+.pu-up { font: 600 12px var(--ui); color: #04140a; background: var(--rad); border: 0; border-radius: 3px; padding: 5px 9px; cursor: pointer; box-shadow: 0 0 12px -4px var(--rad-2); white-space: nowrap; }
+.pu-up:disabled { background: #2a3a2e; color: #7fa985; box-shadow: none; cursor: default; }
+.pu-up:focus-visible { outline: 2px solid var(--bolt); outline-offset: 2px; }
+.pu-lv { color: var(--rad); font-family: var(--display); }
 .pu-ico { width: 46px; height: 46px; display: grid; place-items: center; border-radius: 50%; color: var(--rad);
   background: radial-gradient(circle, #3dff7a33, transparent 70%); border: 1px solid var(--rad-dim); box-shadow: 0 0 16px -4px var(--rad-2), inset 0 0 12px -4px var(--rad-2); }
 .pu-ico svg { width: 26px; height: 26px; filter: drop-shadow(0 0 4px var(--rad-2)); }
@@ -592,6 +659,7 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
     <div class="hp"><div class="hp-fill" id="hpFill"></div><span id="hpText">100 / 100</span></div>
     <div class="dash" title="Dash ready"><div id="dashFill"></div></div>
     <div class="shards" id="shardBox"><span class="gem-ico"></span><b id="shardCount">0</b><span>shards</span></div>
+    <button class="lo-btn bank-btn" id="bankBtn" type="button" title="Bank the shards you're holding to spend on power-up upgrades"><kbd>B</kbd> Bank</button>
   </div>
   <div class="hud-tr">
     <div class="wave"><span id="waveLabel">Wave</span> <b id="waveNum">1</b></div>
@@ -677,6 +745,7 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
       <button class="btn ghost" id="labBtn" type="button">Labyrinth</button>
       <button class="btn ghost" id="petsBtn" type="button">Pets</button>
       <button class="btn ghost" id="puBtn" type="button">Power-ups</button>
+      <button class="btn ghost" id="skillBtn" type="button">Skills</button>
       <button class="btn ghost" id="codexBtn" type="button">Abilities</button>
       <button class="btn ghost" id="padSetupBtn" type="button">Controller setup</button>
     </div>
@@ -796,8 +865,29 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
       <button class="btn" id="puDone" type="button">Done</button>
     </div>
     <div class="seg" id="puWho" hidden><button class="sb-btn" type="button">Player 1</button><button class="sb-btn" type="button">Player 2</button></div>
+    <div class="pu-bank" id="puBank"></div>
     <p class="lo-hint" id="puHint"></p>
     <div id="puBody"></div>
+  </div>
+</section>
+
+<section class="screen" id="skillScreen" hidden>
+  <div class="panel sk-panel">
+    <div class="lo-head">
+      <div><div class="eyebrow">Progress</div><h2 class="lo-title">Level &amp; skills</h2></div>
+      <button class="btn" id="skillDone" type="button">Done</button>
+    </div>
+    <div class="seg" id="skWho" hidden><button class="sb-btn" type="button">Player 1</button><button class="sb-btn" type="button">Player 2</button></div>
+    <div id="skBody"></div>
+  </div>
+</section>
+
+<section class="screen" id="pickScreen" hidden>
+  <div class="panel pick-panel">
+    <div class="eyebrow" id="pickEyebrow">Choose a power</div>
+    <h2 class="lo-title" id="pickTitle">Pick one for this run</h2>
+    <div class="pick-grid" id="pickGrid"></div>
+    <p class="lo-hint" id="pickHint">Click one, or press 1, 2 or 3.</p>
   </div>
 </section>
 
@@ -1073,6 +1163,11 @@ const Sound = (() => {
         meteor: () => tone({ f: 1900, f2: 260, dur: 0.75, vol: 0.03 }),
         thunderfall: () => C.meteor(),
         sentry: () => tone({ type: 'square', f: 240, f2: 120, dur: 0.14, vol: 0.12, filter: 900 }),
+        knives: () => { for (let i = 0; i < 6; i++) noise({ at: i * 0.02, dur: 0.08, vol: 0.08, type: 'highpass', f: 5000 }); },
+        warcry: () => { tone({ type: 'sawtooth', f: 160, f2: 240, dur: 0.6, vol: 0.12, filter: 1200, attack: 0.05 }); tone({ type: 'sawtooth', f: 120, f2: 180, dur: 0.6, vol: 0.1, filter: 900, attack: 0.05 }); noise({ dur: 0.5, vol: 0.1, f: 900, q: 1 }); },
+        lance: () => { tone({ type: 'triangle', f: 2600, f2: 700, dur: 0.35, vol: 0.08 }); noise({ dur: 0.35, vol: 0.12, type: 'highpass', f: 3000, f2: 7000 }); },
+        clap: () => { noise({ dur: 0.25, vol: 0.4, type: 'lowpass', f: 5000, f2: 300 }); tone({ f: 90, f2: 40, dur: 0.5, vol: 0.35 }); chord([1047, 1568, 2093], { type: 'triangle', dur: 0.6, vol: 0.04, at: 0.05 }); },
+        well: () => { tone({ f: 900, f2: 60, dur: 1.5, vol: 0.12 }); noise({ dur: 1.5, vol: 0.12, type: 'bandpass', f: 3000, f2: 150, q: 4, attack: 0.3 }); },
       };
       (C[id] || C.blink)();
     },
@@ -1125,16 +1220,30 @@ const Sound = (() => {
       }
       tone({ when: T1, type: 'sawtooth', f: 900, f2: 35, dur: 0.7, vol: 0.12, filter: 2200 });
     },
-    horizon(dur = 4) {
-      tone({ type: 'sawtooth', f: 41, dur: dur, vol: 0.14, attack: 0.3, filter: 260 });
-      tone({ f: 33, dur: dur, vol: 0.22, attack: 0.3 });
-      noise({ dur: dur, vol: 0.07, type: 'bandpass', f: 400, f2: 1800, q: 4, attack: 0.4 });
-      tone({ f: 2400, f2: 300, dur: 0.6, vol: 0.06 });
+    // Event Horizon opening: a falling shriek as space tears (the hum itself is a live voice, see hum())
+    horizon() {
+      tone({ f: 2400, f2: 120, dur: 0.9, vol: 0.07 });
+      noise({ dur: 0.8, vol: 0.12, type: 'bandpass', f: 4000, f2: 200, q: 3 });
+      tone({ f: 55, f2: 30, dur: 0.8, vol: 0.3 });
+    },
+    // the last second and a bit: everything gets dragged in, faster and faster, rising to a scream
+    horizonSuck() {
+      noise({ dur: 1.35, vol: 0.32, type: 'highpass', f: 180, f2: 7000, q: 0.8, attack: 1.2 });
+      noise({ dur: 1.35, vol: 0.2, type: 'bandpass', f: 120, f2: 2400, q: 6, attack: 1.15 });
+      tone({ f: 50, f2: 900, dur: 1.3, vol: 0.12, attack: 1.15 });
+      tone({ type: 'sawtooth', f: 28, f2: 260, dur: 1.3, vol: 0.12, attack: 1.1, filter: 1400, q: 4 });
+      // gulps of air, closer and closer together
+      for (const at of [0, 0.38, 0.66, 0.86, 1.0, 1.1, 1.17, 1.22]) noise({ at, dur: 0.14, vol: 0.08 + at * 0.12, type: 'bandpass', f: 2600, f2: 220, q: 5 });
     },
     collapse() {
-      noise({ dur: 0.3, vol: 0.2, type: 'bandpass', f: 150, f2: 5000, q: 1 });
+      // a split-second of silence-sucking crack, then a huge low boom that rolls on
+      noise({ dur: 0.12, vol: 0.4, type: 'highpass', f: 2500, q: 0.7 });
+      tone({ f: 80, f2: 17, dur: 2.2, vol: 0.55, attack: 0.01 });
+      tone({ type: 'sawtooth', f: 60, f2: 22, dur: 1.4, vol: 0.2, filter: 400, q: 3 });
+      noise({ dur: 2.4, vol: 0.5, type: 'lowpass', f: 3200, f2: 45, attack: 0.01 });
+      noise({ at: 0.05, dur: 1.2, vol: 0.18, type: 'bandpass', f: 600, f2: 90, q: 2 });
       FX.meteorImpact();
-      chord([midi(74), midi(81), midi(86), midi(93)], { type: 'triangle', dur: 1.4, vol: 0.05, at: 0.1 });
+      chord([midi(74), midi(81), midi(86), midi(93)], { type: 'triangle', dur: 1.8, vol: 0.05, at: 0.3 });
     },
     boom(size = 1) { if (ok('boom', 0.05)) { tone({ f: 95, f2: 28, dur: 0.6 * size, vol: Math.min(0.5, 0.4 * size) }); noise({ dur: 0.5 * size, vol: 0.3, type: 'lowpass', f: 1600, f2: 90 }); } },
     thud() { if (ok('thud', 0.06)) { tone({ f: 120, f2: 50, dur: 0.18, vol: 0.18 }); noise({ dur: 0.1, vol: 0.1, type: 'lowpass', f: 900 }); } },
@@ -1169,8 +1278,39 @@ const Sound = (() => {
   };
   const LEAD = [74, null, 72, 74, 77, null, 76, 74, 72, null, 70, 72, 74, null, null, null];
   let nextT = 0, step = 0, level = 0;
+  // live hums (Event Horizon): they play only while the game keeps them alive, so pausing fades them out
+  const hums = new Set();
+  function hum() {
+    if (!ctx) return null;
+    const now = ctx.currentTime, out = ctx.createGain(), fl = ctx.createBiquadFilter(), trem = ctx.createGain();
+    out.gain.value = 0.0001; out.connect(sfxBus);
+    fl.type = 'lowpass'; fl.frequency.value = 300; fl.Q.value = 7;
+    trem.gain.value = 0.7; fl.connect(trem); trem.connect(out);
+    const nodes = [];
+    const osc = (type, f, dest, gain = 1) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.type = type; o.frequency.value = f; g.gain.value = gain; o.connect(g); g.connect(dest); o.start(now); nodes.push(o); return o; };
+    osc('sawtooth', 41, fl, 0.5); osc('sawtooth', 41.7, fl, 0.5); osc('sawtooth', 82.4, fl, 0.15);   // two detuned saws beat against each other
+    osc('sine', 27.5, out, 0.9);   // a sub you feel more than hear
+    // slow wobble on the filter and a fast flutter on the volume
+    const lfo = (f, depth, param) => { const o = ctx.createOscillator(), g = ctx.createGain(); o.frequency.value = f; g.gain.value = depth; o.connect(g); g.connect(param); o.start(now); nodes.push(o); };
+    lfo(0.3, 160, fl.frequency); lfo(7, 0.3, trem.gain);
+    // a whistling wind through it
+    const src = ctx.createBufferSource(), nf = ctx.createBiquadFilter(), ng = ctx.createGain();
+    src.buffer = noiseBuf; src.loop = true; nf.type = 'bandpass'; nf.frequency.value = 650; nf.Q.value = 9; ng.gain.value = 0.35;
+    src.connect(nf); nf.connect(ng); ng.connect(out); src.start(now); nodes.push(src);
+    lfo(0.17, 300, nf.frequency);
+    const h = { out, level: 0, seen: now, dead: false,
+      keep(level) { h.level = level; h.seen = ctx.currentTime; },
+      stop() { if (h.dead) return; h.dead = true; hums.delete(h); const t = ctx.currentTime; out.gain.cancelScheduledValues(t); out.gain.setTargetAtTime(0.0001, t, 0.05); for (const n of nodes) n.stop(t + 0.4); } };
+    hums.add(h);
+    return h;
+  }
   function schedule() {
     if (!ctx) return;
+    for (const h of hums) {
+      const quiet = ctx.currentTime - h.seen;
+      if (quiet > 6) { h.stop(); continue; }   // forgotten: let it go
+      h.out.gain.setTargetAtTime(quiet < 0.15 ? Math.max(0.0001, h.level) : 0.0001, ctx.currentTime, 0.08);
+    }
     while (nextT < ctx.currentTime + 0.12) {
       STEP = 60 / (BPM + 14 * stress) / 4;   // the loop speeds up a little under pressure
       playStep(step, nextT); nextT += STEP; step = (step + 1) % 64;
@@ -1214,7 +1354,7 @@ const Sound = (() => {
     if (ctx) musicFilter.frequency.setTargetAtTime(muffled ? 650 : 18000, ctx.currentTime, 0.15);
   }
   return {
-    init, play, setMood, prefs,
+    init, play, setMood, prefs, hum,
     status() { return prefs.muted ? 'muted' : !ctx ? 'off' : ctx.state; },
     setStress(v, beat) { stress = v; heartbeat = beat; },
     setMusic(v) { prefs.music = v; apply(); save(); },
@@ -1319,6 +1459,16 @@ const ABILITIES = [
   { id: 'phantom', kind: 'passive', tier: 'rare', name: 'Phantom Step', desc: l => `Dash cooldown is ${10 * l}% shorter, and dashing through monsters hits them for ${2 + 0.5 * l}x damage.` },
   { id: 'overcharge', kind: 'passive', tier: 'epic', name: 'Overcharge', desc: l => `Every ${9 - l}th shot, all your projectiles fire as huge overcharged bolts that deal ${3 + 0.5 * l}x damage and pass through everything.` },
   { id: 'bounce', kind: 'passive', tier: 'epic', name: 'Chain Lightning', desc: l => `Bolts bounce to ${l} more monster${l > 1 ? 's' : ''}, losing 20% damage with each bounce.` },
+  { id: 'scavenge', kind: 'passive', tier: 'common', name: 'Scavenger', desc: l => `Monsters you kill drop ${15 * l}% more shards.` },
+  { id: 'adrenaline', kind: 'passive', tier: 'common', name: 'Adrenaline', desc: l => `Below 40% health, fire ${15 * l}% faster and move ${8 * l}% faster.` },
+  { id: 'splinter', kind: 'passive', tier: 'rare', name: 'Splinter Bolts', desc: l => `When a bolt kills a monster, it bursts into ${2 + l} splinters that fly outward for 0.6x damage.` },
+  { id: 'finisher', kind: 'passive', tier: 'rare', name: 'Finisher', desc: l => `Bolts deal ${25 * l}% more damage to monsters below 35% health.` },
+  { id: 'skyfall', kind: 'passive', tier: 'epic', name: 'Falling Stars', desc: l => `Every ${7 - Math.ceil(l / 2)}th shot, a small star falls on the nearest monster, hitting everything within 2.2 m for ${(2 + 0.6 * l).toFixed(1)}x damage.` },
+  { id: 'knives', kind: 'active', tier: 'common', name: 'Fan of Knives', cd: l => 7 - 0.5 * l, desc: l => `Throw ${7 + 2 * l} knives in a fan toward your aim. Each passes through a monster and deals 1.6x damage.` },
+  { id: 'warcry', kind: 'active', tier: 'common', name: 'War Cry', cd: l => 18 - 1.2 * l, desc: l => `For ${4 + 0.5 * l} s, fire ${30 + 10 * l}% faster and move 20% faster.` },
+  { id: 'lance', kind: 'active', tier: 'rare', name: 'Frost Lance', cd: l => 9 - 0.6 * l, desc: l => `Hurl a huge ice spear toward your aim. It pierces everything for ${3 + 0.75 * l}x damage and freezes what it hits for ${(1.2 + 0.2 * l).toFixed(1)} s.` },
+  { id: 'clap', kind: 'active', tier: 'rare', name: 'Thunder Clap', cd: l => 11 - 0.8 * l, desc: l => `Stun every monster within ${5 + 0.5 * l} m for ${(1.5 + 0.2 * l).toFixed(1)} s and hit them for ${(1.5 + 0.3 * l).toFixed(1)}x damage.` },
+  { id: 'well', kind: 'active', tier: 'epic', name: 'Gravity Well', cd: l => 16 - 1.2 * l, desc: l => `Open a well where you aim. It drags monsters within 6.5 m into its middle for 1.5 s, then implodes for ${5 + 1.5 * l}x damage.` },
   { id: 'nova', kind: 'active', tier: 'common', name: 'Ember Nova', cd: l => 9 - 0.8 * l, desc: l => `Blast monsters within ${(5 + 0.6 * l).toFixed(1)} m for ${2 + 0.5 * l}x damage and throw them back.` },
   { id: 'barrage', kind: 'active', tier: 'common', name: 'Bolt Barrage', cd: l => 10 - 0.8 * l, desc: l => `Fire ${16 + 4 * l} bolts in every direction at once.` },
   { id: 'spring', kind: 'active', tier: 'common', name: 'Healing Spring', cd: l => 22 - 1.5 * l, desc: l => `Restore ${25 + 10 * l} health over 3 seconds.` },
@@ -1380,6 +1530,7 @@ function recompute() {
   S.bladeFreeze = halo > 0;
   S.trail = E('trail'); S.static = E('static'); S.saws = E('saws');
   S.homing = E('homing'); S.rebound = E('rebound'); S.reach = E('reach');
+  S.scav = E('scavenge'); S.adren = E('adrenaline'); S.splinter = E('splinter'); S.finisher = E('finisher'); S.skyfall = E('skyfall');
   S.thorns = E('thorns'); S.phantom = E('phantom'); S.overcharge = E('overcharge'); S.reaction = E('reaction');
   S.dashCd = 1.8 * (1 - 0.1 * S.phantom);
   const blast = E('blast'), arc = E('arc');
@@ -1388,20 +1539,35 @@ function recompute() {
   S.blastR = Math.max(blast ? 1.5 + 0.5 * blast : 0, arc ? 2 + 0.5 * arc : 0);
   S.blastPct = Math.max(blast ? 0.3 + 0.1 * blast : 0, arc ? 0.4 + 0.1 * arc : 0);
   // power-ups
-  if (PU('pu_whetstone')) S.damage *= 1.15;
-  if (PU('pu_stoutheart')) S.maxHp += 30;
-  if (PU('pu_fleetfeet')) S.speed *= 1.1;
-  if (PU('pu_hairtrigger')) S.fireRate *= 1.12;
-  if (PU('pu_hawkeye')) S.crit += 0.1;
-  S.critMul = PU('pu_hawkeye') ? 3 : 2.5;
-  if (PU('pu_extraedge') && E('orbit')) S.orbit += 1;
-  if (PU('pu_sparesaw') && S.saws) S.saws += 1;
-  if (PU('pu_thunderhead') && E('bounce')) { S.bounce += 1; S.bounceKeep = 1; }
-  if (PU('pu_frostbite') && E('frost')) S.slow = Math.min(0.85, S.slow + 0.15);
-  S.slowT = PU('pu_frostbite') && E('frost') ? 3.2 : 1.6;
-  if (PU('pu_biggerbang') && E('blast')) S.blastR *= 1.5;
-  if (PU('pu_lodestar')) S.magnet *= 1.5;
-  if (PU('pu_quickstep')) S.dashCd *= 0.75;
+  S.damage *= PV('pu_whetstone', 'dmg') || 1;
+  S.maxHp += PV('pu_stoutheart', 'hp') || 0;
+  S.speed *= PV('pu_fleetfeet', 'sp') || 1;
+  S.fireRate *= PV('pu_hairtrigger', 'rate') || 1;
+  S.crit += PV('pu_hawkeye', 'crit') || 0;
+  S.critMul = PV('pu_hawkeye', 'mul') || 2.5;
+  if (E('orbit') || halo) S.orbit += PV('pu_extraedge', 'n') || 0;
+  if (S.saws) S.saws += PV('pu_sparesaw', 'n') || 0;
+  if (PU('pu_thunderhead') && (E('bounce') || arc)) { S.bounce += PV('pu_thunderhead', 'n'); S.bounceKeep = 1; }
+  if (PU('pu_frostbite') && (E('frost') || halo)) S.slow = Math.min(0.85, S.slow + PV('pu_frostbite', 'slow'));
+  S.slowT = 1.6 * ((E('frost') || halo) && PV('pu_frostbite', 'dur') || 1);
+  if (E('blast') || arc) S.blastR *= PV('pu_biggerbang', 'r') || 1;
+  S.magnet *= PV('pu_lodestar', 'r') || 1;
+  S.dashCd *= PV('pu_quickstep', 'cd') || 1;
+  // skill tree nodes (from this player's save) and powers picked for this run
+  const R = id => rank(id);
+  S.damage *= 1 + 0.02 * R('o_dmg') + 0.04 * R('o_dmg2');
+  S.fireRate *= 1 + 0.02 * R('o_rate') + 0.04 * R('o_rate2');
+  S.crit += 0.01 * R('o_crit');
+  S.critMul = (S.critMul || 2.5) + 0.1 * R('o_crit2');
+  S.maxHp += 5 * R('d_hp') + 10 * R('d_hp2');
+  S.taken = (1 - 0.02 * R('d_arm')) * (1 - 0.03 * R('d_arm2'));
+  S.regen = 0.2 * R('d_regen');
+  S.killHeal = R('d_kill');
+  S.speed *= 1 + 0.02 * R('u_speed') + 0.03 * R('u_speed2');
+  S.magnet *= 1 + 0.05 * R('u_magnet');
+  S.cdMul = (1 - 0.02 * R('u_cd')) * (1 - 0.04 * R('u_cd2'));
+  S.shardMul = 1 + 0.05 * R('u_shard');
+  if (hasPower('pw_phase')) S.dashCd *= 0.7;
   if (dungeon && D) { S.damage *= 1 + D.might; S.maxHp += D.vigor; }
   if (ffOn()) S.maxHp *= 10;
   P.hp = Math.min(P.hp, S.maxHp);
@@ -1423,7 +1589,7 @@ const PETS = [
   { id: 'drake', tier: 'epic', name: 'Storm Drake', color: 0x6fb8ff, hover: 3.2,
     desc: 'Circles above you. Every 3 s it breathes lightning that jumps between 4 monsters for 3x damage each.' },
   { id: 'guardian', tier: 'epic', name: 'Crystal Guardian', color: 0xc77dff, hover: 1.3,
-    desc: 'Orbits you and destroys enemy projectiles it touches. Every 6 s it slams nearby monsters for 2x damage.' },
+    desc: 'Two guardians orbit you on opposite sides, destroying enemy projectiles they touch. They take turns slamming, so every 3 s one of them hits monsters around it for 2x damage.' },
   { id: 'slime', tier: 'common', name: 'Ember Slime', color: 0xff7a2f, hover: 0,
     desc: 'Hops into nearby monsters, leaving burning puddles that scorch them for 0.5x damage.' },
   { id: 'turtle', tier: 'common', name: 'Pebble Turtle', color: 0x7fae5c, hover: 0,
@@ -1462,66 +1628,139 @@ petSave.asc ||= {};
 // Found in boxes as rarely as pets and kept forever. Four slots for each kind: ones that boost an active
 // ability, ones that boost a passive ability, and ones that just make you stronger. They help every player.
 const PU_KINDS = { active: 'Active ability', passive: 'Passive ability', stat: 'Character' };
+// each power-up has three levels; v holds its numbers for levels 1, 2 and 3, and desc words them for one level
+const pct = x => Math.round(x * 100) + '%', more = x => Math.round((x - 1) * 100) + '%';
 const POWERUPS = [
-  { id: 'pu_wildfire', kind: 'active', for: 'nova', tier: 'common', name: 'Wildfire Core', desc: 'Ember Nova hits 30% harder and reaches 1.5 m farther.' },
-  { id: 'pu_volley', kind: 'active', for: 'barrage', tier: 'rare', name: 'Endless Volley', desc: 'Bolt Barrage fires 50% more bolts.' },
-  { id: 'pu_supercoil', kind: 'active', for: 'storm', tier: 'common', name: 'Supercoil', desc: 'Storm Coil jumps to 3 more monsters and hits 25% harder.' },
-  { id: 'pu_twinstar', kind: 'active', for: 'meteor', tier: 'epic', name: 'Twin Star', desc: 'Starfall drops a second meteor right beside the first, for 60% of the damage.' },
-  { id: 'pu_afterimage', kind: 'active', for: 'blink', tier: 'common', name: 'Afterimage', desc: 'Blink’s bursts deal 2x as much, and nothing can hurt you for 1 s after you land.' },
-  { id: 'pu_deepfreeze', kind: 'active', for: 'glacier', tier: 'rare', name: 'Deep Freeze', desc: 'Glacial Burst freezes 50% longer and hits everything it freezes for 2x damage.' },
-  { id: 'pu_cyclone', kind: 'active', for: 'whirl', tier: 'common', name: 'Cyclone', desc: 'Whirlwind spins 50% longer and hits 25% harder.' },
-  { id: 'pu_aftershock', kind: 'active', for: 'tremor', tier: 'rare', name: 'Aftershock', desc: 'Tremor stomps out 2 extra shockwaves.' },
-  { id: 'pu_overclock', kind: 'active', for: 'sentry', tier: 'epic', name: 'Overclocked Totem', desc: 'Sentry Totem shoots twice as fast and stays 4 s longer.' },
-  { id: 'pu_quickhands', kind: 'active', tier: 'legendary', name: 'Quick Hands', desc: 'Every active ability recharges 20% faster.' },
-  { id: 'pu_hardbounce', kind: 'passive', for: 'rebound', tier: 'rare', name: 'Hard Bounce', desc: 'Rebound Bolts deal 1.5x damage once they’ve bounced.' },
-  { id: 'pu_extraedge', kind: 'passive', for: 'orbit', tier: 'common', name: 'Extra Edge', desc: 'Orbiting Blades get one extra blade.' },
-  { id: 'pu_sparesaw', kind: 'passive', for: 'saws', tier: 'epic', name: 'Spare Saw', desc: 'Ricochet Saws get one extra saw.' },
-  { id: 'pu_hotembers', kind: 'passive', for: 'trail', tier: 'common', name: 'Hotter Embers', desc: 'Ember Trail burns 2x as hard.' },
-  { id: 'pu_overload', kind: 'passive', for: 'static', tier: 'rare', name: 'Overload', desc: 'Static Field zaps every 1 s instead of 1.5 s, and hits 2 more monsters.' },
-  { id: 'pu_lockon', kind: 'passive', for: 'homing', tier: 'common', name: 'Lock-On', desc: 'Seeker Bolts turn twice as sharply.' },
-  { id: 'pu_frostbite', kind: 'passive', for: 'frost', tier: 'common', name: 'Frostbite', desc: 'Rime Bolts slow monsters 15% more, for twice as long.' },
-  { id: 'pu_spikes', kind: 'passive', for: 'thorns', tier: 'common', name: 'Spiked Plating', desc: 'Thorn Mail hits twice as hard and reaches 2 m farther.' },
-  { id: 'pu_biggerbang', kind: 'passive', for: 'blast', tier: 'rare', name: 'Bigger Bang', desc: 'Volatile Bolts’ explosions are 50% wider.' },
-  { id: 'pu_thunderhead', kind: 'passive', for: 'bounce', tier: 'legendary', name: 'Thunderhead', desc: 'Chain Lightning bounces once more and loses no damage when it bounces.' },
-  { id: 'pu_stoutheart', kind: 'stat', tier: 'common', name: 'Stout Heart', desc: '+30 max health.' },
-  { id: 'pu_whetstone', kind: 'stat', tier: 'rare', name: 'Whetstone', desc: 'Everything you do deals 15% more damage.' },
-  { id: 'pu_fleetfeet', kind: 'stat', tier: 'common', name: 'Fleet Feet', desc: 'Move 10% faster.' },
-  { id: 'pu_hairtrigger', kind: 'stat', tier: 'rare', name: 'Hair Trigger', desc: 'Fire 12% faster.' },
-  { id: 'pu_hawkeye', kind: 'stat', tier: 'epic', name: 'Hawk Eye', desc: '+10% crit chance, and crits deal 3x damage instead of 2.5x.' },
-  { id: 'pu_lodestar', kind: 'stat', tier: 'common', name: 'Lodestar', desc: 'Shards fly to you from 50% farther away.' },
-  { id: 'pu_fang', kind: 'stat', tier: 'rare', name: 'Vampire Fang', desc: 'Heal 1 health for every monster you kill.' },
-  { id: 'pu_quickstep', kind: 'stat', tier: 'rare', name: 'Quickstep', desc: 'Your dash recharges 25% faster.' },
-  { id: 'pu_ironskin', kind: 'stat', tier: 'epic', name: 'Iron Skin', desc: 'Take 15% less damage from everything.' },
-  { id: 'pu_secondwind', kind: 'stat', tier: 'legendary', name: 'Second Wind', desc: 'Slowly heal 1.5 health every second.' },
+  { id: 'pu_wildfire', kind: 'active', for: 'nova', tier: 'common', name: 'Wildfire Core', v: { dmg: [1.3, 1.45, 1.6], r: [1.5, 2, 2.5] }, desc: v => `Ember Nova hits ${more(v.dmg)} harder and reaches ${v.r} m farther.` },
+  { id: 'pu_volley', kind: 'active', for: 'barrage', tier: 'rare', name: 'Endless Volley', v: { n: [1.5, 1.75, 2] }, desc: v => `Bolt Barrage fires ${more(v.n)} more bolts.` },
+  { id: 'pu_supercoil', kind: 'active', for: 'storm', tier: 'common', name: 'Supercoil', v: { jumps: [3, 4, 5], dmg: [1.25, 1.4, 1.55] }, desc: v => `Storm Coil jumps to ${v.jumps} more monsters and hits ${more(v.dmg)} harder.` },
+  { id: 'pu_twinstar', kind: 'active', for: 'meteor', tier: 'epic', name: 'Twin Star', v: { dmg: [0.6, 0.8, 1] }, desc: v => `Starfall drops a second meteor right beside the first, for ${pct(v.dmg)} of the damage.` },
+  { id: 'pu_afterimage', kind: 'active', for: 'blink', tier: 'common', name: 'Afterimage', v: { dmg: [2, 2.5, 3], safe: [1, 1.25, 1.5] }, desc: v => `Blink’s bursts deal ${v.dmg}x as much, and nothing can hurt you for ${v.safe} s after you land.` },
+  { id: 'pu_deepfreeze', kind: 'active', for: 'glacier', tier: 'rare', name: 'Deep Freeze', v: { dur: [1.5, 1.75, 2], dmg: [2, 2.5, 3] }, desc: v => `Glacial Burst freezes ${more(v.dur)} longer and hits everything it freezes for ${v.dmg}x damage.` },
+  { id: 'pu_cyclone', kind: 'active', for: 'whirl', tier: 'common', name: 'Cyclone', v: { dur: [1.5, 1.75, 2], dmg: [1.25, 1.4, 1.55] }, desc: v => `Whirlwind spins ${more(v.dur)} longer and hits ${more(v.dmg)} harder.` },
+  { id: 'pu_aftershock', kind: 'active', for: 'tremor', tier: 'rare', name: 'Aftershock', v: { waves: [2, 3, 4] }, desc: v => `Tremor stomps out ${v.waves} extra shockwaves.` },
+  { id: 'pu_overclock', kind: 'active', for: 'sentry', tier: 'epic', name: 'Overclocked Totem', v: { rate: [2, 2.5, 3], t: [4, 6, 8] }, desc: v => `Sentry Totem shoots ${v.rate}x as fast and stays ${v.t} s longer.` },
+  { id: 'pu_quickhands', kind: 'active', tier: 'legendary', name: 'Quick Hands', v: { cd: [0.8, 0.75, 0.7] }, desc: v => `Every active ability recharges ${pct(1 - v.cd)} faster.` },
+  { id: 'pu_hardbounce', kind: 'passive', for: 'rebound', tier: 'rare', name: 'Hard Bounce', v: { mul: [1.5, 1.75, 2] }, desc: v => `Rebound Bolts deal ${v.mul}x damage once they’ve bounced.` },
+  { id: 'pu_extraedge', kind: 'passive', for: 'orbit', tier: 'common', name: 'Extra Edge', v: { n: [1, 2, 3] }, desc: v => `Orbiting Blades get ${v.n} extra blade${v.n > 1 ? 's' : ''}.` },
+  { id: 'pu_sparesaw', kind: 'passive', for: 'saws', tier: 'epic', name: 'Spare Saw', v: { n: [1, 2, 3] }, desc: v => `Ricochet Saws get ${v.n} extra saw${v.n > 1 ? 's' : ''}.` },
+  { id: 'pu_hotembers', kind: 'passive', for: 'trail', tier: 'common', name: 'Hotter Embers', v: { mul: [2, 2.5, 3] }, desc: v => `Ember Trail burns ${v.mul}x as hard.` },
+  { id: 'pu_overload', kind: 'passive', for: 'static', tier: 'rare', name: 'Overload', v: { cd: [1, 0.85, 0.7], extra: [2, 3, 4] }, desc: v => `Static Field zaps every ${v.cd} s instead of 1.5 s, and hits ${v.extra} more monsters.` },
+  { id: 'pu_lockon', kind: 'passive', for: 'homing', tier: 'common', name: 'Lock-On', v: { mul: [2, 2.5, 3] }, desc: v => `Seeker Bolts turn ${v.mul}x as sharply.` },
+  { id: 'pu_frostbite', kind: 'passive', for: 'frost', tier: 'common', name: 'Frostbite', v: { slow: [0.15, 0.2, 0.25], dur: [2, 2.5, 3] }, desc: v => `Rime Bolts slow monsters ${pct(v.slow)} more, for ${v.dur}x as long.` },
+  { id: 'pu_spikes', kind: 'passive', for: 'thorns', tier: 'common', name: 'Spiked Plating', v: { mul: [2, 2.5, 3], r: [2, 2.5, 3] }, desc: v => `Thorn Mail hits ${v.mul}x as hard and reaches ${v.r} m farther.` },
+  { id: 'pu_biggerbang', kind: 'passive', for: 'blast', tier: 'rare', name: 'Bigger Bang', v: { r: [1.5, 1.75, 2] }, desc: v => `Volatile Bolts’ explosions are ${more(v.r)} wider.` },
+  { id: 'pu_thunderhead', kind: 'passive', for: 'bounce', tier: 'legendary', name: 'Thunderhead', v: { n: [1, 2, 3] }, desc: v => `Chain Lightning bounces ${v.n} more time${v.n > 1 ? 's' : ''} and loses no damage when it bounces.` },
+  { id: 'pu_stoutheart', kind: 'stat', tier: 'common', name: 'Stout Heart', v: { hp: [30, 45, 60] }, desc: v => `+${v.hp} max health.` },
+  { id: 'pu_whetstone', kind: 'stat', tier: 'rare', name: 'Whetstone', v: { dmg: [1.15, 1.22, 1.3] }, desc: v => `Everything you do deals ${more(v.dmg)} more damage.` },
+  { id: 'pu_fleetfeet', kind: 'stat', tier: 'common', name: 'Fleet Feet', v: { sp: [1.1, 1.15, 1.2] }, desc: v => `Move ${more(v.sp)} faster.` },
+  { id: 'pu_hairtrigger', kind: 'stat', tier: 'rare', name: 'Hair Trigger', v: { rate: [1.12, 1.18, 1.25] }, desc: v => `Fire ${more(v.rate)} faster.` },
+  { id: 'pu_hawkeye', kind: 'stat', tier: 'epic', name: 'Hawk Eye', v: { crit: [0.1, 0.13, 0.16], mul: [3, 3.25, 3.5] }, desc: v => `+${pct(v.crit)} crit chance, and crits deal ${v.mul}x damage instead of 2.5x.` },
+  { id: 'pu_lodestar', kind: 'stat', tier: 'common', name: 'Lodestar', v: { r: [1.5, 1.75, 2] }, desc: v => `Shards fly to you from ${more(v.r)} farther away.` },
+  { id: 'pu_fang', kind: 'stat', tier: 'rare', name: 'Vampire Fang', v: { heal: [1, 2, 3] }, desc: v => `Heal ${v.heal} health for every monster you kill.` },
+  { id: 'pu_quickstep', kind: 'stat', tier: 'rare', name: 'Quickstep', v: { cd: [0.75, 0.7, 0.65] }, desc: v => `Your dash recharges ${pct(1 - v.cd)} faster.` },
+  { id: 'pu_ironskin', kind: 'stat', tier: 'epic', name: 'Iron Skin', v: { taken: [0.85, 0.8, 0.75] }, desc: v => `Take ${pct(1 - v.taken)} less damage from everything.` },
+  { id: 'pu_secondwind', kind: 'stat', tier: 'legendary', name: 'Second Wind', v: { regen: [1.5, 2, 2.5] }, desc: v => `Slowly heal ${v.regen} health every second.` },
 ].map(p => ({ ...p, isPU: true }));
 const PUD = Object.fromEntries(POWERUPS.map(p => [p.id, p]));
+const puVals = (d, l) => Object.fromEntries(Object.entries(d.v).map(([k, a]) => [k, a[l - 1]]));
+// a power-up for an ability also boosts the fusions made from it
+const puFusions = d => d.for ? ABILITIES.filter(a => a.fusion?.includes(d.for)) : [];
+const puDesc = (d, l = 1) => d.desc(puVals(d, l)) + puFusions(d).map(a => ` Also boosts ${a.name}.`).join('');
+// upgrading costs banked shards: to level 2, then to level 3
+const PU_COST = { common: [60, 120], rare: [120, 240], epic: [220, 440], legendary: [400, 800] };
 const emptyPU = () => ({ owned: [], slots: { active: [null, null, null, null], passive: [null, null, null, null], stat: [null, null, null, null] } });
 function cleanPU(pu) {
   const c = emptyPU();
   c.owned = (pu?.owned || []).filter(id => PUD[id]);
+  c.lv = Object.fromEntries(Object.entries(pu?.lv || {}).filter(([id, l]) => c.owned.includes(id) && (l === 2 || l === 3)));
   for (const k in c.slots) c.slots[k] = c.slots[k].map((_, i) => { const id = pu?.slots?.[k]?.[i]; return id && PUD[id]?.kind === k && c.owned.includes(id) ? id : null; });
   return c;
 }
 petSave.pu = cleanPU(petSave.pu);
+/* ---------- levels and skill tree ---------- */
+// Spend banked shards to level up (each level costs 10% more, starting at 50). Every level gives a skill point.
+// Three trees: stat nodes below, a choice of powers at 8 points (a second one at 15), better nodes above, and a
+// capstone power at 25. Powers aren't always on: at the start of each run you pick from three of the ones you've unlocked.
+const levelCost = lv => Math.round(50 * 1.1 ** (lv - 1));
+// power slots: the first is free, then 1000, 2000 and 3000 banked shards
+const SLOT_COSTS = [0, 1000, 2000, 3000], MAX_SLOTS = SLOT_COSTS.length, POWER_COST = 2, RESPEC_COST = 50;
+const node = (id, name, max, desc) => ({ id, name, max, desc });
+const SKILL_TREES = {
+  offense: { name: 'Offense', color: '#ff7a5a',
+    lower: [node('o_dmg', 'Sharpened Edge', 5, r => `+${2 * r}% damage`), node('o_rate', 'Steady Hands', 5, r => `+${2 * r}% fire rate`), node('o_crit', 'Keen Sight', 5, r => `+${r}% crit chance`)],
+    upper: [node('o_dmg2', 'Deadly Force', 5, r => `+${4 * r}% damage`), node('o_rate2', 'Frenzy', 5, r => `+${4 * r}% fire rate`), node('o_crit2', 'Assassin', 5, r => `Crits deal +${(0.1 * r).toFixed(1)}x damage`)] },
+  defense: { name: 'Defense', color: '#5aa7ff',
+    lower: [node('d_hp', 'Thick Skin', 5, r => `+${5 * r} max health`), node('d_arm', 'Toughness', 5, r => `Take ${2 * r}% less damage`), node('d_regen', 'Mending', 5, r => `Heal ${(0.2 * r).toFixed(1)} health a second`)],
+    upper: [node('d_hp2', 'Iron Heart', 5, r => `+${10 * r} max health`), node('d_arm2', 'Bulwark', 5, r => `Take ${3 * r}% less damage`), node('d_kill', 'Feast', 5, r => `Heal ${r} health per kill`)] },
+  utility: { name: 'Utility', color: '#6fe3a0',
+    lower: [node('u_speed', 'Light Feet', 5, r => `+${2 * r}% move speed`), node('u_magnet', 'Shard Sense', 5, r => `Pick up shards from ${5 * r}% farther`), node('u_cd', 'Focus', 5, r => `Active abilities recharge ${2 * r}% faster`)],
+    upper: [node('u_speed2', 'Fleetness', 5, r => `+${3 * r}% move speed`), node('u_cd2', 'Clarity', 5, r => `Active abilities recharge ${4 * r}% faster`), node('u_shard', 'Prospector', 5, r => `Monsters drop ${5 * r}% more shards`)] },
+};
+const SKILL_NODES = Object.fromEntries(Object.entries(SKILL_TREES).flatMap(([t, tr]) => [...tr.lower, ...tr.upper].map(n => [n.id, { ...n, tree: t, upper: tr.upper.includes(n) }])));
+// powers: tier 1 (8 points, a second at 15) and capstones (25 points)
+const POWERS = [
+  { id: 'pw_bloodlust', tree: 'offense', cap: false, name: 'Bloodlust', desc: 'Every kill gives +4% damage for 6 s, stacking up to +40%.' },
+  { id: 'pw_burn', tree: 'offense', cap: false, name: 'Incendiary Rounds', desc: 'Bolts set monsters on fire, burning them for 0.4x damage a second for 3 s.' },
+  { id: 'pw_echo', tree: 'offense', cap: false, name: 'Echo Shot', desc: 'Each bolt has a 25% chance to fire twice.' },
+  { id: 'pw_storm', tree: 'offense', cap: true, name: 'Storm Caller', desc: 'Every 3 s, lightning strikes the 3 nearest monsters within 12 m for 3x damage.' },
+  { id: 'pw_berserk', tree: 'offense', cap: true, name: 'Berserker', desc: 'Deal 1% more damage for every 1% health you’re missing, up to +60%.' },
+  { id: 'pw_execute', tree: 'offense', cap: true, name: 'Executioner', desc: 'Monsters below 15% health die to your next hit. Bosses below 15% take 50% more damage instead.' },
+  { id: 'pw_ironwill', tree: 'defense', cap: false, name: 'Iron Will', desc: '20% chance to shrug off a hit completely.' },
+  { id: 'pw_regrowth', tree: 'defense', cap: false, name: 'Regrowth', desc: 'After 3 s without getting hurt, heal 3 health a second.' },
+  { id: 'pw_barrier', tree: 'defense', cap: false, name: 'Barrier', desc: 'Every 10 s, a barrier forms around you that blocks the next hit.' },
+  { id: 'pw_laststand', tree: 'defense', cap: true, name: 'Last Stand', desc: 'Once a run, a hit that would kill you leaves you on 1 health and untouchable for 3 s.' },
+  { id: 'pw_frostarmor', tree: 'defense', cap: true, name: 'Frost Armor', desc: 'When you’re hit, monsters within 5 m freeze solid for 1.5 s (at most every 4 s).' },
+  { id: 'pw_aura', tree: 'defense', cap: true, name: 'Vampiric Aura', desc: 'Monsters within 4 m lose 0.5x damage a second, and you heal for 30% of it.' },
+  { id: 'pw_treasure', tree: 'utility', cap: false, name: 'Treasure Hunter', desc: 'Boxes cost 15% less.' },
+  { id: 'pw_phase', tree: 'utility', cap: false, name: 'Phase Dash', desc: 'Nothing can hurt you while you dash, and your dash recharges 30% faster.' },
+  { id: 'pw_siphon', tree: 'utility', cap: false, name: 'Shard Siphon', desc: 'Every shard you pick up heals you 0.5 health.' },
+  { id: 'pw_chrono', tree: 'utility', cap: true, name: 'Chrono Pulse', desc: 'Every 25 s, time slows down around you for 3 s, just like Time Warp.' },
+  { id: 'pw_lucky', tree: 'utility', cap: true, name: 'Lucky Star', desc: 'Every box you open rolls with the odds of a rare box.' },
+  { id: 'pw_double', tree: 'utility', cap: true, name: 'Double Cast', desc: 'Each time you cast an active ability, 25% chance it doesn’t go on cooldown.' },
+];
+const POWER = Object.fromEntries(POWERS.map(p => [p.id, p]));
+const emptySkill = () => ({ level: 1, ranks: {}, powers: [], slots: 1 });
+function cleanSkill(sk) {
+  const c = emptySkill();
+  c.level = Math.max(1, Math.floor(sk?.level || 1));
+  for (const [id, r] of Object.entries(sk?.ranks || {})) if (SKILL_NODES[id]) c.ranks[id] = Math.max(0, Math.min(SKILL_NODES[id].max, r | 0));
+  c.powers = (sk?.powers || []).filter(id => POWER[id]);
+  c.slots = Math.max(1, Math.min(MAX_SLOTS, Math.floor(sk?.slots || (sk?.slot2 ? 2 : 1))));
+  return c;
+}
+petSave.skill = cleanSkill(petSave.skill);
+const skData = sv => sv ? (sv.skill?.ranks ? sv.skill : (sv.skill = cleanSkill(sv.skill))) : emptySkill();
+const treePoints = (sk, t) => Object.entries(sk.ranks).reduce((a, [id, r]) => a + (SKILL_NODES[id].tree === t ? r : 0), 0) + sk.powers.filter(id => POWER[id].tree === t).length * POWER_COST;
+const spentPoints = sk => Object.values(sk.ranks).reduce((a, r) => a + r, 0) + sk.powers.length * POWER_COST;
+const freePoints = sk => sk.level - 1 - spentPoints(sk);
+const rank = (id, pl = curPl) => skData(puSaveOf(pl)).ranks[id] || 0;
+// powers picked for this run (per player)
+const hasPower = (id, pl = curPl) => !!pl.runPowers?.includes(id);
+
 // each player has their own: Player 1 from the active save, Player 2 from the save they brought (none without one)
 const puSaveOf = pl => pl === P2 ? p2Save() : petSave;
 const puData = sv => sv ? (sv.pu?.slots ? sv.pu : (sv.pu = cleanPU(sv.pu))) : emptyPU();
 // sandbox: every power-up is there to try, in each player's own slots that don't touch the real ones
-let sbPU = [emptyPU().slots, emptyPU().slots];
+let sbPU = [emptyPU().slots, emptyPU().slots], sbLv = [{}, {}];
 const puSlots = (pl = P1) => sandbox ? sbPU[pl === P2 ? 1 : 0] : puData(puSaveOf(pl)).slots;
 const puOwned = (id, pl = P1) => sandbox || puData(puSaveOf(pl)).owned.includes(id);
-let puOn = [new Set(), new Set()];
+const puLevel = (id, pl = P1) => (sandbox ? sbLv[pl === P2 ? 1 : 0] : puData(puSaveOf(pl)).lv || {})[id] || 1;
+// each player's slotted power-ups, with their levels
+let puOn = [new Map(), new Map()];
 const PU = id => puOn[curPl === P2 ? 1 : 0].has(id);
+// a slotted power-up's number at its level (undefined when it isn't slotted)
+const PV = (id, key, pl = curPl) => { const l = puOn[pl === P2 ? 1 : 0].get(id); return l ? PUD[id].v[key][l - 1] : undefined; };
 function refreshPU() {
-  puOn = [P1, P2].map(pl => new Set(pl === P2 && !coop ? [] : Object.values(puSlots(pl)).flat().filter(Boolean)));
+  puOn = [P1, P2].map(pl => new Map(pl === P2 && !coop ? [] : Object.values(puSlots(pl)).flat().filter(Boolean).map(id => [id, puLevel(id, pl)])));
   if (typeof recompute === 'function') for (const pl of coop ? [P1, P2] : [P1]) withPlayer(pl, recompute);
 }
 // Ascension: a few pets have a stronger form. Find the pet 2 more times, reach wave 20 with it,
 // then beat the trial, where the ascended pet itself is the boss.
 const ASCEND = {
-  capy: { name: 'Capybara Horde', boss: 'capyboss', desc: 'Twelve capybaras charge around the arena at twice the speed, curving toward monsters, and deal 3x damage every time they bump into one.' },
-  owl: { name: 'Blizzard Owl', boss: 'owlboss', desc: 'Stays out over the fight, diving onto the biggest group of monsters every 1.5 s for 4x damage and freezing them solid.' },
-  beetle: { name: 'Cluster Beetle', boss: 'beetleboss', desc: 'Scuttles into the biggest group and explodes for 4.5x damage, then four bomblets scatter and burst for 2x each. Back 3 s later.' },
+  capy: { name: 'Capybara Horde', boss: 'capyboss', desc: 'Ten capybaras charge around the arena at twice the speed, curving toward monsters, and deal 2.5x damage every time they bump into one.' },
+  owl: { name: 'Blizzard Owl', boss: 'owlboss', desc: 'Two owls stay out over the fight, diving onto the biggest group of monsters every 1.5 s for 4x damage and freezing them solid.' },
+  beetle: { name: 'Cluster Beetle', boss: 'beetleboss', desc: 'Scuttles into the biggest group and explodes for 4.5x damage, then four bomblets scatter and burst for 2x each. Back 1.5 s later.' },
   drake: { name: 'Tempest Drake', boss: 'drakeboss', desc: 'Circles above you. Every 2 s it breathes forked lightning that bounces 8 times, hitting two monsters on every bounce for 4x damage each.' },
 };
 const ascOf = (sv, id) => (sv.asc ||= {})[id] ||= { dupes: 0, wave20: false, done: false, on: true };
@@ -1751,7 +1990,7 @@ function animateAscended(f, t, dt, x, y, z) {
   if (f.orbit) { f.orbit.rotation.y += dt * 3; f.orbit.children.forEach((c, k) => c.rotation.y += dt * (4 + k)); }
   if (Math.random() < dt * 9) burst(x + rand(-0.4, 0.4), y + rand(0, 0.8), z + rand(-0.4, 0.4), Math.random() < 0.5 ? f.look.a : f.look.b, 1, 0.8);
 }
-const crew = p => [...(p.caps || []), ...(p.duo || []), ...(p.throws || [])];
+const crew = p => [...(p.caps || []), ...(p.duo || []), ...(p.throws || []), ...(p.twin ? [p.twin] : []), ...(p.wing ? [p.wing] : [])];
 function dropPet(p) {
   if (!p) return;
   const rm = o => o?.parent?.remove(o);   // from whichever room's scene it's in
@@ -1761,12 +2000,12 @@ function dropPet(p) {
   rm(p.bubble);
   rm(p.g);
 }
-function makePet(id, owner) {
+function makePet(id, owner, wing = false) {
   const { g, parts } = buildPet(id);
   const p = { id, def: PET[id], owner, g, parts, pos: new THREE.Vector3(owner.pos.x - 1.5, 0, owner.pos.z + 1), t: 0, cd: 1.5, saveT: 0, dive: null, target: null, face: 0 };
   p.asc = petAscended(owner, id);
   if (p.asc) { g.scale.setScalar(1.3); p.def = { ...PET[id], name: ASCEND[id].name, desc: ASCEND[id].desc }; if (id !== 'capy') p.fx = decorateAscended(g, id); }
-  const nCaps = p.asc ? 12 : CAPY_COUNT;
+  const nCaps = p.asc ? 10 : CAPY_COUNT;
   p.capSpeed = p.asc ? CAPY_SPEED * 2 : CAPY_SPEED;
   if (id === 'capy') p.caps = [...Array(nCaps).keys()].map(i => {
     const cg = buildCapy(), a = i / nCaps * TAU + rand(-0.4, 0.4);
@@ -1775,6 +2014,12 @@ function makePet(id, owner) {
     cg.position.set(c.x, 0, c.z); scene.add(cg);
     return c;
   });
+  // the Crystal Guardian comes as a pair: the second one circles opposite the first
+  if (id === 'guardian') {
+    const t = buildPet('guardian');
+    p.twin = { g: t.g, parts: t.parts, pos: new THREE.Vector3(owner.pos.x + 1.5, 0, owner.pos.z - 1), cd: 4.5 };
+    t.g.position.copy(p.twin.pos); scene.add(t.g);
+  }
   if (id === 'duo') {
     p.throws = [];
     p.duo = parts.humans.map((hg, i) => {
@@ -1786,6 +2031,12 @@ function makePet(id, owner) {
   }
   g.position.copy(p.pos); scene.add(g);
   burst(p.pos.x, 1, p.pos.z, PET[id].color, 14, 4);
+  // the Blizzard Owl flies as a pair: the second one dives half a beat later, onto a different group
+  if (id === 'owl' && p.asc && !wing) {
+    const w = makePet('owl', owner, true);
+    w.pos.set(owner.pos.x + 1.5, 0, owner.pos.z + 1); w.cd += 0.75; w.t = 2;
+    p.wing = w; p.mate = w; w.mate = p;
+  }
   return p;
 }
 function refreshPet() {
@@ -1906,7 +2157,7 @@ function updateCaps(p, dt, active) {
         c.x = e.pos.x + nx * min; c.z = e.pos.z + nz * min;
         if (p.t - (c.hits.get(e) ?? -9) > 0.35) {
           c.hits.set(e, p.t);
-          damageEnemy(e, S.damage * 3, -nx, -nz, 6);
+          damageEnemy(e, S.damage * (p.asc ? 2.5 : 3), -nx, -nz, 6);
           burst(c.x - nx * 0.5, 0.6, c.z - nz * 0.5, 0xa0703c, 6, 4);
           sfx('boing');
         }
@@ -1914,7 +2165,7 @@ function updateCaps(p, dt, active) {
       if (c.hits.size > 60) c.hits.clear();
       const o = ffOther();
       if (o && Math.hypot(o.pos.x - c.x, o.pos.z - c.z) < 0.9 && p.t - (c.hitMate ?? -9) > 0.6) {
-        c.hitMate = p.t; hurtWho(o, Math.round(S.damage * 3));
+        c.hitMate = p.t; hurtWho(o, Math.round(S.damage * (p.asc ? 2.5 : 3)));
         const nx = c.x - o.pos.x, nz = c.z - o.pos.z, nl = Math.hypot(nx, nz) || 1, dot = (c.vx * nx + c.vz * nz) / nl;
         if (dot < 0) { c.vx -= 2 * dot * nx / nl; c.vz -= 2 * dot * nz / nl; }
       }
@@ -2086,7 +2337,7 @@ function updateOnePet(p, dt, active) {
   // default spot: just behind and to the side of you
   let tx = O.pos.x - O.face.x * 1.6 + O.face.z * 1.3, tz = O.pos.z - O.face.z * 1.6 - O.face.x * 1.3;
   let y = def.hover, speed = 9, orbit = false;
-  if (p.id === 'guardian') { const a = p.t * 1.7; tx = O.pos.x + Math.sin(a) * 2.3; tz = O.pos.z + Math.cos(a) * 2.3; orbit = true; }
+  if (p.id === 'guardian') { const a = p.t * 5.1; tx = O.pos.x + Math.sin(a) * 2.3; tz = O.pos.z + Math.cos(a) * 2.3; orbit = true; }
   if (p.id === 'phoenix') { const a = p.t * 2.2; tx = O.pos.x + Math.sin(a) * 3; tz = O.pos.z + Math.cos(a) * 3; orbit = true; }
   if (p.id === 'drake') { const a = p.t * 0.9; tx = O.pos.x + Math.sin(a) * 3.4; tz = O.pos.z + Math.cos(a) * 3.4; orbit = true; }
 
@@ -2119,6 +2370,7 @@ function updateOnePet(p, dt, active) {
         let best = null, bestN = -1;
         for (const e of enemies) {
           if (e.dead || e.noContact || Math.hypot(e.pos.x - O.pos.x, e.pos.z - O.pos.z) > 16) continue;
+          if (p.mate?.dive && Math.hypot(e.pos.x - p.mate.dive.x, e.pos.z - p.mate.dive.z) < 3) continue;
           let n = 0;
           for (const o of enemies) if (!o.dead && Math.hypot(o.pos.x - e.pos.x, o.pos.z - e.pos.z) < 3) n++;
           if (n > bestN) { bestN = n; best = e; }
@@ -2279,7 +2531,7 @@ function updateOnePet(p, dt, active) {
             areaDamage(p.pos.x, p.pos.z, rad, S.damage * (p.asc ? 4.5 : 3), 10);
             ring(p.pos.x, p.pos.z, 0.4, rad, 0.35, 0xff8a3d); burst(p.pos.x, 0.6, p.pos.z, 0xff8a3d, 24, 8);
             sfx('boom', 0.8); shake = Math.max(shake, 0.25);
-            p.respawnT = p.asc ? 3 : 6; p.cd = 0.5;
+            p.respawnT = p.asc ? 1.5 : 6; p.cd = 0.5;
             // the Cluster Beetle scatters four bomblets that pop a moment later
             if (p.asc) { const off = rand(0, TAU); for (let k = 0; k < 4; k++) { const a = off + k / 4 * TAU; p.bomblets.push({ x: p.pos.x + Math.sin(a) * 3.2, z: p.pos.z + Math.cos(a) * 3.2, t: 0.4 + k * 0.08 }); } }
           }
@@ -2322,18 +2574,25 @@ function updateOnePet(p, dt, active) {
         } else p.cd = 0.3;
       }
     } else if (p.id === 'guardian') {
-      for (let i = shots.length - 1; i >= 0; i--) {
-        const sh = shots[i];
-        if (Math.hypot(sh.m.position.x - p.pos.x, sh.m.position.z - p.pos.z) < 1.3) {
-          burst(sh.m.position.x, 1.2, sh.m.position.z, def.color, 5, 3);
-          scene.remove(sh.m); shots.splice(i, 1);
+      // both guardians destroy enemy projectiles; they take turns slamming, so one slams every 3 s
+      if (p.twin) p.twin.cd -= dt;
+      for (const gd of p.twin ? [p, p.twin] : [p]) {
+        for (let i = shots.length - 1; i >= 0; i--) {
+          const sh = shots[i];
+          if (Math.hypot(sh.m.position.x - gd.pos.x, sh.m.position.z - gd.pos.z) < 1.3) {
+            burst(sh.m.position.x, 1.2, sh.m.position.z, def.color, 5, 3);
+            scene.remove(sh.m); shots.splice(i, 1);
+          }
         }
-      }
-      if (p.cd <= 0) {
-        if (nearestEnemy(p.pos, 3.5)) {
-          p.cd = 6; ring(p.pos.x, p.pos.z, 0.3, 3.5, 0.4, def.color); sfx('thud');
-          areaDamage(p.pos.x, p.pos.z, 3.5, S.damage * 2, 8);
-        } else p.cd = 0.5;
+        if (gd.cd <= 0) {
+          // slams on its turn wherever it is (only skipped while the room has no monsters at all)
+          if (enemies.some(e => !e.dead)) {
+            gd.cd = 6; ring(gd.pos.x, gd.pos.z, 0.3, 3.5, 0.4, def.color); sfx('thud');
+            const other = gd === p ? p.twin : p;
+            if (other) other.cd = Math.max(other.cd, 3);   // the other one goes 3 s later
+            areaDamage(gd.pos.x, gd.pos.z, 3.5, S.damage * 2, 8);
+          } else gd.cd = 0.5;
+        }
       }
     }
   }
@@ -2365,7 +2624,14 @@ function updateOnePet(p, dt, active) {
   if (p.parts.tail) p.parts.tail.rotation.z = Math.sin(p.t * 12) * 0.5;
   if (p.parts.ring) p.parts.ring.rotation.z += dt * 3;
   if (p.parts.core) p.parts.core.rotation.y += dt * 2;
+  if (p.twin) {
+    const T2 = p.twin, a = p.t * 5.1 + Math.PI, k = 1 - Math.exp(-dt * 10);
+    T2.pos.x += (O.pos.x + Math.sin(a) * 2.3 - T2.pos.x) * k; T2.pos.z += (O.pos.z + Math.cos(a) * 2.3 - T2.pos.z) * k;
+    T2.g.position.set(T2.pos.x, def.hover + Math.sin(p.t * 3 + 1.5) * 0.12, T2.pos.z);
+    T2.parts.core.rotation.y -= dt * 2;
+  }
   if (p.parts.halo) p.parts.halo.rotation.z += dt * (p.beam ? 9 : 1.2);
+  if (p.wing) updateOnePet(p.wing, dt, active);
 }function updatePet(dt, active) { for (const p of [pet, pet2]) if (p) withWorld(worldOf(p.owner || P1), () => withPlayer(p.owner || P1, () => withSrc('pet:' + p.id + (p.asc ? '+' : ''), () => updateOnePet(p, dt, active)))); }
 
 
@@ -2375,7 +2641,7 @@ const TYPES = {
   skitter: { hp: 16,   speed: 6.2, dmg: 7,  r: 0.45, sy: 0.7,  color: 0xe0a24a, emissive: 0x000000, shards: 2,  geo: 'blob', label: 'Skitter', intro: 'Small and fast. Swarms you in packs' },
   wisp:    { hp: 36,   speed: 3.0, dmg: 12, r: 0.55, sy: 1.2,  color: 0x9b6bff, emissive: 0x3a1a77, shards: 4,  geo: 'octa', float: true, label: 'Wisp', intro: 'Hangs back at range and shoots purple orbs' },
   bloater: { hp: 70,   speed: 2.0, dmg: 0,  r: 1.0,  sy: 0.95, color: 0x8fbf4a, emissive: 0x1a2a00, shards: 4,  geo: 'blob', label: 'Bloater', intro: 'Pops into a pool of acid when it reaches you or dies' },
-  spitter: { hp: 45,   speed: 2.6, dmg: 14, r: 0.6,  sy: 1.1,  color: 0x5f9e45, emissive: 0x0a1a00, shards: 4,  geo: 'dodeca', label: 'Spitter', intro: 'Lobs acid where you stand. Keep moving' },
+  spitter: { hp: 45,   speed: 2.6, dmg: 14, r: 0.6,  sy: 1.1,  color: 0x5f9e45, emissive: 0x0a1a00, shards: 4,  geo: 'dodeca', label: 'Spitter', intro: 'Lobs acid where you’re heading, not where you are. Change direction to dodge it' },
   charger: { hp: 90,   speed: 3.0, dmg: 18, r: 0.95, sy: 0.8,  color: 0x8a5a3a, emissive: 0x000000, shards: 6,  geo: 'dodeca', horns: true, label: 'Charger', intro: 'Marks a lane in red, then charges down it' },
   bomber:  { hp: 22,   speed: 5.0, dmg: 26, r: 0.5,  sy: 0.9,  color: 0xff6a3a, emissive: 0x401000, shards: 3,  geo: 'blob', label: 'Ember Imp', intro: 'Runs up, flashes, and explodes into fire' },
   shaman:  { hp: 55,   speed: 2.4, dmg: 10, r: 0.6,  sy: 1.3,  color: 0x7fb8e6, emissive: 0x0a2236, shards: 5,  geo: 'octa', float: true, label: 'Frost Shaman', intro: 'Freezes the ground under you, slowing you down' },
@@ -2386,12 +2652,12 @@ const TYPES = {
   sniper:  { hp: 40,   speed: 2.4, dmg: 26, r: 0.55, sy: 1.25, color: 0xd0d6e0, emissive: 0x3a0a10, shards: 5,  geo: 'octa', label: 'Sniper', intro: 'Locks a red laser on you, stops tracking for a moment, then fires down the line' },
   roller:  { hp: 110,  speed: 2.2, dmg: 18, r: 0.9,  sy: 1,    color: 0x7a6ab8, emissive: 0x120a2a, shards: 6,  geo: 'dodeca', label: 'Roller', intro: 'Curls into a ball and rolls across the arena, bouncing off the walls' },
   splitter:{ hp: 80,   speed: 2.8, dmg: 12, r: 1.0,  sy: 0.9,  color: 0xe06aa8, emissive: 0x2a0618, shards: 4,  geo: 'blob', label: 'Splitter', intro: 'Splits into two smaller copies when it dies. Twice' },
-  reflector:{ hp: 95,  speed: 1.9, dmg: 12, r: 0.75, sy: 1.15, color: 0x9fb8d8, emissive: 0x10203a, shards: 7,  geo: 'octa', label: 'Reflector', intro: 'Holds up a mirror wall that bounces your shots back at you. Get around the side' },
+  reflector:{ hp: 95,  speed: 1.9, dmg: 12, r: 0.75, sy: 1.15, color: 0x9fb8d8, emissive: 0x10203a, shards: 7,  geo: 'octa', label: 'Reflector', intro: 'Holds up a mirror wall that bounces your shots back at you. Get around the side, or shoot the mirror until it shatters (it comes back 15 s later)' },
   brute:   { hp: 150,  speed: 2.1, dmg: 22, r: 1.25, sy: 0.9,  color: 0xa8434f, emissive: 0x000000, shards: 9,  geo: 'dodeca', horns: true, label: 'Brute', intro: 'Slow and tough, and hits very hard up close' },
   king:     { hp: 1400, speed: 2.4, dmg: 30, r: 2.6, sy: 0.9, color: 0x5a2a6e, emissive: 0x1a0626, shards: 60,  geo: 'dodeca', horns: true, crown: true, boss: true, name: 'The Hollow King', intro: 'Slams send out shockwave rings. Enraged, he slams three times in a row' },
   brood:    { hp: 1800, speed: 2.0, dmg: 26, r: 2.3, sy: 0.7, color: 0x9a7a32, emissive: 0x1a1000, shards: 70,  geo: 'blob', boss: true, name: 'The Brood Mother', intro: 'Lobs acid, hatches skitters, and channels a Brood Call that floods the arena with monsters' },
   darklord: { hp: 4200, speed: 2.0, dmg: 21, r: 2.3, sy: 1.25, color: 0x2a1838, emissive: 0x3a0a4a, shards: 130, geo: 'octa', float: true, horns: true, crown: true, boss: true, name: 'The Dark Lord', intro: 'Commands storms of dark bolts: rings that close in from every edge of the arena, and a rain from the sky that leaves only a few spots safe' },
-  capyboss:  { hp: 1900, speed: 2.6, dmg: 24, r: 2.2, sy: 0.8, color: 0xa0703c, emissive: 0x000000, shards: 0, geo: 'blob', noEyes: true, model: 'capy', modelScale: 4.4, boss: true, name: 'The Capybara Horde', intro: 'A giant capybara that charges across the arena, belly-flops onto you, and sends its whole herd bouncing your way' },
+  capyboss:  { hp: 2800, speed: 3.0, dmg: 24, r: 2.2, sy: 0.8, color: 0xa0703c, emissive: 0x000000, shards: 0, geo: 'blob', noEyes: true, model: 'capy', modelScale: 4.4, boss: true, name: 'The Capybara Horde', intro: 'A giant capybara that charges again and again where you’re heading, belly-flops onto you, lobs yuzus, and sends its whole herd hunting you' },
   owlboss:   { hp: 1700, speed: 3.0, dmg: 24, r: 1.8, sy: 1.0, color: 0x9fd8ff, emissive: 0x0a2236, shards: 0, geo: 'octa', float: true, noEyes: true, model: 'owl', modelScale: 3.2, boss: true, name: 'The Blizzard Owl', intro: 'Dives out of the sky onto you, throws fans of ice feathers, and freezes the ground in a ring around you' },
   drakeboss: { hp: 1900, speed: 3.2, dmg: 26, r: 1.9, sy: 1.0, color: 0x6fb8ff, emissive: 0x0a2a44, shards: 0, geo: 'octa', float: true, noEyes: true, model: 'drake', modelScale: 3.0, boss: true, name: 'The Tempest Drake', intro: 'Calls lightning down around you, breathes a long line of storms, and swoops across the arena' },
   warden:   { hp: 2200, speed: 2.0, dmg: 26, r: 2.0, sy: 1.2, color: 0xd8d0bc, emissive: 0x1a1408, shards: 70, geo: 'dodeca', horns: true, boss: true, name: 'The Bone Warden', intro: 'Raises the dead, hurls rings of bone, and sends rows of bone spears bursting out of the ground' },
@@ -2402,7 +2668,7 @@ const TYPES = {
   phylactery: { hp: 1, speed: 0, dmg: 0, r: 0.7, sy: 1.4, color: 0x7fe08a, emissive: 0x2a8a3a, shards: 0, geo: 'octa', float: true, noEyes: true, noContact: true, anchored: true },
   rift:     { hp: 60, speed: 0, dmg: 0, r: 0.9, sy: 1.3, color: 0xb06bff, emissive: 0x5a1a8a, shards: 1, geo: 'octa', float: true, noEyes: true, noContact: true, anchored: true },
   mine:     { hp: 1, speed: 0, dmg: 0, r: 0.55, sy: 0.5, color: 0xff6a3a, emissive: 0x401000, shards: 0, geo: 'dodeca', noEyes: true, noContact: true, anchored: true },
-  capyling: { hp: 30, speed: 0, dmg: 14, r: 0.7, sy: 0.8, color: 0xa0703c, emissive: 0x000000, shards: 0, geo: 'blob', noEyes: true, model: 'capy', modelScale: 1.5, label: 'Capybara' },
+  capyling: { hp: 45, speed: 0, dmg: 14, r: 0.7, sy: 0.8, color: 0xa0703c, emissive: 0x000000, shards: 0, geo: 'blob', noEyes: true, model: 'capy', modelScale: 1.5, label: 'Capybara' },
   crystal:  { hp: 140, speed: 0, dmg: 0, r: 0.8, sy: 1.6, color: 0xc77dff, emissive: 0x5a1a8a, shards: 2, geo: 'octa', float: true, noEyes: true, noContact: true, anchored: true },
 };
 let enemies = [], bolts = [], shots = [], gems = [], parts = [], rings = [], zaps = [], slams = [], blades = [];
@@ -2453,6 +2719,10 @@ function spawnEnemy(type, hpMul, dmgMul, at) {
     e.mirror.position.set(0, 1.3, T.r + 0.7); g.add(e.mirror);
     const frame = new THREE.Mesh(new THREE.BoxGeometry(MIRROR_W + 0.2, 0.12, 0.2), M.horn); frame.position.set(0, 2.55, T.r + 0.7); g.add(frame);
     e.faceA = Math.atan2(-e.pos.x, -e.pos.z);
+    // the mirror has its own health: 250 at wave 11, then slowly more (+10 a wave); hpMul tells us the wave in any mode
+    const waveEq = 1 + (hpMul - 1) / 0.15;
+    e.mirrorMax = e.mirrorHp = Math.max(150, Math.round(250 + 10 * (waveEq - 11))) * (coop ? 1.5 : 1);
+    e.mirrorT = 0;
   }
   g.scale.setScalar(0.01);
   g.position.copy(e.pos);
@@ -2512,16 +2782,30 @@ function mirrorBolt(b, mirrors, dt) {
     const m = new THREE.Mesh(G.shot, M_MIRRORSHOT);
     m.position.set(wx + fz * lat + fx * 0.3, 1.2, wz - fx * lat + fz * 0.3); m.scale.set(0.8, 0.8, 1.6); m.rotation.y = Math.atan2(vx, vz);
     scene.add(m);
+    // every bolt the mirror stops chips its health; the one that breaks it is swallowed, not bounced
+    const hit = (buildOf(b.owner || P1).S.damage || 12) * b.mul;
+    e.mirrorHp -= hit;
+    if (e.mirrorHp <= 0) {
+      scene.remove(m);
+      e.mirrorHp = 0; e.mirrorT = 15; e.mirror.visible = false;
+      burst(wx, 1.3, wz, 0xcfe8ff, 26, 7); burst(wx, 1.3, wz, 0xffffff, 10, 5);
+      ring(wx, wz, 0.3, 2.2, 0.3, 0xcfe8ff); sfx('shatter');
+      return true;
+    }
     const dmg = Math.max(1, Math.round((buildOf(b.owner || P1).S.damage || 12) * b.mul * 0.3));
     shots.push({ m, vx, vz, life: 2, dmg });
     burst(m.position.x, 1.2, m.position.z, 0xcfe8ff, 4, 3);
     e.mirror.material.opacity = 0.75;
+    // it tints from pale blue toward red as it takes damage
+    e.mirror.material.color.setHex(0xcfe8ff).lerp(new THREE.Color(0xff5a5a), 1 - e.mirrorHp / e.mirrorMax);
     sfx('tick');
     return true;
   }
   return false;
 }
 const M_CHAIN = new THREE.MeshBasicMaterial({ color: 0xff7ad9 });
+const M_KNIFE = new THREE.MeshBasicMaterial({ color: 0xdfe6ee });
+const M_LANCE = new THREE.MeshBasicMaterial({ color: 0xbfeaff });
 // Chain Reaction: a hit bursts into new bolts spread evenly all the way around the monster,
 // starting from a random angle each time. Every bolt in a chain shares one "already hit" set,
 // so a chain can hit each monster at most once.
@@ -2654,8 +2938,12 @@ function fireBolt(x, z, a, y = 1.15, extra) {
   m.position.set(x + Math.sin(a) * 0.8, y, z + Math.cos(a) * 0.8);
   scene.add(m);
   bolts.push({ m, vx: Math.sin(a) * 28, vz: Math.cos(a) * 28, life: 0.95 * (1 + 0.2 * (S.rebound || 0)) * (1 + 0.2 * (S.reach || 0)), pierce: S.pierce, bounce: S.bounce, keep: S.bounceKeep, mul: 1, hit: new Set(), owner: curPl, src: dmgSrc || 'bolts',
-    home: S.homing ? (0.5 + S.homing) * (PU('pu_lockon') ? 2 : 1) : 0, rebound: S.rebound > 0, ...extra });
+    home: S.homing ? (0.5 + S.homing) * (PV('pu_lockon', 'mul') || 1) : 0, rebound: S.rebound > 0, ...extra });
 }
+// War Cry and Adrenaline speed you up for a while: how much faster to fire and move right now
+const adrenalOn = pl => S.adren && pl.hp < S.maxHp * 0.4;
+const rateBoost = pl => (pl.cryT > 0 ? 1 + pl.cryRate : 1) * (adrenalOn(pl) ? 1 + 0.15 * S.adren : 1);
+const moveBoost = pl => (pl.cryT > 0 ? 1.2 : 1) * (adrenalOn(pl) ? 1 + 0.08 * S.adren : 1);
 function shoot(who = P) {
   const n = S.projectiles, base = Math.atan2(who.face.x, who.face.z);
   // Overcharge: every so often the whole volley fires as overcharged bolts
@@ -2664,7 +2952,17 @@ function shoot(who = P) {
     P.shotN = (P.shotN || 0) + 1;
     if (P.shotN % (9 - S.overcharge) === 0) { over = { mul: 3 + 0.5 * S.overcharge, pierce: 99, mat: M_OVER, big: true }; sfx('crit'); }
   }
-  for (let i = 0; i < n; i++) fireBolt(who.pos.x, who.pos.z, base + (i - (n - 1) / 2) * (over ? 0.2 : 0.13), 1.15, over);
+  for (let i = 0; i < n; i++) {
+    const a = base + (i - (n - 1) / 2) * (over ? 0.2 : 0.13);
+    fireBolt(who.pos.x, who.pos.z, a, 1.15, over);
+    if (hasPower('pw_echo') && Math.random() < 0.25) fireBolt(who.pos.x, who.pos.z, a + rand(-0.06, 0.06), 1.15, over);   // Echo Shot
+  }
+  // Falling Stars: every few shots a small star drops on the nearest monster
+  if (S.skyfall) {
+    P.starN = (P.starN || 0) + 1;
+    const t = P.starN % (7 - Math.ceil(S.skyfall / 2)) === 0 && nearestEnemy(who.pos, 16);
+    if (t) withSrc('skyfall', () => ACTIVE.meteor(0, 0, 2 + 0.6 * S.skyfall, { x: t.pos.x, z: t.pos.z, small: true }));
+  }
   sfx('shoot');
   pLight.intensity = 3;
 }
@@ -2723,6 +3021,13 @@ function damageEnemy(e, amt, kx, kz, force) {
     burst(e.pos.x, e.r * 1.5, e.pos.z, 0xffd36e, 2, 3);
     if (e.lightDmg >= e.maxHp * 0.06 && !(e.stunT > 0)) { e.lightDmg = 0; clearLightPools(); stun(e, 4.5, 'Blinded!'); }
   }
+  // run powers that change how hard the attacker hits
+  const pl = curPl;
+  if (pl?.runPowers?.length) {
+    if (pl.blood > 0 && pl.bloodT > 0) amt *= 1 + 0.04 * pl.blood;
+    if (hasPower('pw_berserk', pl)) { const mx = buildOf(pl).S.maxHp || 100; amt *= 1 + Math.min(0.6, Math.max(0, 1 - pl.hp / mx)); }
+    if (hasPower('pw_execute', pl) && e.hp < e.maxHp * 0.15) amt = e.boss ? amt * 1.5 : Math.max(amt, e.hp);
+  }
   if (e.channelT > 0) e.channelDmg += amt;
   if (e.unstableT > 0) e.unstableDmg = (e.unstableDmg || 0) + amt;
   const dealt = Math.max(0, Math.min(amt, e.hp));
@@ -2777,17 +3082,28 @@ function killEnemy(e) {
   burst(e.pos.x, (e.float ? 1.2 : 0.5), e.pos.z, e.color, e.boss ? 60 : Math.round(8 + e.r * 8), e.boss ? 14 : 7);
   sfx('kill', e.boss);
   // co-op drops twice the shards, since each player buys their own boxes
-  let v = Math.round(e.shards * (hasPet('cat') ? 1.25 : 1) * (coop ? 2 : 1));
+  let v = Math.round(e.shards * (hasPet('cat') ? 1.25 : 1) * (coop ? 2 : 1) * (1 + 0.15 * (buildOf(e.lastHit || P1).S.scav || 0)) * (buildOf(e.lastHit || P1).S.shardMul || 1));
   while (v > 0) { const gv = v >= 10 ? 5 : 1; dropGem(e.pos.x, e.pos.z, gv); v -= gv; }
   kills++;
-  withPlayer(e.lastHit || P1, () => { const heal = (S.vamp || 0) + (PU('pu_fang') ? 1 : 0); if (heal && P.hp > 0) P.hp = Math.min(S.maxHp, P.hp + heal); });
+  withPlayer(e.lastHit || P1, () => {
+    const heal = (S.vamp || 0) + (PV('pu_fang', 'heal') || 0) + (S.killHeal || 0);
+    if (heal && P.hp > 0) P.hp = Math.min(S.maxHp, P.hp + heal);
+    if (hasPower('pw_bloodlust')) { P.blood = Math.min(10, (P.bloodT > 0 ? P.blood || 0 : 0) + 1); P.bloodT = 6; }
+  });
   if (e.boss) { banner(`${TYPES[e.type].name.replace('The ', '')} slain`, `+${e.shards} shards`); shake = 0.6; ring(e.pos.x, e.pos.z, 0.5, 10, 0.7, 0xc77dff); }
 }
 function hitByBolt(e, b) {
   const crit = Math.random() < S.crit;
-  const dmg = S.damage * b.mul * (crit ? S.critMul || 2.5 : 1);
+  const dmg = S.damage * b.mul * (crit ? S.critMul || 2.5 : 1) * (S.finisher && e.hp < e.maxHp * 0.35 ? 1 + 0.25 * S.finisher : 1);
+  if (b.freeze && !e.dead) e.freezeT = Math.max(e.freezeT, e.boss ? b.freeze * 0.4 : b.freeze);
+  if (hasPower('pw_burn')) { e.burnT = 3; e.burnDps = S.damage * 0.4; e.burnBy = curPl; }
   if (S.slow && !e.dead) { e.slowT = S.slowT || 1.6; e.slowAmt = S.slow; }
   damageEnemy(e, dmg, b.vx, b.vz, 3);
+  // Splinter Bolts: a killing bolt bursts into splinters
+  if (e.dead && S.splinter && !b.splint && bolts.length < 400) {
+    const n = 2 + S.splinter, off = rand(0, TAU);
+    for (let k = 0; k < n; k++) fireBolt(e.pos.x, e.pos.z, off + k / n * TAU, 1.15, { mul: 0.6, splint: true, life: 0.35, pierce: 0, bounce: 0, home: 0, hit: new Set([e]), src: 'splinter' });
+  }
   sfx(crit ? 'crit' : 'hit');
   if (crit) burst(b.m.position.x, 1.1, b.m.position.z, 0xffe08a, 6, 5);
   else burst(b.m.position.x, 1.1, b.m.position.z, 0x9ffff2, 3, 4);
@@ -2810,11 +3126,25 @@ function hurtPlayer(d) {
     ring(P.pos.x, P.pos.z, 0.5, 2, 0.3, 0x9fd8ff); burst(P.pos.x, 1, P.pos.z, 0x9fd8ff, 12, 5); sfx('shatter');
     return;
   }
-  if (PU('pu_ironskin')) d *= 0.85;
+  if (hasPower('pw_phase') && P.dashT > 0) return;
+  if (hasPower('pw_ironwill') && Math.random() < 0.2) { P.invuln = 0.4; ring(P.pos.x, P.pos.z, 0.4, 1.8, 0.3, 0x5aa7ff); floatNum(P.pos.x, 2.2, P.pos.z, 'Blocked'); return; }
+  d *= (PV('pu_ironskin', 'taken') || 1) * (S.taken || 1);
+  P.hurtAt = T;
+  if (hasPower('pw_frostarmor') && !(P.frostCd > 0)) {
+    P.frostCd = 4;
+    ring(P.pos.x, P.pos.z, 0.4, 5, 0.4, 0x9fd8ff); burst(P.pos.x, 1, P.pos.z, 0xcfeeff, 18, 6); sfx('cast', 'glacier');
+    for (const e of enemies) if (!e.dead && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 5 + e.r) e.freezeT = Math.max(e.freezeT, e.boss ? 0.5 : 1.5);
+  }
+  if (hasPower('pw_laststand') && !P.lastStandUsed && P.hp - d <= 0) {
+    P.lastStandUsed = true; P.hp = 1; P.invuln = 3; shake = 0.5;
+    ring(P.pos.x, P.pos.z, 0.5, 5, 0.6, 0xffffff); burst(P.pos.x, 1.2, P.pos.z, 0x5aa7ff, 30, 8); sfx('shield');
+    banner('Last Stand!', 'Untouchable for 3 seconds');
+    return;
+  }
   P.hp -= d; P.invuln = 0.4; shake = 0.35; P.kick = 1;
   if (S.thorns) {
-    const sp = PU('pu_spikes'), tr = sp ? 5.2 : 3.2;   // Spiked Plating power-up: twice as hard, 2 m farther
-    withSrc('thorns', () => areaDamage(P.pos.x, P.pos.z, tr, S.damage * (2 + 0.5 * S.thorns) * (sp ? 2 : 1), 8));
+    const tr = 3.2 + (PV('pu_spikes', 'r') || 0);   // Spiked Plating power-up: harder and farther
+    withSrc('thorns', () => areaDamage(P.pos.x, P.pos.z, tr, S.damage * (2 + 0.5 * S.thorns) * (PV('pu_spikes', 'mul') || 1), 8));
     ring(P.pos.x, P.pos.z, 0.4, tr, 0.25, 0x8fbf4a);
     burst(P.pos.x, 0.8, P.pos.z, 0x8fbf4a, 10, 6);
   } sfx('hurt');
@@ -3283,11 +3613,11 @@ function bossAI(e, dt, d, dirx, dirz) {
       e.hy = Math.sin(f * Math.PI) * 8;
       return;
     }
-    // Stampede: the herd comes bouncing out
+    // Stampede: the herd comes bouncing out (and steers toward you)
     e.cT = (e.cT ?? 4) - dt * haste;
     if (e.cT <= 0 && e.windT <= 0 && e.chargeT <= 0) {
-      e.cT = 9;
-      const n = e.phase === 2 ? 12 : 8, off = rand(0, TAU), sp = e.phase === 2 ? 12 : 9;
+      e.cT = 6.5;
+      const n = e.phase === 2 ? 14 : 10, off = rand(0, TAU), sp = e.phase === 2 ? 13 : 10;
       for (let k = 0; k < n; k++) {
         const a = off + k / n * TAU;
         const c = spawnEnemy('capyling', 1, W.dmgMul, { x: e.pos.x + Math.sin(a) * (e.r + 1), z: e.pos.z + Math.cos(a) * (e.r + 1) });
@@ -3295,15 +3625,35 @@ function bossAI(e, dt, d, dirx, dirz) {
       }
       sfx('boing'); if (!e.herdTip) { e.herdTip = true; banner('Stampede!', 'The herd is loose'); }
     }
+    // Yuzu Volley: lobs a spread of yuzus where you're heading
+    e.yT = (e.yT ?? 6) - dt * haste;
+    if (e.yT <= 0 && e.windT <= 0 && e.chargeT <= 0) {
+      e.yT = 7;
+      const n = e.phase === 2 ? 7 : 5, c = leadAim(1);
+      for (let k = 0; k < n; k++) {
+        const a = k / n * TAU + rand(-0.3, 0.3), rr = k === 0 ? 0 : rand(2, 4.5);
+        lob(e.pos, c.x + Math.sin(a) * rr, c.z + Math.cos(a) * rr, 1.5, 1 + k * 0.08, Math.round(e.dmg * 0.6), 0xffa21f);
+      }
+      if (!e.yuzuTip) { e.yuzuTip = true; banner('Yuzu Volley!', 'They land where you’re heading'); }
+    }
     if (e.windT <= 0 && e.chargeT <= 0) {
-      if (e.aT <= 0) { e.aT = 4.8; startCharge(e, dirx, dirz, 0.9, 1.4, 19); }
-      else if (e.phase === 2 && e.bT <= 0) {
-        e.bT = 7;
-        const tx = P.pos.x, tz = P.pos.z;
+      // charges come in a row (two, or three when enraged), each one aimed where you're going
+      const chargeAt = (wind, dur, spd) => { const t = leadAim(wind + 0.4, 0.8), dx = t.x - e.pos.x, dz = t.z - e.pos.z, l = Math.hypot(dx, dz) || 1; startCharge(e, dx / l, dz / l, wind, dur, spd); };
+      if (e.chargesLeft > 0) { e.chargesLeft--; chargeAt(0.45, 1.1, 21); }
+      else if (e.aT <= 0) { e.aT = 4.8; e.chargesLeft = e.phase === 2 ? 2 : 1; chargeAt(0.8, 1.4, 20); }
+      else if (e.bT <= 0) {
+        // belly flop, from the start now (and more often once it's enraged)
+        e.bT = e.phase === 2 ? 5.5 : 8;
+        const { x: tx, z: tz } = leadAim(1.2, 0.7);
         e.flop = { t: 0, dur: 1.2, x0: e.pos.x, z0: e.pos.z, x: tx, z: tz }; e.hidden = true;
         telegraph(tx, tz, 4, 1.2, e.dmg, 0xa0703c, sl => {
           e.flop = null; e.hidden = false; e.hy = 0; e.pos.x = sl.x; e.pos.z = sl.z;
           shockwave(sl.x, sl.z, Math.round(e.dmg * 0.5), 12); shake = Math.max(shake, 0.5);
+          // enraged: the landing shakes loose a ring of capybaras
+          if (e.phase === 2) for (let k = 0; k < 6; k++) {
+            const a = k / 6 * TAU, c = spawnEnemy('capyling', 1, W.dmgMul, { x: sl.x + Math.sin(a) * (e.r + 1), z: sl.z + Math.cos(a) * (e.r + 1) });
+            c.vx = Math.sin(a) * 11; c.vz = Math.cos(a) * 11; c.spawn = 0.6; c.owner = e;
+          }
         });
       }
     }
@@ -3487,7 +3837,7 @@ function clearHazards() {
   for (const h of hazards) scene.remove(h.disc); hazards = [];
   for (const w of waves) scene.remove(w.m); waves = [];
   for (const sp of spikes) scene.remove(sp.g); spikes = [];
-  for (const h of holes) scene.remove(h.g); holes = [];
+  for (const h of holes) { scene.remove(h.g); h.hum?.stop(); } holes = [];
   for (const w of pwaves) scene.remove(w.m); pwaves = [];
   clearLightPools();
   warpT = 0; P.whirlT = 0;
@@ -3499,7 +3849,12 @@ function monsterAI(e, dt, d, dirx, dirz) {
     if (d < e.r + 0.8) killEnemy(e);
   } else if (e.type === 'spitter') {
     e.aT -= dt;
-    if (e.aT <= 0 && d < 20) { e.aT = 3.4; lob(e.pos, P.pos.x, P.pos.z, 1.8, 1.1, e.dmg, 0x8fd14f, sl => pool('acid', sl.x, sl.z, 2.1, 4)); }
+    if (e.aT <= 0 && d < 20) {
+      // aim where you'll be when the acid lands (it's in the air 1.1 s), assuming you keep going the same way
+      e.aT = 3.4;
+      const lead = 1.1, { x: tx, z: tz } = leadAim(lead);
+      lob(e.pos, tx, tz, 1.8, lead, e.dmg, 0x8fd14f, sl => pool('acid', sl.x, sl.z, 2.1, 4));
+    }
   } else if (e.type === 'shaman') {
     e.aT -= dt;
     if (e.aT <= 0 && d < 20) {
@@ -3530,7 +3885,11 @@ function monsterAI(e, dt, d, dirx, dirz) {
       if (e.bursts <= 0) { burst(e.pos.x, 1.2, e.pos.z, 0xb06bff, 12, 4); despawn(e); }
     }
   } else if (e.type === 'capyling') {
-    e.life = (e.life ?? 8) - dt;
+    e.life = (e.life ?? 7) - dt;
+    // curve toward you a little, like the Horde does toward monsters
+    { const sp = Math.hypot(e.vx, e.vz) || 1, want = Math.atan2(P.pos.x - e.pos.x, P.pos.z - e.pos.z), cur = Math.atan2(e.vx, e.vz);
+      const da = ((want - cur + Math.PI * 3) % TAU) - Math.PI, a = cur + Math.max(-1.4 * dt, Math.min(1.4 * dt, da));
+      e.vx = Math.sin(a) * sp; e.vz = Math.cos(a) * sp; }
     e.pos.x += e.vx * dt; e.pos.z += e.vz * dt;
     const cr = Math.hypot(e.pos.x, e.pos.z), lim = ARENA_R - e.r;
     if (cr > lim) { const nx = e.pos.x / cr, nz = e.pos.z / cr, dot = e.vx * nx + e.vz * nz; if (dot > 0) { e.vx -= 2 * dot * nx; e.vz -= 2 * dot * nz; } e.pos.x = nx * lim; e.pos.z = nz * lim; }
@@ -3670,6 +4029,16 @@ function monsterAI(e, dt, d, dirx, dirz) {
     let da = ((want - e.faceA + Math.PI * 3) % TAU) - Math.PI;
     e.faceA += Math.sign(da) * Math.min(Math.abs(da), 1.1 * dt);
     e.mirror.material.opacity += (0.35 - e.mirror.material.opacity) * Math.min(1, dt * 6);
+    if (e.mirrorT > 0) {
+      // broken: it takes 15 s to come back at full health, flickering for the last second
+      e.mirrorT -= dt;
+      e.mirror.visible = e.mirrorT < 1 && Math.floor(e.mirrorT * 12) % 2 === 0;
+      if (e.mirrorT <= 0) {
+        e.mirrorT = 0; e.mirrorHp = e.mirrorMax; e.mirror.visible = true;
+        e.mirror.material.color.setHex(0xcfe8ff); e.mirror.material.opacity = 0.75;
+        burst(e.pos.x + Math.sin(e.faceA) * (e.r + 0.7), 1.3, e.pos.z + Math.cos(e.faceA) * (e.r + 0.7), 0xcfe8ff, 10, 3);
+      }
+    }
   } else if (e.type === 'charger') {
     e.aT -= dt;
     if (e.aT <= 0 && e.windT <= 0 && e.chargeT <= 0 && d < 14) { e.aT = 4.5; startCharge(e, dirx, dirz, 0.8, 0.6, 18); }
@@ -3730,7 +4099,7 @@ function dropGem(x, z, value) {
 /* ---------- boxes ---------- */
 let boxes = [], boxTimers = [];
 const tagsEl = $('#tags');
-const boxCost = () => Math.round((15 + boxesOpened * 8) * (hasPet('cat') ? 0.85 : 1));
+const boxCost = () => Math.round((15 + boxesOpened * 8) * (hasPet('cat') ? 0.85 : 1) * (hasPower('pw_treasure') ? 0.85 : 1));
 function spawnBox(at, opts = {}) {
   let x, z, tries = 0;
   if (at) { x = at.x; z = at.z; } else do {
@@ -3799,7 +4168,7 @@ function fillCard(a) {
     const t = puCardText(a);
     $('#cardRarity').textContent = t.rarity;
     $('#cardName').textContent = a.name;
-    $('#cardDesc').textContent = a.desc;
+    $('#cardDesc').textContent = puDesc(a);
     lvl.textContent = t.lvl;
     return;
   }
@@ -3866,7 +4235,7 @@ function fillCard(a) {
   choices.appendChild(keep);
 }
 function rollAbility(luck) {
-  const r = Math.random() * 100, od = luck?.box && BOX_ODDS[luck.box];
+  const r = Math.random() * 100, od = (luck?.box && BOX_ODDS[luck.box]) || (hasPower('pw_lucky', boxOpener) && !luck?.minTier ? BOX_ODDS.rare : null);
   // a box's rarity only shifts the odds: a legendary box can still roll a common
   let tier = od ? (r < od.legendary ? 'legendary' : r < od.legendary + od.epic ? 'epic' : r < od.legendary + od.epic + od.rare ? 'rare' : 'common')
     : r < 1 ? 'legendary' : r < 11 ? 'epic' : r < 46 ? 'rare' : 'common';
@@ -3910,9 +4279,24 @@ function puCardText(a, pl = boxOpener) {
   return {
     rarity: `${a.tier} · ${PU_KINDS[a.kind].toLowerCase()} power-up`,
     lvl: free >= 0 ? `New power-up! It goes into ${PU_KINDS[a.kind].toLowerCase()} power-up slot ${free + 1}, and stays with you in every run.`
-      : `New power-up! Your ${PU_KINDS[a.kind].toLowerCase()} power-up slots are full, so it goes to your collection. Swap it in from Power-ups.`,
+      : `New power-up! Your ${PU_KINDS[a.kind].toLowerCase()} power-up slots are full, so it goes to your collection. Swap it in from Power-ups on the title screen.`,
   };
 }
+// the shard bank: shards banked during a run are kept forever (per save) and spent on power-up upgrades
+const bankOf = pl => puSaveOf(puFinder(pl));
+function bankShards(pl = P1) {
+  if (state !== 'play' || sandbox || trial) return;
+  withPlayer(pl, () => {
+    const who = coop ? (pl === P2 ? 'Player 2' : 'Player 1') + ' banked' : 'Banked';
+    if (shards <= 0) { banner('No shards to bank', 'Pick some up first'); return; }
+    const sv = bankOf(pl), n = shards;
+    sv.bank = (sv.bank || 0) + n; shards = 0;
+    if (puFinder(pl) === P2) saveSlots(); else savePets();
+    sfx('gem'); ring(P.pos.x, P.pos.z, 0.4, 2.4, 0.4, 0xffb547);
+    banner(`${who} ${n} shard${n === 1 ? '' : 's'}`, `${sv.bank} in the bank · spend them on power-up upgrades from the title screen`);
+  });
+}
+$('#bankBtn').addEventListener('click', () => bankShards(P1));
 function takePU(a, pl = boxOpener) {
   const who = puFinder(pl), pu = puData(puSaveOf(who));
   if (!pu.owned.includes(a.id)) pu.owned.push(a.id);
@@ -3921,7 +4305,7 @@ function takePU(a, pl = boxOpener) {
   if (who === P2) saveSlots(); else savePets();
   refreshPU(); renderPetBtn();
   const name = coop ? (who === P2 ? 'Player 2' : 'Player 1') : 'you';
-  banner(`${a.name} ${free >= 0 ? 'powers ' + name + ' up' : 'added'}`, free >= 0 ? PUD[a.id].desc : 'Equip it from Power-ups');
+  banner(`${a.name} ${free >= 0 ? 'powers ' + name + ' up' : 'added'}`, free >= 0 ? puDesc(a) : 'Swap it in from the title screen');
 }
 function claim(ri) {
   if (state !== 'reveal' || $('#card').hidden) return;
@@ -4134,14 +4518,14 @@ function renderLoadout() {
 /* ---------- active abilities ---------- */
 const ACTIVE = {
   nova(l) {
-    const wild = PU('pu_wildfire'), rad = 5 + 0.6 * l + (wild ? 1.5 : 0);
+    const rad = 5 + 0.6 * l + (PV('pu_wildfire', 'r') || 0);
     ring(P.pos.x, P.pos.z, 0.5, rad, 0.45, 0xff8a3d);
     burst(P.pos.x, 0.6, P.pos.z, 0xff8a3d, 22, 9);
-    areaDamage(P.pos.x, P.pos.z, rad, S.damage * (2 + 0.5 * l) * (wild ? 1.3 : 1), 11);
+    areaDamage(P.pos.x, P.pos.z, rad, S.damage * (2 + 0.5 * l) * (PV('pu_wildfire', 'dmg') || 1), 11);
     shake = Math.max(shake, 0.2);
   },
   barrage(l) {
-    const n = Math.round((16 + 4 * l) * (PU('pu_volley') ? 1.5 : 1));
+    const n = Math.round((16 + 4 * l) * (PV('pu_volley', 'n') || 1));
     for (let i = 0; i < n; i++) fireBolt(P.pos.x, P.pos.z, i / n * TAU);
     pLight.intensity = 5;
   },
@@ -4164,12 +4548,12 @@ const ACTIVE = {
     for (const [x, z] of [[sx, sz], [P.pos.x, P.pos.z]]) {
       ring(x, z, 0.3, 2.6, 0.35, 0x6fe3d6);
       burst(x, 1, z, 0x6fe3d6, 12, 6);
-      areaDamage(x, z, 2.6, S.damage * 1.5 * (PU('pu_afterimage') ? 2 : 1), 6);
+      areaDamage(x, z, 2.6, S.damage * 1.5 * (PV('pu_afterimage', 'dmg') || 1), 6);
     }
-    P.invuln = Math.max(P.invuln, PU('pu_afterimage') ? 1 : 0.4);
+    P.invuln = Math.max(P.invuln, PV('pu_afterimage', 'safe') || 0.4);
   },
   glacier(l) {
-    const deep = PU('pu_deepfreeze'), rad = 7.5 + 0.5 * l, dur = (3 + 0.3 * l) * (deep ? 1.5 : 1);
+    const deep = PV('pu_deepfreeze', 'dmg'), rad = 7.5 + 0.5 * l, dur = (3 + 0.3 * l) * (PV('pu_deepfreeze', 'dur') || 1);
     ring(P.pos.x, P.pos.z, 0.5, rad, 0.5, 0x9fd8ff);
     burst(P.pos.x, 0.5, P.pos.z, 0x9fd8ff, 24, 8);
     for (const e of enemies) {
@@ -4177,19 +4561,18 @@ const ACTIVE = {
       const dx = e.pos.x - P.pos.x, dz = e.pos.z - P.pos.z;
       if (dx * dx + dz * dz < (rad + e.r) ** 2) {
         e.freezeT = e.boss ? dur * 0.4 : dur; burst(e.pos.x, 1, e.pos.z, 0xcfeeff, 4, 3);
-        if (deep) damageEnemy(e, S.damage * 2, dx, dz, 0);
+        if (deep) damageEnemy(e, S.damage * deep, dx, dz, 0);
       }
     }
   },
   storm(l) {
-    const sc = PU('pu_supercoil');
-    return chainFrom(P.pos.x, P.pos.z, 4 + 2 * l + (sc ? 3 : 0), S.damage * 2 * (sc ? 1.25 : 1), 16);
+    return chainFrom(P.pos.x, P.pos.z, 4 + 2 * l + (PV('pu_supercoil', 'jumps') || 0), S.damage * 2 * (PV('pu_supercoil', 'dmg') || 1), 16);
   },
   meteor(l, chain = 0, dmgX = 6 + 2 * l, twin = null) {
     let x = twin ? twin.x : aimWorld.x, z = twin ? twin.z : aimWorld.z;
     const r0 = Math.hypot(x, z);
     if (r0 > ARENA_R) { x *= ARENA_R / r0; z *= ARENA_R / r0; }
-    const r = 3 + 0.7 * l;
+    const r = twin?.small ? 2.2 : 3 + 0.7 * l;
     const mk = (geo, op) => {
       const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: 0xff8a3d, transparent: true, opacity: op, depthWrite: false }));
       m.rotation.x = -Math.PI / 2; m.position.set(x, 0.05, z); scene.add(m); return m;
@@ -4198,20 +4581,23 @@ const ACTIVE = {
     edge.scale.setScalar(r); disc.scale.setScalar(0.01);
     const rock = new THREE.Mesh(G.dodeca, M_METEOR);
     rock.scale.setScalar(0.6 + 0.4 * l); rock.position.set(x + 7, 20, z - 5); scene.add(rock);
-    meteors.push({ src: dmgSrc, x, z, r, dmg: S.damage * dmgX, chainDmg: S.damage * 2.5, owner: P, chain, t: 0, dur: 0.75, disc, edge, rock });
+    meteors.push({ small: !!twin?.small, src: dmgSrc, x, z, r, dmg: S.damage * dmgX, chainDmg: S.damage * 2.5 * (PV('pu_supercoil', 'dmg') || 1), owner: P, chain, t: 0, dur: 0.75, disc, edge, rock });
     // Twin Star power-up: a second, smaller-hitting meteor lands right beside the first
     if (PU('pu_twinstar') && !twin) {
       const a = rand(0, TAU);
-      ACTIVE.meteor(l, 0, dmgX * 0.6, { x: x + Math.sin(a) * r * 1.2, z: z + Math.cos(a) * r * 1.2 });
+      ACTIVE.meteor(l, 0, dmgX * PV('pu_twinstar', 'dmg'), { x: x + Math.sin(a) * r * 1.2, z: z + Math.cos(a) * r * 1.2 });
     }
   },
   emberbarrage(l) {
-    const n = 8 + 2 * l, nova = { r: 2.2 + 0.25 * l, dmg: S.damage * (1.5 + 0.5 * l) };
+    // Endless Volley adds bolts, Wildfire Core makes each nova bigger and harder
+    const n = Math.round((8 + 2 * l) * (PV('pu_volley', 'n') || 1));
+    const nova = { r: 2.2 + 0.25 * l + (PV('pu_wildfire', 'r') || 0) * 0.5, dmg: S.damage * (1.5 + 0.5 * l) * (PV('pu_wildfire', 'dmg') || 1) };
     for (let i = 0; i < n; i++) fireBolt(P.pos.x, P.pos.z, i / n * TAU, 1.15, { mat: M_EMBER, nova, pierce: 0, bounce: 0, life: 0.7 });
     pLight.intensity = 5;
   },
   thunderfall(l) {
-    ACTIVE.meteor(l, 5 + 2 * l, 7 + 2.5 * l);
+    // Twin Star works through the meteor itself; Supercoil adds lightning jumps
+    ACTIVE.meteor(l, 5 + 2 * l + (PV('pu_supercoil', 'jumps') || 0), 7 + 2.5 * l);
   },
   horizon(l) {
     let x = aimWorld.x, z = aimWorld.z;
@@ -4230,16 +4616,53 @@ const ACTIVE = {
     halo.rotation.x = -Math.PI / 2; halo.position.y = -1.15; halo.scale.setScalar(r);
     g.position.set(x, 1.2, z); g.scale.setScalar(0.01);
     scene.add(g);
-    holes.push({ src: dmgSrc, x, z, g, core, disk, disk2, halo, owner: P, t: 0, dur, r, tickT: 0, tick: S.damage * (1 + 0.25 * l), boom: S.damage * (8 + 2 * l) });
-    sfx('horizon', dur);
+    holes.push({ hum: Sound.hum(), src: dmgSrc, x, z, g, core, disk, disk2, halo, owner: P, t: 0, dur, r, tickT: 0, tick: S.damage * (1 + 0.25 * l), boom: S.damage * (8 + 2 * l) });
+    sfx('horizon');
   },
-  tremor(l) { startTremor({ dmg: S.damage * (1.5 + 0.4 * l), max: 7 + 0.5 * l, color: 0xd9b36a, freeze: 0, count: PU('pu_aftershock') ? 5 : 3 }); },
-  glacialquake(l) { startTremor({ dmg: S.damage * (2 + 0.5 * l), max: 9 + 0.5 * l, color: 0x9fd8ff, freeze: 1.5 + 0.2 * l, count: 4 }); },
-  whirl(l) { const cy = PU('pu_cyclone'); P.whirlT = (2.5 + 0.25 * l) * (cy ? 1.5 : 1); P.whirlDmg = S.damage * (1 + 0.25 * l) * (cy ? 1.25 : 1); P.whirlTick = 0; },
+  tremor(l) { startTremor({ dmg: S.damage * (1.5 + 0.4 * l), max: 7 + 0.5 * l, color: 0xd9b36a, freeze: 0, count: 3 + (PV('pu_aftershock', 'waves') || 0) }); },
+  // Aftershock adds shockwaves, Deep Freeze makes the freeze last longer and hit harder
+  glacialquake(l) { startTremor({ dmg: S.damage * (2 + 0.5 * l) * (PU('pu_deepfreeze') ? 1 + (PV('pu_deepfreeze', 'dmg') - 1) * 0.5 : 1), max: 9 + 0.5 * l, color: 0x9fd8ff, freeze: (1.5 + 0.2 * l) * (PV('pu_deepfreeze', 'dur') || 1), count: 4 + (PV('pu_aftershock', 'waves') || 0) }); },
+  whirl(l) { P.whirlT = (2.5 + 0.25 * l) * (PV('pu_cyclone', 'dur') || 1); P.whirlDmg = S.damage * (1 + 0.25 * l) * (PV('pu_cyclone', 'dmg') || 1); P.whirlTick = 0; },
   warp(l) {
     warpT = 4 + 0.5 * l;
     banner('Time Warp', 'Everything slows down');
     ring(P.pos.x, P.pos.z, 0.5, 14, 0.8, 0x6fb8ff);
+  },
+  knives(l) {
+    const n = 7 + 2 * l, base = Math.atan2(aimWorld.x - P.pos.x, aimWorld.z - P.pos.z), spread = 1.05;
+    for (let i = 0; i < n; i++) fireBolt(P.pos.x, P.pos.z, base + (i / (n - 1) - 0.5) * spread, 1.15, { mat: M_KNIFE, mul: 1.6, pierce: 1, bounce: 0, life: 0.5 });
+  },
+  warcry(l) {
+    P.cryT = 4 + 0.5 * l; P.cryRate = 0.3 + 0.1 * l;
+    ring(P.pos.x, P.pos.z, 0.5, 4, 0.5, 0xff6a3a); burst(P.pos.x, 1.4, P.pos.z, 0xff6a3a, 18, 5);
+    shake = Math.max(shake, 0.15);
+  },
+  lance(l) {
+    const a = Math.atan2(aimWorld.x - P.pos.x, aimWorld.z - P.pos.z);
+    fireBolt(P.pos.x, P.pos.z, a, 1.2, { mat: M_LANCE, big: true, mul: 3 + 0.75 * l, pierce: 99, bounce: 0, freeze: 1.2 + 0.2 * l, life: 1.1 });
+  },
+  clap(l) {
+    const rad = 5 + 0.5 * l, dur = 1.5 + 0.2 * l;
+    ring(P.pos.x, P.pos.z, 0.4, rad, 0.4, 0xffe08a); ring(P.pos.x, P.pos.z, 0.2, rad * 0.6, 0.3, 0xffffff);
+    burst(P.pos.x, 1, P.pos.z, 0xffe08a, 20, 8); shake = Math.max(shake, 0.25);
+    for (const e of enemies) {
+      if (e.dead || e.hidden || Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) > rad + e.r) continue;
+      damageEnemy(e, S.damage * (1.5 + 0.3 * l), e.pos.x - P.pos.x, e.pos.z - P.pos.z, 4);
+      if (!e.dead) { e.freezeT = Math.max(e.freezeT, e.boss ? dur * 0.3 : dur); burst(e.pos.x, 1.6, e.pos.z, 0xffe08a, 4, 2); }
+    }
+  },
+  well(l) {
+    // a small, short-lived cousin of Event Horizon: it drags monsters in hard, then implodes
+    let x = aimWorld.x, z = aimWorld.z;
+    const r0 = Math.hypot(x, z);
+    if (!lab && r0 > ARENA_R) { x *= ARENA_R / r0; z *= ARENA_R / r0; }
+    const g = new THREE.Group(), glow = (c, o) => new THREE.MeshBasicMaterial({ color: c, transparent: true, opacity: o, blending: THREE.AdditiveBlending, depthWrite: false });
+    const core = new THREE.Mesh(new THREE.SphereGeometry(0.5, 16, 12), new THREE.MeshBasicMaterial({ color: 0x05030c })); g.add(core);
+    const disk = new THREE.Mesh(new THREE.TorusGeometry(1, 0.12, 8, 40), glow(0x7a8cff, 0.9)); disk.rotation.x = Math.PI / 2; g.add(disk);
+    const disk2 = new THREE.Mesh(new THREE.TorusGeometry(1.4, 0.05, 6, 40), glow(0xb6c2ff, 0.6)); disk2.rotation.x = Math.PI / 2 + 0.3; g.add(disk2);
+    const halo = new THREE.Mesh(G.ring, glow(0x7a8cff, 0.3)); halo.rotation.x = -Math.PI / 2; halo.position.y = -1.15; halo.scale.setScalar(6.5); g.add(halo);
+    g.position.set(x, 1.2, z); g.scale.setScalar(0.01); scene.add(g);
+    holes.push({ well: true, pullMul: 2.2, src: dmgSrc, x, z, g, core, disk, disk2, halo, owner: P, t: 0, dur: 1.5, r: 6.5, tickT: 99, tick: 0, boom: S.damage * (5 + 1.5 * l) });
   },
   sentry(l) {
     const g = new THREE.Group();
@@ -4249,7 +4672,7 @@ const ACTIVE = {
     top.position.y = 1.8; g.add(top);
     g.position.set(P.pos.x, 0, P.pos.z); scene.add(g);
     ring(P.pos.x, P.pos.z, 0.3, 2, 0.4, 0x6fe3d6);
-    totems.push({ src: dmgSrc, g, top, x: P.pos.x, z: P.pos.z, t: 8 + l + (PU('pu_overclock') ? 4 : 0), fireT: 0, rate: (3 + 0.5 * l) * (PU('pu_overclock') ? 2 : 1), owner: P });
+    totems.push({ src: dmgSrc, g, top, x: P.pos.x, z: P.pos.z, t: 8 + l + (PV('pu_overclock', 't') || 0), fireT: 0, rate: (3 + 0.5 * l) * (PV('pu_overclock', 'rate') || 1), owner: P });
   },
 };
 function useActive(i) {
@@ -4258,7 +4681,8 @@ function useActive(i) {
   if (!id || (cds[id] || 0) > 0) return;
   const l = L(id);
   if (withSrc(id, () => ACTIVE[id](l)) === false) return;
-  cds[id] = AB[id].cd(l) * (PU('pu_quickhands') ? 0.8 : 1);
+  cds[id] = AB[id].cd(l) * (PV('pu_quickhands', 'cd') || 1) * (S.cdMul || 1);
+  if (hasPower('pw_double') && Math.random() < 0.25) { cds[id] = 0; burst(P.pos.x, 1.6, P.pos.z, 0x6fe3a0, 10, 3); }   // Double Cast
   sfx('cast', id);
   const el = (curPl === P2 ? activeEls2 : activeEls)[i];
   if (el) { el.classList.remove('fired'); void el.offsetWidth; el.classList.add('fired'); }
@@ -4305,6 +4729,7 @@ function renderBar() {
   withPlayer(P1, () => renderBarFor($('#activeSlots'), $('#passiveSlots'), activeEls, useActive, coop ? keysFor(P1) : slotKey));
   $('#bar2').hidden = !coop;
   if (coop) withPlayer(P2, () => renderBarFor($('#activeSlots2'), $('#passiveSlots2'), activeEls2, i => castAs(P2, i), keysFor(P2)));
+  $('#bankBtn kbd').textContent = pad.active && !coop ? padLabel(B.bank) : 'B';   // the HUD shows whichever button banks
 }
 function updateBarFor(els) {
   slots.active.forEach((id, i) => {
@@ -4349,6 +4774,14 @@ addEventListener('keydown', e => {
     if (k === 'escape') closePU();
     return;
   }
+  if (state === 'skills') {
+    if (k === 'escape') closeSkills();
+    return;
+  }
+  if (state === 'powerpick') {
+    if (/^[1-3]$/.test(k)) $('#pickGrid').children[+k - 1]?.click();
+    return;
+  }
   if (state === 'codex') {
     if (k === 'escape') closeCodex();
     return;
@@ -4384,6 +4817,7 @@ addEventListener('keydown', e => {
     if (k === 'e') withWorld(worldOf(kh), () => { const b = nearBox(kh.pos); if (b) openBox(b, kh); });
     if (k === '1' || k === '2' || k === '3') castAs(kh, +k - 1);
     if (k === 'q') openLoadout(kh);
+    if (k === 'b') bankShards(kh);
     if (k === 'f') { autoFire = !autoFire; $('#autoTag').hidden = !autoFire; }
     if (k === 'escape' || k === 'p') pause(true);
   } else if (state === 'paused' && (k === 'escape' || k === 'p')) pause(false);
@@ -4405,11 +4839,12 @@ const pad = { active: false, prev: [], move: { x: 0, y: 0 }, aim: { x: 0, y: 0 }
 const PAD_ACTIONS = [
   ['interact', 'Open box / confirm'], ['cast1', 'Cast slot 1'], ['cast2', 'Cast slot 2'], ['cast3', 'Cast slot 3'],
   ['dash', 'Dash'], ['fire', 'Fire (hold)'], ['back', 'Back in menus'], ['loadout', 'Loadout'], ['pause', 'Pause'], ['auto', 'Toggle auto-fire'],
+  ['bank', 'Bank shards'],
 ];
 // "standard" = the browser recognised an Xbox-style layout; anything else is a generic pad with numbered buttons
 const PAD_DEFAULTS = {
-  standard: { interact: 0, cast1: 2, cast2: 3, cast3: 1, dash: 4, fire: 7, back: 1, loadout: 8, pause: 9, auto: 10, aimX: 2, aimY: 3, labels: 'xbox' },
-  generic: { interact: 0, cast1: 1, cast2: 2, cast3: 3, dash: 4, fire: 7, back: 1, loadout: 8, pause: 9, auto: 10, aimX: 2, aimY: 3, labels: 'numbers' },
+  standard: { interact: 0, cast1: 2, cast2: 3, cast3: 1, dash: 4, fire: 7, back: 1, loadout: 8, pause: 9, auto: 10, bank: 5, aimX: 2, aimY: 3, labels: 'xbox' },
+  generic: { interact: 0, cast1: 1, cast2: 2, cast3: 3, dash: 4, fire: 7, back: 1, loadout: 8, pause: 9, auto: 10, bank: 5, aimX: 2, aimY: 3, labels: 'numbers' },
 };
 const STD_NAMES = ['A', 'B', 'X', 'Y', 'LB', 'RB', 'LT', 'RT', 'Back', 'Start', 'L3', 'R3', 'Up', 'Down', 'Left', 'Right', 'Home'];
 let B = { ...PAD_DEFAULTS.standard };
@@ -4505,6 +4940,7 @@ function pollPad(dt) {
     if (hit(B.cast2)) castAs(ph, 1);
     if (hit(B.cast3)) castAs(ph, 2);
     if (hit(B.auto)) p2in.auto = !p2in.auto;
+    if (hit(B.bank)) bankShards(ph);
     if (hit(B.pause)) pause(true);
     else if (hit(B.loadout)) openLoadout(ph);
     return;
@@ -4520,6 +4956,7 @@ function pollPad(dt) {
     if (hit(B.cast2)) useActive(1);
     if (hit(B.cast3)) useActive(2);
     if (hit(B.auto)) { autoFire = !autoFire; $('#autoTag').hidden = !autoFire; }
+    if (hit(B.bank)) bankShards(P1);
     if (hit(B.pause)) pause(true);
     else if (hit(B.loadout)) openLoadout();
     return;
@@ -4538,7 +4975,7 @@ function pollPad(dt) {
     const scr = openScreen(), el = document.activeElement;
     if (scr && el && el !== scr && scr.contains(el)) el.click(); else navFocus(0, 0);
   } else if (hit(B.back) || hit(B.loadout)) {
-    if (state === 'loadout') closeLoadout(); else if (state === 'paused') pause(false); else if (state === 'padsetup') closePadSetup(); else if (state === 'pets') closePets(); else if (state === 'powerups') closePU(); else if (state === 'codex') closeCodex(); else if (state === 'players') closePlayers();
+    if (state === 'loadout') closeLoadout(); else if (state === 'paused') pause(false); else if (state === 'padsetup') closePadSetup(); else if (state === 'pets') closePets(); else if (state === 'powerups') closePU(); else if (state === 'skills') closeSkills(); else if (state === 'codex') closeCodex(); else if (state === 'players') closePlayers();
   } else if (hit(B.pause)) {
     if (state === 'paused') pause(false); else if (state === 'loadout') closeLoadout(); else if (state === 'title') begin('normal');
   }
@@ -4558,6 +4995,7 @@ function closePadSetup() {
   padCapture = null;
   $('#padScreen').hidden = true;
   state = padReturn;
+  renderBar();
   (state === 'paused' ? $('#resumeBtn') : $('#startBtn')).focus({ preventScroll: true });
 }
 function renderPadSetup() {
@@ -4837,6 +5275,8 @@ function begin(mode) {
   leaveDungeon();
   sandbox = mode === 'sandbox'; dungeon = mode === 'dungeon'; godMode = false; sbWave = 1;
   dmgLog = [{}, {}];
+  P1.cryT = P2.cryT = 0;
+  for (const pl of [P1, P2]) Object.assign(pl, { runPowers: [], blood: 0, bloodT: 0, lastStandUsed: false, barrierT: 10, stormT: 3, chronoT: 25, frostCd: 0, auraT: 0.5, hurtAt: -9 });
   refreshPU();
   trial = typeof mode === 'string' && mode.startsWith('ascend:') ? mode.slice(7) : null;
   lab = mode === 'lab';
@@ -4845,6 +5285,7 @@ function begin(mode) {
   for (const c of introCards) c.el.remove(); introCards = [];
   $('#sbGod').checked = false;
   $('#sandboxTag').hidden = !sandbox;
+  $('#bankBtn').hidden = sandbox || !!trial;
   levels = {}; slots = { active: [null, null, null], passive: [null, null, null, null, null, null] }; cds = {};
   // sandbox: every ability is in the collection, starting at level I
   if (sandbox) for (const a of ABILITIES) levels[a.id] = 1;
@@ -4875,6 +5316,7 @@ function begin(mode) {
   if (sandbox) openLoadout();
   if (trial) startTrial();
   if (lab) startLab();
+  if (!sandbox && !trial) startPowerPick();
 }
 // Ascension trial: no waves and no boxes. You get a random kit, and the ascended pet comes for you.
 function trialKit() {
@@ -4929,7 +5371,7 @@ const dungeonOpen = () => progress.dungeon || !!p2Save()?.dungeon;
 function syncActiveSave() {
   try {
     if (activeSlot < 0 || !petSlots[activeSlot]) return;
-    petSlots[activeSlot] = { ...petSlots[activeSlot], owned: [...petSave.owned], equipped: petSave.equipped, asc: JSON.parse(JSON.stringify(petSave.asc || {})), pu: cleanPU(petSave.pu), dungeon: progress.dungeon, bestFloor: progress.bestFloor, abilities: [...codex], at: Date.now() };
+    petSlots[activeSlot] = { ...petSlots[activeSlot], owned: [...petSave.owned], equipped: petSave.equipped, asc: JSON.parse(JSON.stringify(petSave.asc || {})), pu: cleanPU(petSave.pu), bank: petSave.bank || 0, skill: cleanSkill(petSave.skill), dungeon: progress.dungeon, bestFloor: progress.bestFloor, abilities: [...codex], at: Date.now() };
     localStorage.setItem('shardfall-pet-slots', JSON.stringify(petSlots));
   } catch (_) {}   // the slots aren't set up yet during start-up
 }
@@ -4937,7 +5379,7 @@ function applySave(sl) {
   petSave.owned = (sl.owned || []).filter(id => PET[id]);
   petSave.equipped = petSave.owned.includes(sl.equipped) ? sl.equipped : null;
   petSave.asc = JSON.parse(JSON.stringify(sl.asc || {}));
-  petSave.pu = cleanPU(sl.pu); refreshPU();
+  petSave.pu = cleanPU(sl.pu); petSave.bank = sl.bank || 0; petSave.skill = cleanSkill(sl.skill); refreshPU();
   progress.dungeon = !!sl.dungeon; progress.bestFloor = sl.bestFloor || 0;
   codex = new Set((sl.abilities || []).filter(id => AB[id]));
   try { localStorage.setItem('shardfall-codex', JSON.stringify([...codex])); } catch (_) {}
@@ -4957,7 +5399,7 @@ function slotAction(kind, i) {
     activeSlot = i; applySave(petSlots[i]);
     slotMsg = `Started a new save in ${slotLabel(i)}: no pets, and the dungeon is locked until you reach wave 10.`;
   } else if (kind === 'save') {
-    petSlots[i] = { owned: [...petSave.owned], equipped: petSave.equipped, asc: JSON.parse(JSON.stringify(petSave.asc || {})), pu: cleanPU(petSave.pu), at: Date.now(), dungeon: progress.dungeon, bestFloor: progress.bestFloor, abilities: [...codex] };
+    petSlots[i] = { owned: [...petSave.owned], equipped: petSave.equipped, asc: JSON.parse(JSON.stringify(petSave.asc || {})), pu: cleanPU(petSave.pu), bank: petSave.bank || 0, skill: cleanSkill(petSave.skill), at: Date.now(), dungeon: progress.dungeon, bestFloor: progress.bestFloor, abilities: [...codex] };
     activeSlot = i;
     slotMsg = `Copied your current progress into ${slotLabel(i)}. It's now the save you're playing.`;
   } else if (kind === 'load') {
@@ -5080,11 +5522,14 @@ function renderPetBtn() {
   const n = petSave.owned.length;
   $('#petsBtn').textContent = `Pets ${n} / ${PETS.length}`;
   $('#puBtn').textContent = `Power-ups ${petSave.pu.owned.length} / ${POWERUPS.length}`;
+  const sk = skData(petSave), fp = freePoints(sk);
+  $('#skillBtn').textContent = `Skills · level ${sk.level}${fp > 0 ? ` (${fp} to spend)` : ''}`;
 }
 // Power-ups screen: four slots for each kind; click a power-up to slot it in, click a slot to take it out
 let puReturn = 'title', puWho = P1;
 function openPU(who = P1) {
-  if (state !== 'title' && state !== 'loadout') return;
+  // power-ups are locked in once a run starts (except in sandbox, where they're there to try)
+  if (state !== 'title' && !(state === 'loadout' && sandbox)) return;
   puReturn = state; state = 'powerups';
   puWho = who === P2 && coop ? P2 : P1; puView = null;
   renderPU();
@@ -5120,8 +5565,27 @@ const TREFOIL = (() => {
 })();
 const PU_SPOTS = [[17, 20], [83, 20], [17, 80], [83, 80]];   // where the four slots sit around the middle (in %)
 let puView = null, puTarget = -1;
+const ROMAN3 = ['I', 'II', 'III'];
+// spend banked shards to take a power-up to its next level (free in sandbox)
+function upgradePU(id) {
+  const who = puWho, d = PUD[id], l = puLevel(id, who), cost = PU_COST[d.tier][l - 1];
+  if (l >= 3 || !puOwned(id, who)) return;
+  if (sandbox) { sbLv[who === P2 ? 1 : 0][id] = l + 1; }
+  else {
+    const sv = puSaveOf(who);
+    if (!sv || (sv.bank || 0) < cost) return;
+    sv.bank -= cost;
+    const pu = puData(sv); (pu.lv ||= {})[id] = l + 1;
+    if (who === P2) saveSlots(); else savePets();
+  }
+  sfx('fuse');
+  refreshPU(); renderPU();
+}
 function renderPU() {
   const who = puWho, noSave = !sandbox && !puSaveOf(who);
+  const bank = noSave ? 0 : puSaveOf(who)?.bank || 0;
+  $('#puBank').hidden = sandbox || noSave;
+  $('#puBank').innerHTML = `<span class="gem-ico"></span>Shard bank <b>${bank.toLocaleString()}</b>`;
   const found = puData(puSaveOf(who)).owned.length;
   // co-op: switch between the two players' power-ups
   const seg = $('#puWho');
@@ -5131,8 +5595,8 @@ function renderPU() {
     ? 'Player 2 has no save of their own, so they have no power-ups. Pick a save for Player 2 in Players to give them theirs; until then, the power-ups they find go to Player 1.'
     : sandbox
     ? 'Sandbox: every power-up is here to try. What you slot in here doesn’t change your real power-ups.'
-    : puView ? 'Click a power-up below to slot it in (pick an empty slot first to choose where it goes). Click a slot to take its power-up out.'
-    : `${coop ? (who === P2 ? 'Player 2: ' : 'Player 1: ') : ''}${found} of ${POWERUPS.length} found. Whenever a box rolls a rarity, there’s a 4% chance it gives you a power-up of that rarity you don’t have yet (the same odds as a pet).`;
+    : puView ? 'Click a power-up below to slot it in (pick an empty slot first to choose where it goes). Click a slot to take its power-up out. Spend banked shards to upgrade a power-up up to level III.'
+    : `${coop ? (who === P2 ? 'Player 2: ' : 'Player 1: ') : ''}${found} of ${POWERUPS.length} found. Whenever a box rolls a rarity, there’s a 4% chance it gives you a power-up of that rarity you don’t have yet (the same odds as a pet). Press B in a run to bank the shards you’re holding, then spend them here to upgrade your power-ups.`;
   if (noSave) { $('#puBody').replaceChildren(); return; }
   const sl = puSlots(who);
   if (!puView) {
@@ -5170,8 +5634,9 @@ function renderPU() {
     n.style.left = PU_SPOTS[i][0] + '%'; n.style.top = PU_SPOTS[i][1] + '%';
     if (d) {
       n.style.setProperty('--tier', TIER_COLOR[d.tier]);
-      n.innerHTML = `<small>Slot ${i + 1} · ${d.tier}</small><b></b><span></span>`;
-      n.querySelector('b').textContent = d.name; n.querySelector('span').textContent = d.desc;
+      const lv = puLevel(d.id, who);
+      n.innerHTML = `<small>Slot ${i + 1} · ${d.tier} · level ${ROMAN3[lv - 1]}</small><b></b><span></span>`;
+      n.querySelector('b').textContent = d.name; n.querySelector('span').textContent = puDesc(d, lv);
       n.setAttribute('aria-label', `Slot ${i + 1}: ${d.name}. Click to take it out.`);
       n.addEventListener('click', () => { puTarget = i; setPUSlot(kind, i, null); });
     } else {
@@ -5197,16 +5662,41 @@ function renderPU() {
       b.innerHTML = `<span class="mono">?</span><span class="lo-name">Locked</span><span class="lo-desc"></span><span class="lo-state">${d.tier} power-up</span>`;
       b.disabled = true;
     } else {
+      const lv = puLevel(d.id, who);
       b.className = 'lo-item' + (on ? ' equipped' : full ? ' full' : '');
       b.innerHTML = '<span class="mono"></span><span class="lo-name"></span><span class="lo-desc"></span><span class="lo-state"></span>';
       b.querySelector('.mono').textContent = mono(d.name);
-      b.querySelector('.lo-name').textContent = d.name;
-      b.querySelector('.lo-desc').textContent = d.desc;
+      b.querySelector('.lo-name').innerHTML = `<span></span><i class="pu-lv">${ROMAN3[lv - 1]}</i>`;
+      b.querySelector('.lo-name span').textContent = d.name;
+      b.querySelector('.lo-desc').textContent = puDesc(d, lv);
       b.querySelector('.lo-state').textContent = `${d.tier} · ` + (on ? `In slot ${slots.indexOf(d.id) + 1} · click to take out` : full ? 'Slots full · take one out first' : 'Click to slot in');
       b.addEventListener('click', () => {
         if (on) setPUSlot(kind, slots.indexOf(d.id), null);
         else if (!full) { const at = puTarget >= 0 && !slots[puTarget] ? puTarget : slots.indexOf(null); puTarget = -1; setPUSlot(kind, at, d.id); }
       });
+      // level and the upgrade button under the card
+      const cell = document.createElement('div');
+      cell.className = 'lo-cell';
+      const steps = document.createElement('div');
+      steps.className = 'lo-steps';
+      const sp = document.createElement('span');
+      sp.textContent = `Level ${ROMAN3[lv - 1]} of III`;
+      const up = document.createElement('button');
+      up.type = 'button'; up.className = 'pu-up';
+      if (lv >= 3) { up.textContent = 'Max level'; up.disabled = true; }
+      else {
+        const cost = PU_COST[d.tier][lv - 1];
+        up.textContent = sandbox ? `Upgrade to ${ROMAN3[lv]} · free` : `Upgrade to ${ROMAN3[lv]} · ${cost} shards`;
+        up.disabled = !sandbox && bank < cost;
+        up.title = puDesc(d, lv + 1);
+        up.setAttribute('aria-label', `Upgrade ${d.name} to level ${lv + 1} for ${sandbox ? 'free' : cost + ' shards'}: ${puDesc(d, lv + 1)}`);
+        up.addEventListener('click', () => { upgradePU(d.id); [...$('#puBody').querySelectorAll('.pu-up')].find(x => x.dataset.id === d.id)?.focus({ preventScroll: true }); });
+      }
+      up.dataset.id = d.id;
+      steps.append(sp, up);
+      cell.append(b, steps);
+      grid.append(cell);
+      continue;
     }
     grid.append(b);
   }
@@ -5217,6 +5707,151 @@ function renderPU() {
 $('#puBtn').addEventListener('click', () => openPU(P1));
 $('#puWho').querySelectorAll('button').forEach((b, i) => b.addEventListener('click', () => { puWho = i ? P2 : P1; renderPU(); }));
 $('#puDone').addEventListener('click', () => closePU(true));
+
+/* ---------- skills screen ---------- */
+let skillWho = P1;
+function openSkills() {
+  if (state !== 'title') return;
+  state = 'skills'; skillWho = P1; skArmed = false;
+  renderSkills();
+  $('#skillScreen').hidden = false;
+  $('#skillDone').focus({ preventScroll: true });
+}
+function closeSkills() {
+  if (state !== 'skills') return;
+  $('#skillScreen').hidden = true; state = 'title';
+  renderPetBtn(); $('#skillBtn').focus({ preventScroll: true });
+}
+const skSave = () => puSaveOf(skillWho);
+function skCommit() { if (skillWho === P2) saveSlots(); else savePets(); renderSkills(); renderPetBtn(); }
+function skDo(fn, focusSel) { const sv = skSave(); if (!sv) return; const was = skArmed; fn(sv, skData(sv)); if (was && skArmed) skArmed = false; skCommit(); if (focusSel) $(focusSel)?.focus({ preventScroll: true }); }
+const levelUp = () => skDo((sv, sk) => { const c = levelCost(sk.level); if ((sv.bank || 0) < c) return; sv.bank -= c; sk.level++; sfx('fuse'); }, '#skLevelUp');
+// reset: every spent point comes back for 50 shards each (level and power slots stay); first click arms it
+let skArmed = false;
+const respec = () => skDo((sv, sk) => {
+  const c = spentPoints(sk) * RESPEC_COST;
+  if (!c || (sv.bank || 0) < c) return;
+  if (!skArmed) { skArmed = true; return; }
+  skArmed = false; sv.bank -= c; sk.ranks = {}; sk.powers = []; sfx('fuse');
+}, '#skReset');
+const buySlot = () => skDo((sv, sk) => { const c = SLOT_COSTS[sk.slots]; if (c == null || (sv.bank || 0) < c) return; sv.bank -= c; sk.slots++; sfx('fuse'); }, '#skSlot');
+// what's open in a tree right now
+function treeState(sk, t) {
+  const pts = treePoints(sk, t), mine = sk.powers.filter(id => POWER[id].tree === t);
+  const t1 = mine.filter(id => !POWER[id].cap).length, cap = mine.some(id => POWER[id].cap);
+  return { pts, t1, cap, upperOpen: t1 > 0, canT1: (t1 === 0 && pts >= 8) || (t1 === 1 && pts >= 15), canCap: !cap && pts >= 25 };
+}
+function renderSkills() {
+  const seg = $('#skWho');
+  seg.hidden = !coop;
+  seg.querySelectorAll('button').forEach((b, i) => b.classList.toggle('on', (i === 1) === (skillWho === P2)));
+  const sv = skSave();
+  if (!sv) { $('#skBody').innerHTML = '<p class="lo-hint">Player 2 has no save of their own, so they have no levels or skills. Pick a save for Player 2 in Players.</p>'; return; }
+  const sk = skData(sv), bank = sv.bank || 0, free = freePoints(sk), cost = levelCost(sk.level);
+  const top = document.createElement('div');
+  top.className = 'sk-top';
+  top.innerHTML = `<div class="sk-lv"><small>Level</small>${sk.level}</div>
+    <div class="sk-stat pts">Skill points <b>${free}</b></div>
+    <div class="sk-stat">Shard bank <b>${bank.toLocaleString()}</b></div>
+    <button class="btn" id="skLevelUp" type="button">Level up · ${cost.toLocaleString()} shards</button>
+    <div class="sk-stat">Power slots <b>${sk.slots} / ${MAX_SLOTS}</b></div>
+    ${sk.slots >= MAX_SLOTS ? '' : `<button class="btn ghost" id="skSlot" type="button">Power slot ${sk.slots + 1} · ${SLOT_COSTS[sk.slots].toLocaleString()} shards</button>`}
+    <button class="btn ghost${skArmed ? ' armed' : ''}" id="skReset" type="button"></button>`;
+  const spent = spentPoints(sk), rc = spent * RESPEC_COST, rb = top.querySelector('#skReset');
+  if (!spent || bank < rc) skArmed = false;
+  rb.textContent = skArmed ? `Refund all ${spent} points for ${rc.toLocaleString()} shards? Click again` : spent ? `Reset skills · ${rc.toLocaleString()} shards` : 'Reset skills';
+  rb.disabled = !spent || bank < rc;
+  rb.addEventListener('click', respec);
+  top.querySelector('#skLevelUp').disabled = bank < cost;
+  top.querySelector('#skLevelUp').addEventListener('click', levelUp);
+  const sb = top.querySelector('#skSlot');
+  if (sb) { sb.disabled = bank < SLOT_COSTS[sk.slots]; sb.addEventListener('click', buySlot); }
+  const hint = document.createElement('p');
+  hint.className = 'lo-hint';
+  hint.textContent = 'Bank shards in a run (B), level up here, and spend a skill point per level. 8 points in a tree opens a choice of powers (2 points each) and the stronger skills above them; at 15 you can take a second power, and at 25 a capstone power. At the start of each run you choose a power for each power slot you own (up to 4). Reset skills refunds every point for 50 shards per point spent.';
+  const trees = document.createElement('div');
+  trees.className = 'sk-trees';
+  for (const [t, tr] of Object.entries(SKILL_TREES)) {
+    const st = treeState(sk, t), col = document.createElement('div');
+    col.className = 'sk-tree'; col.style.setProperty('--bc', tr.color);
+    const add = (cls, html) => { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; col.append(d); return d; };
+    add('sk-head', `<b>${tr.name}</b><span>${st.pts} point${st.pts === 1 ? '' : 's'} in this tree</span>`);
+    const nodeRow = (n, open) => {
+      const r = sk.ranks[n.id] || 0, d = add('sk-node' + (open ? '' : ' locked'), `<b></b><span></span><div class="sk-pips">${Array.from({ length: n.max }, (_, i) => `<i class="${i < r ? 'on' : ''}"></i>`).join('')}</div><button class="sk-plus" type="button">+</button>`);
+      d.querySelector('b').textContent = `${n.name} ${r}/${n.max}`;
+      d.querySelector('span').textContent = r ? n.desc(r) + (r < n.max ? ` (next: ${n.desc(r + 1)})` : '') : n.desc(1);
+      const b = d.querySelector('.sk-plus');
+      b.disabled = !open || r >= n.max || free < 1;
+      b.setAttribute('aria-label', `Put a point into ${n.name}`);
+      b.addEventListener('click', () => skDo((sv2, sk2) => { if (freePoints(sk2) < 1 || (sk2.ranks[n.id] || 0) >= n.max) return; sk2.ranks[n.id] = (sk2.ranks[n.id] || 0) + 1; sfx('ui'); }, null));
+    };
+    const powerList = (cap, open, gateTxt) => {
+      add('sk-gate' + (open ? '' : ' locked'), gateTxt);
+      const box = add('sk-pows', '');
+      for (const p of POWERS.filter(p => p.tree === t && p.cap === cap)) {
+        const have = sk.powers.includes(p.id), can = !have && (cap ? st.canCap : st.canT1) && free >= POWER_COST;
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'sk-pow' + (have ? ' have' : '') + (cap ? ' cap' : '');
+        b.innerHTML = '<small></small><b></b><span></span>';
+        b.querySelector('b').textContent = p.name; b.querySelector('span').textContent = p.desc;
+        b.querySelector('small').textContent = have ? 'Unlocked' : can ? `Unlock · ${POWER_COST} points` : (cap ? st.cap : st.t1 >= 2) ? 'Not chosen' : 'Locked';
+        b.disabled = !can;
+        b.addEventListener('click', () => skDo((sv2, sk2) => { const s2 = treeState(sk2, t); if (freePoints(sk2) < POWER_COST || sk2.powers.includes(p.id) || !(cap ? s2.canCap : s2.canT1)) return; sk2.powers.push(p.id); sfx('fuse'); }, null));
+        box.append(b);
+      }
+    };
+    // drawn top to bottom: capstone, stronger skills, powers, starting skills (you climb from the bottom)
+    powerList(true, st.pts >= 25, st.cap ? 'Capstone chosen' : `Capstone power · ${st.pts >= 25 ? 'choose one' : '25 points'}`);
+    add('sk-gate' + (st.upperOpen ? '' : ' locked'), st.upperOpen ? 'Stronger skills' : 'Stronger skills · take a power first');
+    for (const n of tr.upper) nodeRow(n, st.upperOpen);
+    powerList(false, st.pts >= 8, st.t1 === 0 ? `Powers · ${st.pts >= 8 ? 'choose one' : '8 points'}` : st.t1 === 1 ? `Powers · ${st.pts >= 15 ? 'choose a second' : 'a second at 15 points'}` : 'Both powers chosen');
+    add('sk-gate', 'Starting skills');
+    for (const n of tr.lower) nodeRow(n, true);
+    trees.append(col);
+  }
+  $('#skBody').replaceChildren(top, hint, trees);
+}
+$('#skillBtn').addEventListener('click', openSkills);
+$('#skillDone').addEventListener('click', closeSkills);
+$('#skWho').querySelectorAll('button').forEach((b, i) => b.addEventListener('click', () => { skillWho = i ? P2 : P1; skArmed = false; renderSkills(); }));
+
+/* ---------- choosing powers at the start of a run ---------- */
+let pickQueue = [];
+function startPowerPick() {
+  pickQueue = [];
+  for (const pl of coop ? [P1, P2] : [P1]) {
+    const sv = puSaveOf(pl); if (!sv) continue;
+    const sk = skData(sv);
+    if (!sk.powers.length) continue;
+    for (let i = 0; i < sk.slots; i++) pickQueue.push({ pl, n: i, of: sk.slots });
+  }
+  if (pickQueue.length) { state = 'powerpick'; showPick(); }
+}
+function showPick() {
+  const q = pickQueue[0];
+  if (!q) { $('#pickScreen').hidden = true; state = 'play'; return; }
+  const sk = skData(puSaveOf(q.pl)), left = sk.powers.filter(id => !q.pl.runPowers.includes(id));
+  if (!left.length) { pickQueue.shift(); return showPick(); }
+  const offer = left.sort(() => Math.random() - 0.5).slice(0, 3);
+  $('#pickEyebrow').textContent = (coop ? (q.pl === P2 ? 'Player 2 · ' : 'Player 1 · ') : '') + (q.of > 1 ? `Power ${q.n + 1} of ${q.of}` : 'Choose a power');
+  $('#pickTitle').textContent = 'Pick one for this run';
+  $('#pickGrid').replaceChildren(...offer.map((id, i) => {
+    const p = POWER[id], b = document.createElement('button');
+    b.type = 'button'; b.className = 'pick-card'; b.style.setProperty('--bc', SKILL_TREES[p.tree].color);
+    b.innerHTML = `<small>${SKILL_TREES[p.tree].name}${p.cap ? ' · capstone' : ''}</small><b></b><span></span><kbd>${i + 1}</kbd>`;
+    b.querySelector('b').textContent = p.name; b.querySelector('span').textContent = p.desc;
+    b.addEventListener('click', () => {
+      q.pl.runPowers.push(id);
+      withPlayer(q.pl, () => { recompute(); P.hp = S.maxHp; });
+      sfx('fuse'); pickQueue.shift();
+      showPick();
+      if (state === 'play') banner(p.name, 'Power active for this run');
+    });
+    return b;
+  }));
+  $('#pickScreen').hidden = false;
+  $('#pickGrid .pick-card').focus({ preventScroll: true });
+}
 function openPets() {
   if (state !== 'title' && state !== 'loadout') return;
   petReturn = state; state = 'pets'; slotArmed = null; slotMsg = '';
@@ -5336,14 +5971,16 @@ function renderLoPet() {
   btn.type = 'button'; btn.className = 'sb-btn'; btn.textContent = 'Change pet';
   btn.addEventListener('click', openPets);
   box.append(now, btn);
-  const lw = loPlayer === P2 ? P2 : P1, pubox = $('#loPU'), on = [...puOn[lw === P2 ? 1 : 0]].map(id => PUD[id]);
+  const lw = loPlayer === P2 ? P2 : P1, pubox = $('#loPU'), on = [...puOn[lw === P2 ? 1 : 0].keys()].map(id => PUD[id]);
   const pnow = document.createElement('span');
   pnow.className = 'mode-note';
-  pnow.textContent = on.length ? on.map(d => d.name).join(' · ') : 'No power-ups slotted in.';
-  const pbtn = document.createElement('button');
-  pbtn.type = 'button'; pbtn.className = 'sb-btn'; pbtn.textContent = 'Change power-ups';
-  pbtn.addEventListener('click', () => openPU(lw));
-  pubox.replaceChildren(pnow, pbtn);
+  pnow.textContent = (on.length ? on.map(d => d.name).join(' · ') : 'No power-ups slotted in.') + (sandbox ? '' : ' Change them from the title screen between runs.');
+  if (sandbox) {
+    const pbtn = document.createElement('button');
+    pbtn.type = 'button'; pbtn.className = 'sb-btn'; pbtn.textContent = 'Change power-ups';
+    pbtn.addEventListener('click', () => openPU(lw));
+    pubox.replaceChildren(pnow, pbtn);
+  } else pubox.replaceChildren(pnow);
 }
 /* ---------- dungeon ---------- */
 // Each run builds a fresh floor: a maze of rooms on a grid with a boss at the far end,
@@ -7182,11 +7819,12 @@ function toTitle() {
   state = 'title';
 }
 // the pause screen's damage breakdown: what share of your damage each weapon dealt this run
-const DMG_KIND_COLOR = { bolts: 'var(--bolt)', active: 'var(--shard)', passive: 'var(--rare)', pet: 'var(--legendary)' };
+const DMG_KIND_COLOR = { bolts: 'var(--bolt)', active: 'var(--shard)', passive: 'var(--rare)', pet: 'var(--legendary)', power: 'var(--fusion)' };
 function dmgLabel(src, pl) {
   if (src === 'bolts') return { name: 'Bolts', kind: 'bolts' };
   if (src === 'blades') return { name: AB.halo && L('halo') && !L('orbit') ? AB.halo.name : 'Orbiting Blades', kind: 'passive' };
   if (src === 'pets') return { name: 'Pets', kind: 'pet' };
+  if (POWER[src]) return { name: POWER[src].name, kind: 'power' };
   const a = AB[src];
   return { name: a ? a.name : src, kind: a?.kind === 'active' ? 'active' : 'passive' };
 }
@@ -7364,9 +8002,53 @@ function tickWhirl(dt) {
     if (Math.hypot(sh.m.position.x - P.pos.x, sh.m.position.z - P.pos.z) < 2.8) { burst(sh.m.position.x, 1.2, sh.m.position.z, 0x6fe3d6, 4, 3); scene.remove(sh.m); shots.splice(i, 1); }
   }
 }
+function tickPowers(dt) {
+  const heal = n => { if (P.hp > 0 && !P.down) P.hp = Math.min(S.maxHp, P.hp + n); };
+  if (S.regen) heal(S.regen * dt);
+  if (!P.runPowers?.length) return;
+  if (hasPower('pw_regrowth') && T - (P.hurtAt ?? -9) > 3) heal(3 * dt);
+  if (P.bloodT > 0) P.bloodT -= dt;
+  if (P.frostCd > 0) P.frostCd -= dt;
+  if (hasPower('pw_barrier') && !P.shield) {
+    P.barrierT = (P.barrierT ?? 10) - dt;
+    if (P.barrierT <= 0) { P.barrierT = 10; P.shield = true; ring(P.pos.x, P.pos.z, 0.3, 1.6, 0.4, 0x9fd8ff); sfx('shield'); }
+  }
+  if (hasPower('pw_storm')) {
+    P.stormT = (P.stormT ?? 3) - dt;
+    if (P.stormT <= 0) {
+      P.stormT = 3;
+      const near = enemies.filter(e => !e.dead && !e.hidden && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 12)
+        .sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z)).slice(0, 3);
+      for (const e of near) {
+        zap([{ x: e.pos.x, z: e.pos.z, y: 9 }, { x: e.pos.x, z: e.pos.z }]); burst(e.pos.x, 1, e.pos.z, 0xffe08a, 8, 4);
+        withSrc('pw_storm', () => damageEnemy(e, S.damage * 3, 0, 0));
+      }
+      if (near.length) sfx('zap');
+    }
+  }
+  if (hasPower('pw_aura')) {
+    P.auraT = (P.auraT ?? 0.5) - dt;
+    if (P.auraT <= 0) {
+      P.auraT = 0.5;
+      let dealt = 0;
+      for (const e of enemies) {
+        if (e.dead || e.hidden || Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) > 4 + e.r) continue;
+        const before = e.hp; withSrc('pw_aura', () => damageEnemy(e, S.damage * 0.25)); dealt += before - Math.max(0, e.hp);
+        burst(e.pos.x, 1, e.pos.z, 0xff4f6a, 2, 2);
+      }
+      heal(dealt * 0.3);
+    }
+  }
+  if (hasPower('pw_chrono')) {
+    P.chronoT = (P.chronoT ?? 25) - dt;
+    if (P.chronoT <= 0) { P.chronoT = 25; warpT = Math.max(warpT, 3); ring(P.pos.x, P.pos.z, 0.5, 14, 0.8, 0x6fb8ff); sfx('cast', 'warp'); }
+  }
+}
 function tickAbilities(dt) {
   for (const id in cds) cds[id] = Math.max(0, cds[id] - dt);
-  if (PU('pu_secondwind') && P.hp > 0 && !P.down) P.hp = Math.min(S.maxHp, P.hp + 1.5 * dt);
+  tickPowers(dt);
+  if (P.cryT > 0) { P.cryT -= dt; if (Math.random() < dt * 12) burst(P.pos.x + rand(-0.4, 0.4), 0.4, P.pos.z + rand(-0.4, 0.4), 0xff6a3a, 1, 1.5); }
+  if (PU('pu_secondwind') && P.hp > 0 && !P.down) P.hp = Math.min(S.maxHp, P.hp + PV('pu_secondwind', 'regen') * dt);
   if (P.regenT > 0) {
     P.regenT -= dt; P.hp = Math.min(S.maxHp, P.hp + P.regen * dt);
     if (Math.random() < dt * 14) burst(P.pos.x + rand(-0.5, 0.5), 0.3, P.pos.z + rand(-0.5, 0.5), 0x7fe08a, 1, 1);
@@ -7410,7 +8092,7 @@ function tickAutoPassives(dt) {
       f.m.material.opacity = 0.5 * Math.max(0, 1 - f.t / f.dur);
       if (tick) for (const e of enemies) {
         if (e.dead || hit.has(e) || Math.hypot(e.pos.x - f.x, e.pos.z - f.z) > 1.1 + e.r) continue;
-        hit.add(e); withSrc('trail', () => damageEnemy(e, S.damage * (0.3 + 0.1 * S.trail) * (PU('pu_hotembers') ? 2 : 1)));
+        hit.add(e); withSrc('trail', () => damageEnemy(e, S.damage * (0.3 + 0.1 * S.trail) * (PV('pu_hotembers', 'mul') || 1)));
         if (Math.random() < 0.3) burst(e.pos.x, 0.4, e.pos.z, 0xff7a2f, 2, 2);
       }
       if (f.t >= f.dur) { scene.remove(f.m); f.m.material.dispose(); P.trail.splice(i, 1); }
@@ -7420,9 +8102,9 @@ function tickAutoPassives(dt) {
   if (S.static) {
     P.staticT = (P.staticT ?? 1.5) - dt;
     if (P.staticT <= 0) {
-      P.staticT = PU('pu_overload') ? 1 : 1.5;
+      P.staticT = PV('pu_overload', 'cd') || 1.5;
       const near = enemies.filter(e => !e.dead && !e.hidden && Math.hypot(e.pos.x - P.pos.x, e.pos.z - P.pos.z) < 5.5 + e.r)
-        .sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z)).slice(0, 1 + S.static + (PU('pu_overload') ? 2 : 0));
+        .sort((a, b) => Math.hypot(a.pos.x - P.pos.x, a.pos.z - P.pos.z) - Math.hypot(b.pos.x - P.pos.x, b.pos.z - P.pos.z)).slice(0, 1 + S.static + (PV('pu_overload', 'extra') || 0));
       for (const e of near) { zap([{ x: P.pos.x, z: P.pos.z }, { x: e.pos.x, z: e.pos.z }]); withSrc('static', () => damageEnemy(e, S.damage * (1.2 + 0.3 * S.static), e.pos.x - P.pos.x, e.pos.z - P.pos.z, 2)); }
       ffZap(P.pos.x, P.pos.z, 5.5, S.damage * (1.2 + 0.3 * S.static));
       if (near.length) sfx('zap');
@@ -7505,7 +8187,7 @@ function updateP2(dt) {
     if (p.boxing) { mx = 0; mz = 0; }
     const ml = Math.hypot(mx, mz); if (ml > 1) { mx /= ml; mz /= ml; }
     if (p.dashT > 0) { p.dashT -= dt; p.pos.x += p.dashDir.x * 26 * dt; p.pos.z += p.dashDir.z * 26 * dt; }
-    else { const sp = S.speed * (p.whirlT > 0 ? 1.3 : 1); p.pos.x += mx * sp * dt; p.pos.z += mz * sp * dt; }
+    else { const sp = S.speed * moveBoost(p) * (p.whirlT > 0 ? 1.3 : 1); p.pos.x += mx * sp * dt; p.pos.z += mz * sp * dt; }
     const pr = Math.hypot(p.pos.x, p.pos.z);
     if (pr > ARENA_R) { p.pos.x *= ARENA_R / pr; p.pos.z *= ARENA_R / pr; }
     for (const o of obstacles) {
@@ -7524,7 +8206,7 @@ function updateP2(dt) {
       else if (ml > 0.1) p.face.set(mx / ml, 0, mz / ml);
     }
     p.fireT -= dt;
-    if (fire && p.fireT <= 0) { shoot(p); p.fireT = 1 / (S.fireRate * (warpT > 0 ? 1.3 : 1)); }
+    if (fire && p.fireT <= 0) { shoot(p); p.fireT = 1 / (S.fireRate * (warpT > 0 ? 1.3 : 1) * rateBoost(p)); }
     p.naturalT -= dt;
     if (p.naturalT <= 0) { p.naturalT = 5; if (p.hp < S.maxHp) p.hp = Math.min(S.maxHp, p.hp + 2); }
     p.hp = Math.min(p.hp, S.maxHp);
@@ -7577,7 +8259,7 @@ function fillHalfCard(pl, card) {
     opts.push({ label: 'Claim' });
   } else if (a.isPU) {
     const t = puCardText(a, pl);
-    rarity = t.rarity; name = a.name; desc = a.desc; lvl = t.lvl;
+    rarity = t.rarity; name = a.name; desc = puDesc(a); lvl = t.lvl;
     opts.push({ label: 'Claim' });
   } else if (a.isPet) {
     const sv = pl === P2 ? p2Save() : null, curId = sv ? sv.equipped : petSave.equipped, cur = curId && PET[curId];
@@ -7673,7 +8355,30 @@ function hideHalfReveals() {
   for (const pl of [P1, P2]) { pl.boxing = false; pl.pending = null; pl.revealReady = false; halfRoot(pl).hidden = true; }
 }
 let camZoom = 1;
+// each player's recent velocity (smoothed), so monsters like the Spitter can lead their aim
+function trackVelocity(dt) {
+  if (dt <= 0) return;
+  for (const pl of [P1, P2]) {
+    const pv = pl.prevPos;
+    if (pv) {
+      let vx = (pl.pos.x - pv.x) / dt, vz = (pl.pos.z - pv.z) / dt;
+      const sp = Math.hypot(vx, vz);
+      if (sp > 40) vx = vz = 0;   // a teleport or room change, not running
+      const k = 1 - Math.exp(-dt * 8);
+      pl.vx = (pl.vx || 0) + (vx - (pl.vx || 0)) * k; pl.vz = (pl.vz || 0) + (vz - (pl.vz || 0)) * k;
+    }
+    pl.prevPos = { x: pl.pos.x, z: pl.pos.z };
+  }
+}
+// where the current player will be in t seconds if they keep going the same way (kept inside the arena)
+function leadAim(t, frac = 1) {
+  const v = Math.hypot(P.vx || 0, P.vz || 0), k = v ? Math.min(v, 14) / v * frac : 0;
+  let x = P.pos.x + (P.vx || 0) * k * t, z = P.pos.z + (P.vz || 0) * k * t;
+  if (!lab) { const r = Math.hypot(x, z), lim = ARENA_R - 0.5; if (r > lim) { x *= lim / r; z *= lim / r; } }
+  return { x, z };
+}
 function update(dt) {
+  trackVelocity(dt);
   switchWorld(worldOf(P1));
   if (!worldsSplit()) return updateWorld(dt, 0);
   // the players are in different rooms: Player 1's room, then Player 2's room with Player 2 standing in as P
@@ -7713,13 +8418,13 @@ function updateWorld(dt, pass) {
     burst(P.pos.x, 0.9, P.pos.z, 0x6fe3d6, 1, 1);
   } else if (dungeon && D && D.cur && D.cur.type === 'ice') {
     // on ice you build speed slowly and keep sliding
-    const sp = S.speed * P.slowMul;
+    const sp = S.speed * P.slowMul * moveBoost(P);
     P.vx += mx * sp * 2.2 * dt; P.vz += mz * sp * 2.2 * dt;
     const v = Math.hypot(P.vx, P.vz), cap = sp * 1.5;
     if (v > cap) { P.vx *= cap / v; P.vz *= cap / v; }
     const fr = Math.exp(-dt * 0.5); P.vx *= fr; P.vz *= fr;
     P.pos.x += P.vx * dt; P.pos.z += P.vz * dt;
-  } else { const sp = S.speed * P.slowMul * (P.whirlT > 0 ? 1.3 : 1); P.pos.x += mx * sp * dt; P.pos.z += mz * sp * dt; }
+  } else { const sp = S.speed * P.slowMul * moveBoost(P) * (P.whirlT > 0 ? 1.3 : 1); P.pos.x += mx * sp * dt; P.pos.z += mz * sp * dt; }
   const pr = Math.hypot(P.pos.x, P.pos.z);
   if (pr > ARENA_R) {
     P.pos.x *= ARENA_R / pr; P.pos.z *= ARENA_R / pr;
@@ -7785,7 +8490,7 @@ function updateWorld(dt, pass) {
   } else if (pad.active && !coop) aimWorld.set(P.pos.x + P.face.x * 9, 0, P.pos.z + P.face.z * 9);
   else aimWorld.copy(aimPt);
   P.fireT -= dt;
-  if (wantFire && !P.down && !P.boxing && P.fireT <= 0) { shoot(); P.fireT = 1 / (S.fireRate * (warpT > 0 ? 1.3 : 1)); }
+  if (wantFire && !P.down && !P.boxing && P.fireT <= 0) { shoot(); P.fireT = 1 / (S.fireRate * (warpT > 0 ? 1.3 : 1) * rateBoost(P)); }
 
   // player visuals
   pg.position.set(P.pos.x, ml > 0.1 ? Math.abs(Math.sin(T * 11)) * 0.12 : 0, P.pos.z);
@@ -7806,7 +8511,7 @@ function updateWorld(dt, pass) {
   }
 
   // bolts
-  const mirrors = enemies.filter(e => e.type === 'reflector' && !e.dead && e.spawn >= 1 && e.mirror);
+  const mirrors = enemies.filter(e => e.type === 'reflector' && !e.dead && e.spawn >= 1 && e.mirror && !(e.mirrorT > 0));
   for (let i = bolts.length - 1; i >= 0; i--) {
     const b = bolts[i];
     // Seeker Bolts: turn a little toward the nearest monster
@@ -7835,7 +8540,7 @@ function updateWorld(dt, pass) {
       }
       if (hit) {
         b.m.rotation.y = Math.atan2(b.vx, b.vz); burst(b.m.position.x, 1.15, b.m.position.z, 0x6fe3d6, 2, 2);
-        if (!b.hardBounced && puOn[b.owner === P2 ? 1 : 0].has('pu_hardbounce')) { b.hardBounced = true; b.mul *= 1.5; }   // the bolt owner's Hard Bounce power-up
+        if (!b.hardBounced && PV('pu_hardbounce', 'mul', b.owner)) { b.hardBounced = true; b.mul *= PV('pu_hardbounce', 'mul', b.owner); }   // the bolt owner's Hard Bounce power-up
       }
     }
     if (!dead && (dungeon || lab)) dead = boltHitsWall(b);
@@ -7892,6 +8597,13 @@ function updateWorld(dt, pass) {
     const dx = tgt.pos.x - e.pos.x, dz = tgt.pos.z - e.pos.z, d = Math.hypot(dx, dz) || 1;
     const dirx = dx / d, dirz = dz / d;
     e.slowT -= dt; e.freezeT -= dt;
+    // Incendiary Rounds: burning monsters take damage over time
+    if (e.burnT > 0) {
+      e.burnT -= dt;
+      withPlayer(e.burnBy || P1, () => withSrc('pw_burn', () => damageEnemy(e, e.burnDps * dt)));
+      if (Math.random() < dt * 10) burst(e.pos.x + rand(-0.3, 0.3), 0.8 + e.r * 0.5, e.pos.z + rand(-0.3, 0.3), Math.random() < 0.5 ? 0xff8a3d : 0xffd36e, 1, 1.2);
+      if (e.dead) continue;
+    }
     const frozen = e.freezeT > 0;
     const spd = frozen || e.stunT > 0 ? 0 : e.speed * (e.slowT > 0 ? 1 - e.slowAmt : 1);
     let move = 1;
@@ -7928,7 +8640,7 @@ function updateWorld(dt, pass) {
       if (Math.random() < dt * 30) burst(e.pos.x, 0.3, e.pos.z, e.color, 2, 3);
       if (e.type === 'capyboss' && Math.hypot(e.pos.x, e.pos.z) > ARENA_R - e.r - 0.3) {
         e.chargeT = 0; shake = Math.max(shake, 0.5); sfx('boom', 0.8);
-        burst(e.pos.x, 1, e.pos.z, 0xa0703c, 24, 7); stun(e, 3.5, 'Dizzy!');
+        burst(e.pos.x, 1, e.pos.z, 0xa0703c, 24, 7); e.chargesLeft = 0; stun(e, 1.8, 'Dizzy!');
       }
       if (e.type === 'colossus') {
         e.trailT = (e.trailT || 0) - dt;
@@ -8063,11 +8775,17 @@ function updateWorld(dt, pass) {
     h.g.scale.setScalar(Math.max(0.01, Math.min(1, h.t / 0.3, (h.dur - h.t) / 0.25 + 0.2)));
     h.disk.rotation.z += dt * 5; h.disk2.rotation.z -= dt * 3; h.halo.rotation.z += dt;
     h.core.scale.setScalar(1 + Math.sin(h.t * 18) * 0.06);
+    // its hum gets louder the closer you are, and swells at the end; then it drags everything in before the boom
+    const near = Math.min(...(coop ? [P1, P2] : [P1]).filter(here).map(pl => Math.hypot(pl.pos.x - h.x, pl.pos.z - h.z)), 99);
+    const close = Math.max(0, Math.min(1, 1 - (near - h.r * 0.4) / (h.r * 2.2)));
+    h.close = close;
+    h.hum?.keep((0.28 + 0.5 * close) * Math.min(1, h.t / 0.4) * (1 + 0.6 * Math.max(0, 1 - (h.dur - h.t) / 1.3)));
+    if (!h.sucked && !h.well && h.dur - h.t <= 1.3) { h.sucked = true; sfx('horizonSuck'); }
     for (const e of enemies) {
       if (e.dead || e.anchored) continue;
       const dx = h.x - e.pos.x, dz = h.z - e.pos.z, d = Math.hypot(dx, dz);
       if (d < h.r + e.r && d > 0.3) {
-        const pull = (e.boss ? 1.5 : 8) * (1.2 - d / (h.r + e.r));
+        const pull = (e.boss ? 1.5 : 8) * (h.pullMul || 1) * (1.2 - d / (h.r + e.r));
         e.pos.x += dx / d * pull * dt; e.pos.z += dz / d * pull * dt;
       }
     }
@@ -8082,11 +8800,12 @@ function updateWorld(dt, pass) {
     }
     if (h.t >= h.dur) {
       withPlayer(h.owner || P1, () => withSrc(h.src, () => areaDamage(h.x, h.z, h.r * 0.7, h.boom, 16)));
-      ring(h.x, h.z, 0.5, h.r + 2, 0.6, 0xff4fa3);
+      ring(h.x, h.z, 0.5, h.r + 2, 0.6, h.well ? 0x7a8cff : 0xff4fa3);
       ring(h.x, h.z, 0.3, h.r * 0.6, 0.35, 0xffffff);
       burst(h.x, 1.2, h.z, 0xff4fa3, 50, 12); burst(h.x, 1.2, h.z, 0x050008, 20, 8);
-      shake = Math.max(shake, 0.5);
-      sfx('collapse');
+      shake = Math.max(shake, h.well ? 0.3 : 0.5);
+      sfx(h.well ? 'boom' : 'collapse', 1.2);
+      h.hum?.stop();
       scene.remove(h.g);
       holes.splice(i, 1);
     }
@@ -8103,7 +8822,7 @@ function updateWorld(dt, pass) {
     m.rock.rotation.x += dt * 6;
     if (k >= 1) {
       withPlayer(m.owner || P1, () => withSrc(m.src, () => areaDamage(m.x, m.z, m.r, m.dmg, 12)));
-      sfx('meteorImpact');
+      if (m.small) sfx('boom', 0.6); else sfx('meteorImpact');
       if (m.chain) withPlayer(m.owner || P1, () => withSrc(m.src, () => chainFrom(m.x, m.z, m.chain, m.chainDmg, m.r + 10)));
       ring(m.x, m.z, 0.5, m.r + 1.5, 0.45, 0xff8a3d);
       burst(m.x, 0.5, m.z, 0xff8a3d, Math.round(m.r * 8), m.r * 2.5);
@@ -8140,6 +8859,7 @@ function updateWorld(dt, pass) {
     if (d < 0.8) {
       if (g.split) creditSplit(g.split, g.value); else addShardsTo(gp, g.value);
       shardsTotal += g.value; sfx('gem');
+      if (hasPower('pw_siphon', gp) && gp.hp > 0) gp.hp = Math.min(buildOf(gp).S.maxHp || 100, gp.hp + 0.5 * g.value);
       const sb = $('#shardBox'); sb.classList.remove('pulse'); void sb.offsetWidth; sb.classList.add('pulse');
       scene.remove(g.m); gems.splice(i, 1); continue;
     }
@@ -8262,6 +8982,87 @@ function updateHUD() {
 }
 
 /* ---------- loop ---------- */
+// Event Horizon bends space: when a black hole is on screen, the scene is drawn to a texture first and then
+// pulled and twisted around each hole, more strongly the closer a player is to it (single screen only)
+const Warp = (() => {
+  let rt = null;
+  const MAX = 4;
+  const mat = new THREE.ShaderMaterial({
+    uniforms: {
+      tScene: { value: null }, uAspect: { value: 1 }, uTime: { value: 0 }, uGlobal: { value: 0 },
+      uC: { value: Array.from({ length: MAX }, () => new THREE.Vector2()) }, uR: { value: new Array(MAX).fill(0) }, uS: { value: new Array(MAX).fill(0) },
+    },
+    vertexShader: 'varying vec2 vUv; void main() { vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
+    fragmentShader: `
+      uniform sampler2D tScene; uniform float uAspect, uTime, uGlobal;
+      uniform vec2 uC[${MAX}]; uniform float uR[${MAX}], uS[${MAX}];
+      varying vec2 vUv;
+      vec2 bend(vec2 uv, float k) {
+        for (int i = 0; i < ${MAX}; i++) {
+          if (uS[i] <= 0.0) continue;
+          vec2 d = uv - uC[i]; d.x *= uAspect;
+          float r = length(d), R = uR[i];
+          if (r > R * 1.4) continue;
+          float f = 1.0 - smoothstep(0.0, R * 1.4, r);
+          float a = uS[i] * (1.15 * f * f + 0.07 * sin(uTime * 3.0 + r * 40.0) * f);   // swirl, with a ripple
+          float c = cos(a), s = sin(a);
+          d = mat2(c, -s, s, c) * d;
+          d *= 1.0 + uS[i] * k * 0.55 * f * f;   // sample from farther out, so space looks dragged inward
+          d.x /= uAspect;
+          uv = uC[i] + d;
+        }
+        return uv;
+      }
+      void main() {
+        vec2 uv = vUv;
+        // standing near a hole makes the whole screen breathe
+        vec2 q = uv - 0.5;
+        uv += q * uGlobal * 0.025 * sin(uTime * 5.0 + length(q) * 18.0);
+        float spread = 0.06 * (1.0 + uGlobal);
+        float r = texture2D(tScene, bend(uv, 1.0 + spread)).r;
+        float g = texture2D(tScene, bend(uv, 1.0)).g;
+        float b = texture2D(tScene, bend(uv, 1.0 - spread)).b;
+        vec3 col = vec3(r, g, b);
+        float vig = smoothstep(0.35, 0.95, length(q * vec2(uAspect, 1.0)));
+        col = mix(col, col * vec3(0.55, 0.3, 0.65), vig * uGlobal * 0.8);   // a purple-dark vignette when you're close
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+    depthTest: false, depthWrite: false, toneMapped: false,
+  });
+  const quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
+  quad.frustumCulled = false;
+  const scn = new THREE.Scene(); scn.add(quad);
+  const cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  const v = new THREE.Vector3(), v2 = new THREE.Vector3(), size = new THREE.Vector2();
+  // returns false when there's nothing to bend, so the caller draws normally
+  function render(sc, camr, list, t) {
+    if (!list.length || reduceMotion) return false;
+    renderer.getDrawingBufferSize(size);
+    if (!rt || rt.width !== size.x || rt.height !== size.y) { rt?.dispose(); rt = new THREE.WebGLRenderTarget(size.x, size.y, { samples: 4, stencilBuffer: true }); }   // stencil gets a 24-bit depth buffer, so flat floor layers don't flicker
+    const U = mat.uniforms;
+    U.uAspect.value = size.x / size.y; U.uTime.value = t;
+    let glob = 0;
+    for (let i = 0; i < MAX; i++) {
+      const h = list[i];
+      U.uS.value[i] = 0;
+      if (!h) continue;
+      v.set(h.x, 1, h.z).project(camr);
+      if (v.z > 1) continue;
+      v2.set(h.x + h.r, 1, h.z).project(camr);
+      U.uC.value[i].set(v.x * 0.5 + 0.5, v.y * 0.5 + 0.5);
+      U.uR.value[i] = Math.hypot((v2.x - v.x) * 0.5 * U.uAspect.value, (v2.y - v.y) * 0.5);
+      const grow = Math.min(1, h.t / 0.4, (h.dur - h.t) / 0.25 + 0.2);
+      U.uS.value[i] = (0.2 + 0.8 * (h.close || 0) ** 1.5) * grow * (h.well ? 0.5 : 1);
+      glob = Math.max(glob, (h.close || 0) * grow);
+    }
+    U.uGlobal.value = glob;
+    renderer.setRenderTarget(rt); renderer.render(sc, camr);
+    U.tScene.value = rt.texture;
+    renderer.setRenderTarget(null); renderer.render(scn, cam);
+    return true;
+  }
+  return { render };
+})();
 function resize() {
   renderer.setSize(innerWidth, innerHeight, false);
   const asp = (splitView ? innerWidth / 2 : innerWidth) / innerHeight;
@@ -8360,7 +9161,7 @@ function frame() {
     renderer.setViewport(0, 0, w / 2, h); renderer.setScissor(0, 0, w / 2, h); renderer.render(scene, camera);
     renderer.setViewport(w / 2, 0, w / 2, h); renderer.setScissor(w / 2, 0, w / 2, h); renderer.render(sceneOf(worldOf(P2)), camera2);
     renderer.setScissorTest(false); renderer.setViewport(0, 0, w, h);
-  } else renderer.render(scene, camera);
+  } else if (!Warp.render(scene, camera, holes, T)) renderer.render(scene, camera);
 }
 
 if (touchMode) {
