@@ -1154,6 +1154,7 @@ const Sound = (() => {
         horizon: () => {},
         tremor: () => {},
         glacialquake: () => C.glacier(),
+        trance: () => { C.warp(); C.warcry(); },
         whirl: () => { for (let i = 0; i < 7; i++) noise({ at: i * 0.38, dur: 0.36, vol: 0.12, f: 500, f2: 1800, q: 1.2 }); },
         warp: () => {
           tone({ f: 1400, f2: 90, dur: 1.2, vol: 0.12 });
@@ -1496,6 +1497,8 @@ const ABILITIES = [
     desc: l => `Bolts bounce to ${l + 1} more monsters, losing only 10% damage per bounce, and explode on every hit for ${40 + 10 * l}% splash within ${(2 + 0.5 * l).toFixed(1)} m.` },
   { id: 'glacialquake', kind: 'active', tier: 'fusion', fusion: ['tremor', 'glacier'], name: 'Glacial Quake', cd: l => 11 - 0.8 * l,
     desc: l => `Stomp out 4 freezing shockwaves that reach ${9 + 0.5 * l} m. Each hits for ${2 + 0.5 * l}x damage and freezes monsters solid for ${(1.5 + 0.2 * l).toFixed(1)} s.` },
+  { id: 'trance', kind: 'active', tier: 'fusion', fusion: ['warcry', 'warp'], name: 'Battle Trance', cd: l => 22 - 1.5 * l,
+    desc: l => `For ${5 + 0.5 * l} s, slow every monster and enemy attack to 40% speed, fire ${60 + 10 * l}% faster and move 30% faster. Each kill while it lasts adds 0.25 s, up to 3 s more.` },
   { id: 'halo', kind: 'passive', tier: 'fusion', fusion: ['orbit', 'frost'], name: 'Glacial Halo',
     desc: l => `${l + 1} icy blades circle you, hitting for 2.5x damage and freezing monsters solid for 1 s. Your bolts also slow monsters by ${30 + 10 * l}%.` },
 ];
@@ -2658,7 +2661,7 @@ const TYPES = {
   brood:    { hp: 1800, speed: 2.0, dmg: 26, r: 2.3, sy: 0.7, color: 0x9a7a32, emissive: 0x1a1000, shards: 70,  geo: 'blob', boss: true, name: 'The Brood Mother', intro: 'Lobs acid, hatches skitters, and channels a Brood Call that floods the arena with monsters' },
   darklord: { hp: 4200, speed: 2.0, dmg: 21, r: 2.3, sy: 1.25, color: 0x2a1838, emissive: 0x3a0a4a, shards: 130, geo: 'octa', float: true, horns: true, crown: true, boss: true, name: 'The Dark Lord', intro: 'Commands storms of dark bolts: rings that close in from every edge of the arena, and a rain from the sky that leaves only a few spots safe' },
   capyboss:  { hp: 2800, speed: 3.0, dmg: 24, r: 2.2, sy: 0.8, color: 0xa0703c, emissive: 0x000000, shards: 0, geo: 'blob', noEyes: true, model: 'capy', modelScale: 4.4, boss: true, name: 'The Capybara Horde', intro: 'A giant capybara that charges again and again where you’re heading, belly-flops onto you, lobs yuzus, and sends its whole herd hunting you' },
-  owlboss:   { hp: 1700, speed: 3.0, dmg: 24, r: 1.8, sy: 1.0, color: 0x9fd8ff, emissive: 0x0a2236, shards: 0, geo: 'octa', float: true, noEyes: true, model: 'owl', modelScale: 3.2, boss: true, name: 'The Blizzard Owl', intro: 'Dives out of the sky onto you, throws fans of ice feathers, and freezes the ground in a ring around you' },
+  owlboss:   { hp: 1700, speed: 3.0, dmg: 24, r: 1.8, sy: 1.0, color: 0x9fd8ff, emissive: 0x0a2236, shards: 0, geo: 'octa', float: true, noEyes: true, model: 'owl', modelScale: 3.2, boss: true, name: 'The Blizzard Owl', intro: 'Dives out of the sky onto you, throws fans of ice feathers, and freezes the ground in a ring around you. Make it miss a dive onto old snow and it gets stuck' },
   drakeboss: { hp: 1900, speed: 3.2, dmg: 26, r: 1.9, sy: 1.0, color: 0x6fb8ff, emissive: 0x0a2a44, shards: 0, geo: 'octa', float: true, noEyes: true, model: 'drake', modelScale: 3.0, boss: true, name: 'The Tempest Drake', intro: 'Calls lightning down around you, breathes a long line of storms, and swoops across the arena' },
   warden:   { hp: 2200, speed: 2.0, dmg: 26, r: 2.0, sy: 1.2, color: 0xd8d0bc, emissive: 0x1a1408, shards: 70, geo: 'dodeca', horns: true, boss: true, name: 'The Bone Warden', intro: 'Raises the dead, hurls rings of bone, and sends rows of bone spears bursting out of the ground' },
   stalker:  { hp: 2600, speed: 4.0, dmg: 28, r: 1.6, sy: 1.3, color: 0x6a3a9a, emissive: 0x2a0a4a, shards: 90, geo: 'octa', float: true, boss: true, name: 'The Rift Stalker', intro: 'Blinks right next to you and slashes, and tears open rifts that spray bolts' },
@@ -2943,7 +2946,7 @@ function fireBolt(x, z, a, y = 1.15, extra) {
 // War Cry and Adrenaline speed you up for a while: how much faster to fire and move right now
 const adrenalOn = pl => S.adren && pl.hp < S.maxHp * 0.4;
 const rateBoost = pl => (pl.cryT > 0 ? 1 + pl.cryRate : 1) * (adrenalOn(pl) ? 1 + 0.15 * S.adren : 1);
-const moveBoost = pl => (pl.cryT > 0 ? 1.2 : 1) * (adrenalOn(pl) ? 1 + 0.08 * S.adren : 1);
+const moveBoost = pl => (pl.cryT > 0 ? (pl.trance ? 1.3 : 1.2) : 1) * (adrenalOn(pl) ? 1 + 0.08 * S.adren : 1);
 function shoot(who = P) {
   const n = S.projectiles, base = Math.atan2(who.face.x, who.face.z);
   // Overcharge: every so often the whole volley fires as overcharged bolts
@@ -3088,6 +3091,7 @@ function killEnemy(e) {
   withPlayer(e.lastHit || P1, () => {
     const heal = (S.vamp || 0) + (PV('pu_fang', 'heal') || 0) + (S.killHeal || 0);
     if (heal && P.hp > 0) P.hp = Math.min(S.maxHp, P.hp + heal);
+    if (P.trance && P.cryT > 0 && P.tranceExt < 3) { P.tranceExt += 0.25; P.cryT += 0.25; if (warpT > 0) warpT += 0.25; }
     if (hasPower('pw_bloodlust')) { P.blood = Math.min(10, (P.bloodT > 0 ? P.blood || 0 : 0) + 1); P.bloodT = 6; }
   });
   if (e.boss) { banner(`${TYPES[e.type].name.replace('The ', '')} slain`, `+${e.shards} shards`); shake = 0.6; ring(e.pos.x, e.pos.z, 0.5, 10, 0.7, 0xc77dff); }
@@ -3323,19 +3327,24 @@ function blackRain(e) {
   });
   const dmg = Math.round(e.dmg * 0.7);
   e.lightDmg = 0;
+  // strikes next to a safe spot shrink, so each one leaves a clear patch this wide to move around in
+  const CLEAR = 3.4, safes = cells.slice(0, safe);
   cells.forEach((c, k) => {
     if (k < safe) {
       const disc = new THREE.Mesh(G.disc, new THREE.MeshBasicMaterial({ color: 0xffd36e, transparent: true, opacity: 0, depthWrite: false }));
-      disc.rotation.x = -Math.PI / 2; disc.position.set(c.x, 0.05, c.z); disc.scale.setScalar(cell * 0.5);
+      disc.rotation.x = -Math.PI / 2; disc.position.set(c.x, 0.05, c.z); disc.scale.setScalar(CLEAR - 0.4);
       scene.add(disc);
-      lightPools.push({ x: c.x, z: c.z, r: cell * 0.5, t: 0, dur: 6.5, disc });
+      lightPools.push({ x: c.x, z: c.z, r: CLEAR - 0.4, t: 0, dur: 6.5, disc });
       return;
     }
+    const gap = Math.min(...safes.map(sc => Math.hypot(c.x - sc.x, c.z - sc.z))) - CLEAR;
+    const r = Math.min(cell * 0.6, gap);
+    if (r < 0.7) return;
     const delay = 1.5 + rand(0, 0.35);
     const glob = new THREE.Mesh(G.shot, M_DARK.clone());
     glob.scale.setScalar(1.6); glob.position.set(c.x, 30, c.z); glob.userData = { fall: true };
     scene.add(glob);
-    telegraph(c.x, c.z, cell * 0.6, delay, dmg, 0xb06bff, null, glob);
+    telegraph(c.x, c.z, r, delay, dmg, 0xb06bff, null, glob);
   });
   sfx('warn');
 }
@@ -3658,16 +3667,18 @@ function bossAI(e, dt, d, dirx, dirz) {
       }
     }
   } else if (e.type === 'owlboss') {
-    // Dive: marks you, then crashes down there. If it misses, it's stuck in the snow for a moment
+    // Dive: marks you, then crashes down there. It only gets stuck if it misses and lands in snow
+    // that's already on the ground, so you have to lure it onto old frost
     if (e.diving) return;
     if (e.aT <= 0) {
       e.aT = 4.6; e.diving = true;
       const tx = P.pos.x, tz = P.pos.z, x0 = e.pos.x, z0 = e.pos.z;
       telegraph(tx, tz, 3, 1.1, e.dmg, 0x9fd8ff, sl => {
         e.diving = false; e.pos.x = sl.x; e.pos.z = sl.z;
+        const inSnow = hazards.some(h => h.kind === 'frost' && h.t < h.dur && Math.hypot(h.x - sl.x, h.z - sl.z) < h.r);
         pool('frost', sl.x, sl.z, 3.2, 4); burst(sl.x, 0.5, sl.z, 0xcfeeff, 24, 7);
         const hitSomeone = (coop ? [P1, P2] : [P]).some(pl => !pl.down && Math.hypot(pl.pos.x - sl.x, pl.pos.z - sl.z) < 3);
-        if (!hitSomeone && !e.dead) stun(e, 2.5, 'Stuck in the snow!');
+        if (!hitSomeone && inSnow && !e.dead) stun(e, 2.5, 'Stuck in the snow!');
       });
       e.diveFrom = { x0, z0, tx, tz, t: 0 };
       return;
@@ -4484,7 +4495,8 @@ function renderLoadout() {
     ? `Your ${pickKind} slots are full. Pick one to swap ${AB[loPick].name} into, or click it again to cancel.`
     : sandbox ? 'Every ability is unlocked. Click one to equip it, and set its level with − and +. Press Q any time to come back here.'
     : 'Click an ability in your collection to equip it. Click an equipped slot to take it off. Cooldowns carry over when you swap.';
-  const list = [...ABILITIES.filter(a => a.kind === 'active'), ...ABILITIES.filter(a => a.kind === 'passive')].filter(a => owned(a.id));
+  // sandbox lays everything out like the ability deck
+  const list = (sandbox ? DECK_ORDER : [...ABILITIES.filter(a => a.kind === 'active'), ...ABILITIES.filter(a => a.kind === 'passive')]).filter(a => owned(a.id));
   $('#loCount').textContent = `Collection · ${list.length} of ${ABILITIES.length}`;
   const grid = $('#loCollection');
   if (!list.length) { grid.innerHTML = '<p class="lo-empty">Nothing yet. Open boxes in the arena to collect abilities.</p>'; return; }
@@ -4628,12 +4640,20 @@ const ACTIVE = {
     banner('Time Warp', 'Everything slows down');
     ring(P.pos.x, P.pos.z, 0.5, 14, 0.8, 0x6fb8ff);
   },
+  // Battle Trance: Time Warp and a stronger War Cry at once; kills stretch both
+  trance(l) {
+    const d = 5 + 0.5 * l;
+    warpT = Math.max(warpT, d); P.cryT = d; P.cryRate = 0.6 + 0.1 * l; P.trance = true; P.tranceExt = 0;
+    banner('Battle Trance', 'Time slows and you surge');
+    ring(P.pos.x, P.pos.z, 0.5, 14, 0.8, 0x6fb8ff); ring(P.pos.x, P.pos.z, 0.5, 4, 0.5, 0xff6a3a);
+    burst(P.pos.x, 1.4, P.pos.z, 0xff6a3a, 18, 5); shake = Math.max(shake, 0.15);
+  },
   knives(l) {
     const n = 7 + 2 * l, base = Math.atan2(aimWorld.x - P.pos.x, aimWorld.z - P.pos.z), spread = 1.05;
     for (let i = 0; i < n; i++) fireBolt(P.pos.x, P.pos.z, base + (i / (n - 1) - 0.5) * spread, 1.15, { mat: M_KNIFE, mul: 1.6, pierce: 1, bounce: 0, life: 0.5 });
   },
   warcry(l) {
-    P.cryT = 4 + 0.5 * l; P.cryRate = 0.3 + 0.1 * l;
+    P.cryT = 4 + 0.5 * l; P.cryRate = 0.3 + 0.1 * l; P.trance = false;
     ring(P.pos.x, P.pos.z, 0.5, 4, 0.5, 0xff6a3a); burst(P.pos.x, 1.4, P.pos.z, 0xff6a3a, 18, 5);
     shake = Math.max(shake, 0.15);
   },
@@ -5275,7 +5295,7 @@ function begin(mode) {
   leaveDungeon();
   sandbox = mode === 'sandbox'; dungeon = mode === 'dungeon'; godMode = false; sbWave = 1;
   dmgLog = [{}, {}];
-  P1.cryT = P2.cryT = 0;
+  P1.cryT = P2.cryT = 0; P1.trance = P2.trance = false;
   for (const pl of [P1, P2]) Object.assign(pl, { runPowers: [], blood: 0, bloodT: 0, lastStandUsed: false, barrierT: 10, stormT: 3, chronoT: 25, frostCd: 0, auraT: 0.5, hurtAt: -9 });
   refreshPU();
   trial = typeof mode === 'string' && mode.startsWith('ascend:') ? mode.slice(7) : null;
@@ -5485,9 +5505,11 @@ function closeCodex() {
   state = 'title';
   $('#codexBtn').focus({ preventScroll: true });
 }
+// the ability deck's order: commons first, then rare, epic, legendary, then fusions
+const DECK_ORDER = [...['common', 'rare', 'epic', 'legendary'].flatMap(t => ABILITIES.filter(a => a.tier === t && !a.fusion)), ...ABILITIES.filter(a => a.fusion)];
 function renderCodex() {
-  const abilities = ['common', 'rare', 'epic', 'legendary'].flatMap(t => ABILITIES.filter(a => a.tier === t));
-  const fusions = ABILITIES.filter(a => a.fusion);
+  const abilities = DECK_ORDER.filter(a => !a.fusion);
+  const fusions = DECK_ORDER.filter(a => a.fusion);
   $('#codexHint').textContent = `${codex.size} of ${ABILITIES.length} found. Every ability you claim from a box in a run or the dungeon is added here, and fusions are added when you make them. Descriptions show level I.`;
   const card = a => {
     const c = document.createElement('div');
