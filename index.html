@@ -343,6 +343,7 @@ body.tut-on .intros { top: calc(150px + env(safe-area-inset-top, 0px)); }
   .tut-bubble { font-size: 14px; }
   body.tut-on .screen { padding-top: calc(190px + env(safe-area-inset-top, 0px)); }
 }
+.finale-flash { position: absolute; inset: 0; pointer-events: none; opacity: 0; background: radial-gradient(circle at var(--fx, 50%) var(--fy, 50%), #fff 0%, #fffbea 30%, #ffe9c4 75%, #ffd9a8 100%); }
 .sound-hint {
   pointer-events: auto; position: fixed; z-index: 50; left: 50%; transform: translateX(-50%);
   top: calc(12px + env(safe-area-inset-top, 0px));
@@ -907,6 +908,7 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
   <div class="warp-fx" id="warpFx"></div>
   <div class="hurt" id="hurt"></div>
   <div class="fade" id="fade"></div>
+  <div class="finale-flash" id="finaleFlash" hidden></div>
 <div class="half-reveal" id="half1" hidden></div>
 <div class="half-reveal right" id="half2" hidden></div>
 <button class="sound-hint" id="soundHint" type="button" hidden></button>
@@ -1607,6 +1609,32 @@ const Sound = (() => {
       noise({ at: 0.05, dur: 1.2, vol: 0.18, type: 'bandpass', f: 600, f2: 90, q: 2 });
       FX.meteorImpact();
       chord([midi(74), midi(81), midi(86), midi(93)], { type: 'triangle', dur: 1.8, vol: 0.05, at: 0.3 });
+    },
+    // a boss dragging the whole arena into itself: a swelling roar, rising saws, gulps of air coming faster, a heartbeat
+    finaleSuck() {
+      tone({ f: 32, f2: 95, dur: 2.0, vol: 0.38, attack: 1.6 });
+      noise({ dur: 2.0, vol: 0.34, type: 'highpass', f: 300, f2: 9000, q: 0.7, attack: 1.8 });
+      noise({ dur: 2.0, vol: 0.22, type: 'bandpass', f: 150, f2: 3200, q: 9, attack: 1.7 });
+      tone({ type: 'sawtooth', f: 44, f2: 420, dur: 2.0, vol: 0.1, attack: 1.5, filter: 1400, q: 6 });
+      tone({ type: 'sawtooth', f: 44.8, f2: 412, dur: 2.0, vol: 0.1, attack: 1.5, filter: 1400, q: 6 });
+      tone({ f: 2600, f2: 180, dur: 0.9, vol: 0.06 });
+      for (const at of [0, 0.5, 0.88, 1.18, 1.42, 1.6, 1.74, 1.85, 1.93]) noise({ at, dur: 0.16, vol: 0.07 + at * 0.09, type: 'bandpass', f: 2800, f2: 200, q: 5 });
+      for (const at of [0.1, 0.75, 1.25, 1.6, 1.85]) { tone({ at, f: 70, f2: 34, dur: 0.22, vol: 0.32 }); tone({ at: at + 0.14, f: 60, f2: 30, dur: 0.2, vol: 0.22 }); }
+      // the light swelling: a bright shimmering chord rising out of the roar
+      for (const [i, n] of [74, 81, 86, 93, 98].entries()) tone({ at: 1.25 + i * 0.05, type: 'triangle', f: midi(n) * 0.5, f2: midi(n) * 2, dur: 1.4, vol: 0.035, attack: 1.0 });
+      noise({ at: 2.45, dur: 0.15, vol: 0.18, type: 'highpass', f: 6000 });
+    },
+    // and then it all comes out at once: a crack, a huge rolling boom, falling debris and a bright chord as the new arena appears
+    finaleBoom() {
+      noise({ dur: 0.08, vol: 0.5, type: 'highpass', f: 2500, q: 0.7 });
+      tone({ f: 120, f2: 18, dur: 2.8, vol: 0.6, attack: 0.005 });
+      tone({ type: 'sawtooth', f: 70, f2: 16, dur: 1.9, vol: 0.22, filter: 500, q: 3 });
+      noise({ dur: 3.2, vol: 0.6, type: 'lowpass', f: 6000, f2: 40, attack: 0.005 });
+      noise({ at: 0.04, dur: 1.6, vol: 0.22, type: 'bandpass', f: 900, f2: 80, q: 2 });
+      FX.meteorImpact();
+      for (let i = 0; i < 14; i++) noise({ at: 0.15 + Math.random() * 1.6, dur: 0.06 + Math.random() * 0.08, vol: 0.05 + Math.random() * 0.07, type: 'bandpass', f: 1200 + Math.random() * 3500, q: 3 });
+      [62, 66, 69, 74, 78, 81].forEach((n, i) => tone({ at: 0.55 + i * 0.07, type: 'triangle', f: midi(n), dur: 2.4, vol: 0.06 }));
+      [62, 69, 74].forEach(n => tone({ at: 0.55, type: 'sawtooth', f: midi(n - 12), dur: 2.6, vol: 0.05, attack: 0.3, filter: 1200 }));
     },
     boom(size = 1) { if (ok('boom', 0.05)) { tone({ f: 95, f2: 28, dur: 0.6 * size, vol: Math.min(0.5, 0.4 * size) }); noise({ dur: 0.5 * size, vol: 0.3, type: 'lowpass', f: 1600, f2: 90 }); } },
     thud() { if (ok('thud', 0.06)) { tone({ f: 120, f2: 50, dur: 0.18, vol: 0.18 }); noise({ dur: 0.1, vol: 0.1, type: 'lowpass', f: 900 }); } },
@@ -4446,7 +4474,7 @@ const ROSTER = [
   ['splitter', 5, 2.5], ['leaper', 6, 3], ['roller', 7, 2.5], ['burrower', 8, 2.5], ['sniper', 9, 2], ['reflector', 8, 2],
 ];
 function pickMonster(n) {
-  const pool = ROSTER.filter(r => n >= r[1]);
+  const pool = mapOn() ? mapRoster(n) : ROSTER.filter(r => n >= r[1]);
   let pick = Math.random() * pool.reduce((sum, r) => sum + r[2], 0);
   for (const r of pool) { pick -= r[2]; if (pick <= 0) return r[0]; }
   return 'grub';
@@ -4680,7 +4708,7 @@ function killEnemy(e) {
     if (hasPower('pw_bloodlust')) { P.blood = Math.min(10, (P.bloodT > 0 ? P.blood || 0 : 0) + 1); P.bloodT = 6; }
     CH()?.kill?.(e);
   });
-  if (e.boss && e.type !== 'demon') { banner(`${bossName(e.type).replace('The ', '')} slain`, `+${e.shards} shards`); shake = 0.6; ring(e.pos.x, e.pos.z, 0.5, 10, 0.7, 0xc77dff); }
+  if (e.boss && e.type !== 'demon' && !startFinale(e)) { banner(`${bossName(e.type).replace('The ', '')} slain`, `+${e.shards} shards`); shake = 0.6; ring(e.pos.x, e.pos.z, 0.5, 10, 0.7, 0xc77dff); }
 }
 // The Splitting Demon: every death sends a shockwave a second later and splits it in two, seven times over.
 // One line of splits carries the crown down to a single smallest split; killing that one beats the boss.
@@ -4699,6 +4727,8 @@ function demonDied(e) {
     root.done = true;
     for (const o of enemies) if (o.root === root && o !== e && !o.dead) { burst(o.pos.x, 0.5, o.pos.z, o.color, 6, 4); despawn(o); }
     comicWord(e.pos.x, 2, e.pos.z, 'KA-BLOOEY!');
+    sfx('kill', true);
+    if (startFinale(e, bossName('demon').replace('The ', ''))) return;
     banner(`${bossName('demon').replace('The ', '')} slain`, `+${e.shards * (coop ? 2 : 1)} shards`);
     shake = 0.6; ring(e.pos.x, e.pos.z, 0.5, 10, 0.7, 0xc77dff); sfx('kill', true);
     return;
@@ -5865,7 +5895,7 @@ function pool(kind, x, z, r, dur) {
   const disc = new THREE.Mesh(G.disc, new THREE.MeshBasicMaterial({ color: H.color, transparent: true, opacity: 0, depthWrite: false }));
   disc.rotation.x = -Math.PI / 2; disc.position.set(x, 0.03 + Math.random() * 0.01, z); disc.scale.setScalar(r);
   scene.add(disc);
-  hazards.push({ kind, x, z, r, t: 0, dur, disc, dps: H.dps * W.dmgMul, slow: H.slow, fx: kind === 'fire' || fpOn() ? poolFx(kind, x, z, r) : null });
+  hazards.push({ kind, x, z, r, t: 0, dur, disc, dps: H.dps * W.dmgMul, slow: H.slow, fx: kind === 'fire' || (kind === 'acid' && !lowGfx()) || fpOn() ? poolFx(kind, x, z, r) : null });
 }
 function shockwave(x, z, dmg, max) {
   const m = new THREE.Mesh(G.ring, new THREE.MeshBasicMaterial({ color: 0xffb070, transparent: true, opacity: 0.9, depthWrite: false }));
@@ -5891,6 +5921,7 @@ function updateHazards(dt) {
       if (Math.random() < dt * 6) burst(P.pos.x, 0.2, P.pos.z, HAZ[h.kind].color, 1, 1.5);
     }
   }
+  slow = Math.max(slow, mapSlowAt(P.pos));
   P.slowMul = 1 - slow;
   for (let i = spikes.length - 1; i >= 0; i--) {
     const sp = spikes[i];
@@ -7841,6 +7872,8 @@ function clearEnemies() {
   clearHazards();
 }
 function clearAll() {
+  endFinale();
+  if (arenaTheme) applyArenaTheme(0);
   for (const arr of [bolts, shots, gems, parts]) { for (const o of arr) scene.remove(o.m); arr.length = 0; }
   for (const e of enemies) { scene.remove(e.g); e.mat.dispose(); if (e.tele) scene.remove(e.tele); for (const t of e.tethers || []) scene.remove(t.line); } enemies = [];
   for (const pl of [P1, P2]) clearCharFx(pl);
@@ -11251,6 +11284,7 @@ function tickWalk(e, dt, held) {
 const WALK_AMP = 1.2;
 function update(dt) {
   trackVelocity(dt);
+  tickMap(dt);
   switchWorld(worldOf(P1));
   if (!worldsSplit()) return updateWorld(dt, 0);
   // the players are in different rooms: Player 1's room, then Player 2's room with Player 2 standing in as P
@@ -11289,7 +11323,7 @@ function updateWorld(dt, pass) {
     }
     P.pos.x += P.dashDir.x * 26 * dt; P.pos.z += P.dashDir.z * 26 * dt;
     burst(P.pos.x, 0.9, P.pos.z, 0x6fe3d6, 1, 1);
-  } else if (dungeon && D && D.cur && D.cur.type === 'ice') {
+  } else if ((dungeon && D && D.cur && D.cur.type === 'ice') || onMapIce(P.pos)) {
     // on ice you build speed slowly and keep sliding
     const sp = S.speed * P.slowMul * moveBoost(P);
     P.vx += mx * sp * 2.2 * dt; P.vz += mz * sp * 2.2 * dt;
@@ -12305,14 +12339,14 @@ function frame() {
     const e = cutQueue.shift();
     if (!e.dead && !e.sleep && !e.cutDone && e.g.parent) startCutscene(e);
   }
-  if (state === 'play' && !bothBoxing) update(dt);
-  if ((state === 'play' && !bothBoxing) || state === 'title') updatePet(dt, state === 'play');
+  if (state === 'play' && !bothBoxing) { if (finale) tickFinale(dt); else update(dt); }
+  if ((state === 'play' && !bothBoxing && !finale) || state === 'title') updatePet(dt, state === 'play');
   if (state === 'title') {
     idleT += dt;
     camBase.set(Math.sin(idleT * 0.1) * 6, 22, 13 + Math.cos(idleT * 0.1) * 4);
     pg.rotation.y = Math.atan2(camBase.x, camBase.z);
   }
-  if (state !== 'paused' && state !== 'reveal') ambient(dt);
+  if (state !== 'paused' && state !== 'reveal') { ambient(dt); mapAmbient(dt); }
   flailArms(performance.now() / 1000);
   const fp = fpOn();
   const blendTo = fp ? 1 : 0;
@@ -12389,7 +12423,7 @@ function frame() {
     renderer.setViewport(0, 0, w / 2, h); renderer.setScissor(0, 0, w / 2, h); renderer.render(scene, camera);
     renderer.setViewport(w / 2, 0, w / 2, h); renderer.setScissor(w / 2, 0, w / 2, h); renderer.render(sceneOf(worldOf(P2)), camera2);
     renderer.setScissorTest(false); renderer.setViewport(0, 0, w, h);
-  } else if (!Warp.render(scene, camera, holes, T)) drawGlow(scene);
+  } else if (!Warp.render(scene, camera, finale?.hole ? [finale.hole, ...holes] : holes, T)) drawGlow(scene);
 }
 
 if (touchMode) {
@@ -12647,6 +12681,350 @@ $('#tutBtn').addEventListener('click', () => { tut = null; tutStart(); });
   try { played = !!localStorage.getItem('shardfall-best') || (petSave.owned || []).length > 0 || codex.size > 0 || activeSlot >= 0; } catch (_) {}
   if (played) tutMark();
   else if (!tutSeen()) setTimeout(() => { if (state === 'title') tutOfferShow('first'); }, 900);
+}
+
+/* ---------- boss finale: the last boss of a wave drags the arena into itself, the screen whites out,
+   it explodes, and when the light clears you're standing in a new arena ---------- */
+const ARENA_THEMES = [
+  { name: 'Dusk Hollow', bg: 0x0d0b16, hemi: [0x8a7cff, 0x1a1020], sun: 0xffe2b0, ground: 0x241e36, voidC: 0x130f1f, stone: 0x3a3352, rune: 0xffb547, line: 0x8a7cff, mote: 0xffc56e, sky: 0xffffff },
+  { name: 'Ember Wastes', bg: 0x1a0806, hemi: [0xff9a6a, 0x2a0a05], sun: 0xffb070, ground: 0x3a1c16, voidC: 0x1e0a06, stone: 0x4e2a20, rune: 0xff5a2a, line: 0xff6a3a, mote: 0xff8a3a, sky: 0xff9a7a },
+  { name: 'Frostfall', bg: 0x0a1420, hemi: [0xbfe0ff, 0x102030], sun: 0xe8f4ff, ground: 0x2c3c52, voidC: 0x0e1824, stone: 0x5a7290, rune: 0x9fe8ff, line: 0x9fd8ff, mote: 0xe8f8ff, sky: 0x9fc8ff },
+  { name: 'Verdant Ruins', bg: 0x07140a, hemi: [0xa0ffa0, 0x0a1a08], sun: 0xfff0c0, ground: 0x1f3322, voidC: 0x0a160c, stone: 0x3a5a3a, rune: 0x9fe05f, line: 0x7fe08a, mote: 0xc8ff7a, sky: 0x9fe8a0 },
+  { name: 'Golden Sands', bg: 0x1a1208, hemi: [0xffe0a0, 0x2a1a08], sun: 0xfff0d0, ground: 0x5a4628, voidC: 0x241a0c, stone: 0x7a6038, rune: 0xffd36e, line: 0xffd36e, mote: 0xffe8a0, sky: 0xffd8a0 },
+  { name: 'The Abyss', bg: 0x05030a, hemi: [0x6a3aff, 0x050008], sun: 0xc8a0ff, ground: 0x15101f, voidC: 0x07040c, stone: 0x241a36, rune: 0xc77dff, line: 0xc77dff, mote: 0xd8a0ff, sky: 0x8a5aff },
+];
+let arenaTheme = 0, arenaLines = null;
+function applyArenaTheme(i) {
+  const t = ARENA_THEMES[i]; arenaTheme = i;
+  arenaLines ||= arenaDecor.filter(o => o.material?.color?.getHex() === 0x8a7cff);
+  scene.background.setHex(t.bg); scene.fog.color.setHex(t.bg);
+  hemi.color.setHex(t.hemi[0]); hemi.groundColor.setHex(t.hemi[1]); sun.color.setHex(t.sun);
+  ground.material.color.setHex(t.ground); voidFloor.material.color.setHex(t.voidC);
+  for (const m of arenaLines) m.material.color.setHex(t.line);
+  motes.material.color.setHex(t.mote); skyMat.color.setHex(t.sky);
+  buildMap(i);
+}
+let finale = null;
+const finaleOk = () => state === 'play' && !dungeon && !lab && !trial;
+function startFinale(e, name) {
+  if (finale || !finaleOk()) return false;
+  // only the last boss standing gets the show
+  if (enemies.some(o => o.boss && !o.dead && o !== e)) return false;
+  const x = e.pos.x, z = e.pos.z;
+  if (!e.g.parent) scene.add(e.g);
+  e.mat.emissive?.setHex(0xffffff);
+  const theme = ARENA_THEMES[arenaTheme];
+  const fl = $('#finaleFlash');
+  fl.style.setProperty('--fx', '50%'); fl.style.setProperty('--fy', '50%');
+  v3.set(x, 1.5, z).project(camera);
+  if (v3.z < 1) { fl.style.setProperty('--fx', `${(v3.x + 1) * 50}%`); fl.style.setProperty('--fy', `${(1 - v3.y) * 50}%`); }
+  finale = { e, x, z, t: 0, s0: e.g.scale.x, streamT: 0, ringT: 0, streams: [], color: theme.rune, boomed: false, name: name || bossName(e.type).replace('The ', ''),
+    hole: { x, z, r: 4, t: 0, dur: 99, close: 0 } };
+  fl.style.opacity = 0; fl.hidden = false;
+  P1.invuln = Math.max(P1.invuln, 6); P2.invuln = Math.max(P2.invuln, 6);
+  sfx('finaleSuck');
+  return true;
+}
+const FIN = { suck: 2.0, white: 2.6, clear: 4.0 };
+let finaleDot = null;
+function tickFinale(dt) {
+  const f = finale; f.t += dt; const t = f.t;
+  const { x, z, e } = f;
+  tickFx3(dt);
+  if (t < FIN.white) {
+    // the pull: space bends harder and harder toward the boss, and light streams into it
+    const k = Math.min(1, t / FIN.suck);
+    f.hole.t = t; f.hole.r = 4 + 22 * k * k; f.hole.close = Math.min(1, k * 1.2);
+    if (!reduceMotion) shake = Math.max(shake, 0.05 + 0.35 * k * k);
+    e.g.rotation.y += dt * (2 + 14 * k * k);
+    e.g.scale.setScalar(Math.max(0.01, f.s0 * (1 + 0.25 * Math.sin(t * 30) * k - 0.55 * k * k)));
+    e.g.position.set(x + rand(-1, 1) * 0.15 * k, 0, z + rand(-1, 1) * 0.15 * k);
+    f.streamT -= dt;
+    finaleDot ||= new THREE.SphereGeometry(0.16, 6, 4);
+    while (f.streamT <= 0 && t < FIN.suck) {
+      f.streamT += 0.012 + 0.03 * (1 - k);
+      const a = rand(0, TAU), r = rand(9, 26), m = new THREE.Mesh(finaleDot, addMat(Math.random() < 0.4 ? 0xffffff : f.color, 0.9));
+      m.position.set(x + Math.sin(a) * r, rand(0.3, 5), z + Math.cos(a) * r); m.scale.set(1, 1, rand(2, 5));
+      scene.add(m); f.streams.push({ m, sp: rand(6, 10) });
+    }
+    f.ringT -= dt;
+    if (f.ringT <= 0 && t < FIN.suck) { f.ringT = 0.38 - 0.25 * k; ring(x, z, 20 - 6 * k, 0.4, 0.55, f.color); }
+  }
+  for (let i = f.streams.length - 1; i >= 0; i--) {
+    const s = f.streams[i], m = s.m, dx = x - m.position.x, dy = 1.5 - m.position.y, dz = z - m.position.z, d = Math.hypot(dx, dy, dz);
+    s.sp += dt * 40;
+    const step = Math.min(d, s.sp * dt);
+    m.position.x += dx / d * step; m.position.y += dy / d * step; m.position.z += dz / d * step;
+    m.lookAt(x, 1.5, z);
+    if (d < 0.6 || f.boomed) { scene.remove(m); m.material.dispose(); f.streams.splice(i, 1); }
+  }
+  // the light swells until the screen is white
+  const fl = $('#finaleFlash');
+  if (t < FIN.suck) fl.style.opacity = Math.pow(Math.max(0, (t - FIN.suck + 0.7) / 0.7), 2) * 0.55;
+  else if (t < FIN.white) fl.style.opacity = 0.55 + 0.45 * (t - FIN.suck) / (FIN.white - FIN.suck);
+  else fl.style.opacity = Math.max(0, 1 - (t - FIN.white) / (FIN.clear - FIN.white));
+  if (!f.boomed && t >= FIN.white) {
+    // under the white: the new arena, then the explosion that reveals it
+    f.boomed = true;
+    scene.remove(e.g); f.hole = null;
+    let next = arenaTheme; while (next === arenaTheme) next = Math.floor(Math.random() * ARENA_THEMES.length);
+    applyArenaTheme(next);
+    const c = ARENA_THEMES[next].rune;
+    for (const [col, n, sp] of [[0xffffff, 70, 22], [c, 70, 16], [f.color, 50, 12], [0xffd36e, 40, 26]]) burst(x, 1.2, z, col, n, sp);
+    for (const [to, dur, col] of [[34, 1.3, 0xffffff], [26, 1.0, c], [18, 0.8, f.color], [44, 1.8, c]]) ring(x, z, 0.5, to, dur, col);
+    fxAdd(new THREE.Mesh(FX3.bubble, addMat(0xffffff, 0.9)), 1.1, (fx, d2, k) => { fx.m.position.set(x, 1, z); fx.m.scale.setScalar(Math.max(0.01, 14 * Math.sqrt(k))); fx.m.material.opacity = 0.9 * (1 - k); });
+    fxAdd(new THREE.Mesh(FX3.bubble, addMat(c, 0.8)), 1.5, (fx, d2, k) => { fx.m.position.set(x, 1, z); fx.m.scale.setScalar(Math.max(0.01, 24 * Math.sqrt(k))); fx.m.material.opacity = 0.7 * (1 - k); });
+    if (!reduceMotion) shake = 1.2;
+    sfx('finaleBoom');
+  }
+  if (t >= FIN.clear) {
+    endFinale();
+    banner(`Welcome to ${ARENA_THEMES[arenaTheme].name}`, MAP_INFO[arenaTheme].blurb);
+  }
+}
+function endFinale() {
+  const f = finale; if (!f) return;
+  for (const s of f.streams) { scene.remove(s.m); s.m.material.dispose(); }
+  if (!f.boomed) scene.remove(f.e.g);
+  finale = null;
+  const fl = $('#finaleFlash'); fl.hidden = true; fl.style.opacity = 0;
+}
+
+/* ---------- arena maps: each one has its own scenery, its own twist, and monsters you only meet there ---------- */
+// Grubs, skitters and brutes turn up everywhere; every other monster belongs to one map.
+const MAP_COMMON = ['grub', 'skitter', 'brute'];
+const MAP_INFO = [
+  { key: 'dusk', mobs: ['wisp', 'splitter'], blurb: 'Wisps and Splitters haunt the ruins' },
+  { key: 'ember', mobs: ['bomber', 'charger'], blurb: 'Lava vents erupt · Ember Imps and Chargers roam' },
+  { key: 'frost', mobs: ['shaman', 'reflector'], blurb: 'Slippery ice patches · Frost Shamans and Reflectors' },
+  { key: 'verdant', mobs: ['spitter', 'bloater'], blurb: 'Healing blossoms grow · Spitters and Bloaters lurk' },
+  { key: 'sands', mobs: ['burrower', 'roller'], blurb: 'Quicksand and sandstorms · Burrowers and Rollers' },
+  { key: 'abyss', mobs: ['sniper', 'leaper'], blurb: 'Three void wells drag you in · Snipers and Leapers' },
+];
+const mapOn = () => !dungeon && !lab && !trial;
+// which monsters can show up in this map's waves (a map's own monsters come out early, they're what it's about)
+function mapRoster(n) {
+  const own = MAP_INFO[arenaTheme].mobs;
+  return ROSTER.filter(r => MAP_COMMON.includes(r[0]) ? n >= r[1] : own.includes(r[0]) && n >= Math.min(r[1], 3));
+}
+let mapG = null, mapZ = null;   // the scenery group, and the twist's live state
+const defaultDecor = () => arenaDecor.filter(o => !arenaLines.includes(o));
+const lit = (c, o = {}) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.85, flatShading: true, ...o });
+const glowM = (c, op = 1) => new THREE.MeshBasicMaterial({ color: c, transparent: op < 1, opacity: op, fog: false });
+function mk(geo, mat, x, y, z, sx = 1, sy = sx, sz = sx) {
+  const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = !lowGfx(); mapG.add(m); return m;
+}
+// a spot out past the arena wall
+const outer = (i, n, r0, r1) => { const a = i / n * TAU + rand(-0.12, 0.12), r = rand(r0, r1); return [Math.sin(a) * r, Math.cos(a) * r, a]; };
+// a spot inside the arena that isn't on top of the others
+function spots(n, rmin, rmax, gap) {
+  const out = [];
+  for (let t = 0; out.length < n && t < 300; t++) {
+    const a = rand(0, TAU), r = rand(rmin, rmax), x = Math.sin(a) * r, z = Math.cos(a) * r;
+    if (out.every(p => Math.hypot(p.x - x, p.z - z) > gap)) out.push({ x, z });
+  }
+  return out;
+}
+function flatDisc(r, mat, x, z, y = 0.025) { const m = new THREE.Mesh(new THREE.CircleGeometry(r, 40), mat); m.rotation.x = -Math.PI / 2; m.position.set(x, y, z); m.receiveShadow = true; mapG.add(m); return m; }
+
+const MAP_BUILD = {
+  ember() {
+    const rock = lit(0x2a1410), lava = glowM(0xff6a1a), lavaDim = glowM(0xff3a0a, 0.85);
+    // a river of lava around the arena, and black spires with glowing cracks
+    const river = new THREE.Mesh(new THREE.RingGeometry(ARENA_BASE + 7, ARENA_BASE + 11, 96), lavaDim); river.rotation.x = -Math.PI / 2; river.position.y = 0.03; mapG.add(river); mapZ.glow = [river];
+    for (let i = 0; i < 18; i++) {
+      const [x, z] = outer(i, 18, ARENA_BASE + 3, ARENA_BASE + 6), h = rand(5, 13);
+      const s = mk(new THREE.ConeGeometry(1, 1, 5), rock, x, h / 2, z, rand(1.2, 2.2), h, rand(1.2, 2.2)); s.rotation.y = rand(0, 3);
+      mk(new THREE.BoxGeometry(0.12, 1, 0.12), lava, x * 0.985, h * 0.3, z * 0.985, 1, h * 0.45, 1).rotation.z = rand(-0.3, 0.3);
+    }
+    for (let i = 0; i < 26; i++) { const [x, z] = outer(i, 26, ARENA_BASE + 13, 66); mk(new THREE.DodecahedronGeometry(1, 0), rock, x, 0.4, z, rand(1, 3)); }
+    // volcanoes on the horizon with glowing craters
+    for (let i = 0; i < 4; i++) {
+      const [x, z] = outer(i + 0.3, 4, 80, 95), h = rand(22, 32);
+      mk(new THREE.ConeGeometry(18, h, 9, 1, true), rock, x, h / 2 - 1, z);
+      const c = mk(new THREE.CylinderGeometry(4, 3, 1, 9), lava, x, h - 2, z); mapZ.glow.push(c);
+    }
+    // vents in the arena floor that erupt into fire
+    mapZ.vents = spots(6, 6, ARENA_R - 5, 9).map(p => {
+      const g = new THREE.Group(); g.position.set(p.x, 0.03, p.z); mapG.add(g);
+      const d = new THREE.Mesh(new THREE.CircleGeometry(1.5, 20), glowM(0x1a0806)); d.rotation.x = -Math.PI / 2; g.add(d);
+      const cr = []; for (let k = 0; k < 4; k++) { const c = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 2.6), glowM(0xff5a1a)); c.rotation.set(-Math.PI / 2, 0, k * 0.8 + rand(-0.2, 0.2)); c.position.y = 0.01; g.add(c); cr.push(c); }
+      return { ...p, g, cr, t: rand(3, 9) };
+    });
+  },
+  frost() {
+    const ice = lit(0xbfe8ff, { roughness: 0.15, metalness: 0.2, transparent: true, opacity: 0.85 }), snow = lit(0xeef6ff), pine = lit(0x2a5a4a), bark = lit(0x4a3a2a);
+    for (let i = 0; i < 16; i++) {
+      // crystal clusters
+      const [x, z] = outer(i, 16, ARENA_BASE + 3, ARENA_BASE + 7);
+      for (let k = 0; k < 3; k++) { const h = rand(2.5, 7); const c = mk(new THREE.OctahedronGeometry(1, 0), ice, x + rand(-1.5, 1.5), h / 2, z + rand(-1.5, 1.5), rand(0.6, 1.1), h, rand(0.6, 1.1)); c.rotation.set(rand(-0.3, 0.3), rand(0, 3), rand(-0.3, 0.3)); }
+    }
+    for (let i = 0; i < 22; i++) {
+      // snowy pines
+      const [x, z] = outer(i, 22, ARENA_BASE + 9, 64), s = rand(0.9, 1.6);
+      mk(new THREE.CylinderGeometry(0.25, 0.35, 1.6, 6), bark, x, 0.8 * s, z, s);
+      for (let k = 0; k < 3; k++) { mk(new THREE.ConeGeometry(1.7 - k * 0.45, 2.2, 7), pine, x, (1.8 + k * 1.3) * s, z, s); mk(new THREE.ConeGeometry(1.2 - k * 0.35, 0.9, 7), snow, x, (2.5 + k * 1.3) * s, z, s); }
+    }
+    for (let i = 0; i < 5; i++) { const [x, z] = outer(i + 0.5, 5, 85, 100), h = rand(30, 45); mk(new THREE.ConeGeometry(22, h, 7), lit(0x3a4a62), x, h / 2 - 1, z); mk(new THREE.ConeGeometry(9.5, h * 0.42, 7), snow, x, h * 0.79 - 1, z); }
+    // slippery ice sheets in the arena
+    const sheet = new THREE.MeshStandardMaterial({ color: 0x9fd8ff, roughness: 0.05, metalness: 0.4, transparent: true, opacity: 0.5 });
+    mapZ.ice = spots(6, 5, ARENA_R - 5, 11).map(p => { const r = rand(3.2, 5); const d = flatDisc(r, sheet, p.x, p.z, 0.03); d.scale.set(1, rand(0.6, 1), 1); d.rotation.z = rand(0, 3); return { ...p, r, sx: 1, sy: d.scale.y, rot: d.rotation.z }; });
+    // falling snow
+    const n = lowGfx() ? 300 : 900, pos = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) pos.set([rand(-60, 60), rand(0, 30), rand(-60, 60)], i * 3);
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    mapZ.snow = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.2, transparent: true, opacity: 0.85 })); mapG.add(mapZ.snow);
+  },
+  verdant() {
+    const trunk = lit(0x5a3a22), leaf = [lit(0x2f7a3a), lit(0x3f9a46), lit(0x24603a)], col = lit(0xb8b49a), vine = lit(0x3a8a3a);
+    for (let i = 0; i < 24; i++) {
+      const [x, z] = outer(i, 24, ARENA_BASE + 5, 66), s = rand(1, 1.9);
+      mk(new THREE.CylinderGeometry(0.35, 0.55, 4, 7), trunk, x, 2 * s, z, s);
+      for (let k = 0; k < 3; k++) mk(new THREE.IcosahedronGeometry(1.6, 0), leaf[k], x + rand(-1, 1) * s, (4.2 + rand(0, 1.5)) * s, z + rand(-1, 1) * s, s * rand(0.9, 1.3));
+    }
+    for (let i = 0; i < 10; i++) {
+      // broken columns wrapped in vines
+      const [x, z] = outer(i + 0.5, 10, ARENA_BASE + 2.5, ARENA_BASE + 4.5), h = rand(2.5, 7);
+      mk(new THREE.CylinderGeometry(0.9, 1, h, 10), col, x, h / 2, z).rotation.z = rand(-0.12, 0.12);
+      for (let k = 0; k < 3; k++) mk(new THREE.TorusGeometry(1.0, 0.09, 5, 14), vine, x, h * (0.25 + k * 0.25), z).rotation.set(Math.PI / 2 + rand(-0.4, 0.4), 0, 0);
+    }
+    for (let i = 0; i < 30; i++) { const [x, z] = outer(i, 30, ARENA_BASE + 1.5, ARENA_BASE + 12); mk(new THREE.IcosahedronGeometry(1, 0), leaf[i % 3], x, 0.3, z, rand(0.6, 1.4), rand(0.4, 0.8), rand(0.6, 1.4)); }
+    // healing blossoms that wilt after use and grow back
+    mapZ.blooms = spots(3, 8, ARENA_R - 6, 14).map(p => {
+      const g = new THREE.Group(); g.position.set(p.x, 0, p.z); mapG.add(g);
+      const pad = new THREE.Mesh(new THREE.CircleGeometry(2.2, 28), glowM(0x7fe08a, 0.22)); pad.rotation.x = -Math.PI / 2; pad.position.y = 0.03; g.add(pad);
+      const fl = new THREE.Group(); g.add(fl);
+      for (let k = 0; k < 6; k++) { const a = k / 6 * TAU, pt = new THREE.Mesh(new THREE.SphereGeometry(0.4, 8, 6), lit(0xff8ac8)); pt.scale.set(1, 0.35, 0.6); pt.position.set(Math.sin(a) * 0.45, 0.5, Math.cos(a) * 0.45); pt.rotation.y = a; fl.add(pt); }
+      const ctr = new THREE.Mesh(new THREE.SphereGeometry(0.28, 10, 8), glowM(0xffe08a)); ctr.position.y = 0.6; fl.add(ctr);
+      return { ...p, g, pad, fl, juice: 1, regrow: 0 };
+    });
+  },
+  sands() {
+    const sand = lit(0xc8a060), stone = lit(0xb89a6a), gold = glowM(0xffd36e), cactus = lit(0x4a7a3a);
+    for (let i = 0; i < 16; i++) { const [x, z] = outer(i, 16, ARENA_BASE + 8, 70); mk(new THREE.SphereGeometry(1, 14, 8), sand, x, -rand(1, 3), z, rand(7, 13), rand(3, 6), rand(5, 9)).rotation.y = rand(0, 3); }
+    for (let i = 0; i < 8; i++) {
+      const [x, z] = outer(i + 0.5, 8, ARENA_BASE + 3, ARENA_BASE + 5), h = rand(6, 10);
+      mk(new THREE.BoxGeometry(1.4, h, 1.4), stone, x, h / 2, z);
+      mk(new THREE.ConeGeometry(1.0, 1.4, 4), gold, x, h + 0.7, z).rotation.y = Math.PI / 4;
+    }
+    for (let i = 0; i < 12; i++) {
+      const [x, z] = outer(i, 12, ARENA_BASE + 4, ARENA_BASE + 14), h = rand(1.8, 3);
+      mk(new THREE.CylinderGeometry(0.35, 0.4, h, 8), cactus, x, h / 2, z);
+      for (const s of [-1, 1]) if (Math.random() < 0.8) { const y = rand(0.8, 1.6); mk(new THREE.CylinderGeometry(0.22, 0.22, 0.8, 7), cactus, x + s * 0.55, y, z).rotation.z = Math.PI / 2; mk(new THREE.CylinderGeometry(0.22, 0.22, 1, 7), cactus, x + s * 0.9, y + 0.5, z); }
+    }
+    for (const [i, s] of [[0.1, 28], [0.55, 20]]) { const [x, z] = outer(i * 4, 4, 92, 100); mk(new THREE.ConeGeometry(s, s * 0.85, 4), stone, x, s * 0.42 - 0.5, z).rotation.y = Math.PI / 4; }
+    // quicksand pits that drag at your feet
+    const qm = new THREE.MeshStandardMaterial({ color: 0x3a2814, roughness: 1 });
+    mapZ.pits = spots(5, 6, ARENA_R - 5, 10).map(p => {
+      const r = rand(2.8, 4); flatDisc(r, qm, p.x, p.z, 0.03);
+      const sw = new THREE.Mesh(new THREE.RingGeometry(r * 0.3, r * 0.42, 24, 1, 0, 4.2), glowM(0x1e1408, 0.8)); sw.rotation.x = -Math.PI / 2; sw.position.set(p.x, 0.04, p.z); mapG.add(sw);
+      return { ...p, r, sw };
+    });
+    mapZ.stormT = 25; mapZ.storm = 0; mapZ.wind = rand(0, TAU);
+  },
+  abyss() {
+    const rockM = lit(0x241a36), crystal = glowM(0xc77dff, 0.9), rim = glowM(0x8a3aff);
+    mapZ.float = [];
+    for (let i = 0; i < 16; i++) {
+      const [x, z] = outer(i, 16, ARENA_BASE + 6, 68), s = rand(1.5, 4), y = rand(4, 16);
+      const g = new THREE.Group(); g.position.set(x, y, z); mapG.add(g);
+      const top = new THREE.Mesh(new THREE.CylinderGeometry(s, s * 0.8, s * 0.5, 7), rockM); g.add(top);
+      const bot = new THREE.Mesh(new THREE.ConeGeometry(s * 0.8, s * 1.8, 7), rockM); bot.rotation.x = Math.PI; bot.position.y = -s * 1.15; g.add(bot);
+      if (Math.random() < 0.5) { const c = new THREE.Mesh(new THREE.OctahedronGeometry(0.5, 0), crystal); c.position.y = s * 0.6; c.scale.set(1, 2, 1); g.add(c); }
+      mapZ.float.push({ g, y, ph: rand(0, TAU) });
+    }
+    for (let i = 0; i < 10; i++) { const [x, z] = outer(i + 0.5, 10, ARENA_BASE + 3, ARENA_BASE + 6), h = rand(5, 11); const c = mk(new THREE.OctahedronGeometry(1, 0), crystal, x, h / 2, z, rand(0.8, 1.3), h / 2, rand(0.8, 1.3)); c.rotation.y = rand(0, 3); }
+    const edge = new THREE.Mesh(new THREE.RingGeometry(ARENA_BASE + 2.2, ARENA_BASE + 2.6, 96), rim); edge.rotation.x = -Math.PI / 2; edge.position.y = 0.04; mapG.add(edge);
+    // three void wells drift around the arena, dragging everything toward them
+    mapZ.wells = [0, 1, 2].map(i => i * Math.PI * 2 / 3).map(a0 => {
+      const g = new THREE.Group(); mapG.add(g);
+      const core = new THREE.Mesh(new THREE.SphereGeometry(0.9, 16, 12), new THREE.MeshBasicMaterial({ color: 0x05020a })); core.position.y = 1.2; g.add(core);
+      const halo = new THREE.Mesh(new THREE.TorusGeometry(1.25, 0.12, 8, 30), glowM(0xc77dff)); halo.position.y = 1.2; g.add(halo);
+      const pull = new THREE.Mesh(new THREE.RingGeometry(1, WELL_REACH, 40), glowM(0x6a2aff, 0.07)); pull.rotation.x = -Math.PI / 2; pull.position.y = 0.04; g.add(pull);
+      return { g, halo, a: a0, r: ARENA_R * 0.45 };
+    });
+  },
+};
+const WELL_REACH = 9;   // how far a void well's pull reaches
+function buildMap(i) {
+  if (mapG) { scene.remove(mapG); mapG.traverse(o => { o.geometry?.dispose(); o.material?.dispose(); }); mapG = null; }
+  mapZ = null;
+  scene.fog.near = 34; scene.fog.far = 75;
+  const key = MAP_INFO[i].key;
+  for (const o of defaultDecor()) o.visible = key === 'dusk';
+  if (key === 'dusk') return;
+  mapG = new THREE.Group(); mapZ = { key }; scene.add(mapG);
+  scene.fog.near = 42; scene.fog.far = 120;   // the new maps let you see further, so their scenery shows
+  MAP_BUILD[key]();
+}
+const onMapIce = pos => !!mapZ?.ice && mapOn() && mapZ.ice.some(p => { const dx = pos.x - p.x, dz = pos.z - p.z, c = Math.cos(-p.rot), s = Math.sin(-p.rot), lx = dx * c - dz * s, lz = dx * s + dz * c; return (lx / (p.r * p.sx)) ** 2 + (lz / (p.r * p.sy)) ** 2 < 1; });
+const mapSlowAt = pos => mapZ?.pits && mapOn() && mapZ.pits.some(p => Math.hypot(pos.x - p.x, pos.z - p.z) < p.r) ? 0.45 : 0;
+// the twist, while you're playing
+function tickMap(dt) {
+  if (!mapZ || !mapOn()) return;
+  const players = (coop ? [P1, P2] : [P1]).filter(pl => here(pl) && !pl.down);
+  if (mapZ.vents) for (const v of mapZ.vents) {
+    v.t -= dt;
+    const warm = Math.max(0, 1 - v.t / 1.5);
+    for (const c of v.cr) c.material.color.setHex(warm > 0 ? 0xffd040 : 0xff5a1a);
+    if (v.t <= 0 && W.active) {
+      v.t = rand(7, 13);
+      telegraph(v.x, v.z, 2.6, 1.2, Math.round(16 * W.dmgMul), 0xff6a1a, () => { pool('fire', v.x, v.z, 2.4, 4); burst(v.x, 0.5, v.z, 0xff8a3a, 16, 7); });
+    } else if (v.t <= 0) v.t = 2;
+  }
+  if (mapZ.blooms) for (const b of mapZ.blooms) {
+    if (b.juice <= 0) { b.regrow -= dt; if (b.regrow <= 0) { b.juice = 1; burst(b.x, 0.6, b.z, 0xff8ac8, 10, 3); } }
+    let used = false;
+    if (b.juice > 0) for (const pl of players) {
+      if (Math.hypot(pl.pos.x - b.x, pl.pos.z - b.z) > 2.2) continue;
+      withPlayer(pl, () => { if (P.hp < S.maxHp) { P.hp = Math.min(S.maxHp, P.hp + 9 * dt); used = true; } });
+    }
+    if (used) { b.juice -= dt / 5; if (Math.random() < dt * 8) specks(b.x, 0.6, b.z, 0x7fe08a, 1, 0.8, { g: -2, up: 1.5, life: 0.8, size: 0.9, spread: 1.5 }); if (b.juice <= 0) { b.regrow = 22; sfx('splat'); } }
+    const k = Math.max(0, b.juice);
+    b.fl.scale.setScalar(0.35 + 0.65 * k); b.fl.position.y = -0.4 * (1 - k); b.pad.material.opacity = 0.05 + 0.2 * k;
+  }
+  if (mapZ.pits) {
+    for (const e of enemies) if (!e.dead && !e.float && mapSlowAt(e.pos)) { e.slowT = Math.max(e.slowT, 0.2); e.slowAmt = Math.max(e.slowAmt || 0, 0.45); }
+    // a sandstorm every so often: the dust closes in and the wind shoves everyone along
+    mapZ.stormT -= dt;
+    if (mapZ.stormT <= 0 && !mapZ.storm && W.active) { mapZ.storm = 9; mapZ.wind = rand(0, TAU); banner('Sandstorm!', 'The wind pushes everything along'); sfx('warn'); }
+    else if (mapZ.stormT <= 0 && !mapZ.storm) mapZ.stormT = 3;
+    if (mapZ.storm > 0) {
+      mapZ.storm = Math.max(0, mapZ.storm - dt);
+      const k = Math.min(1, mapZ.storm / 1.5, (9 - mapZ.storm) / 1.5), wx = Math.sin(mapZ.wind) * 2.2 * k, wz = Math.cos(mapZ.wind) * 2.2 * k;
+      for (const pl of players) if (!(pl.dashT > 0)) { pl.pos.x += wx * dt; pl.pos.z += wz * dt; }
+      for (const e of enemies) if (!e.dead && !e.boss && !e.anchored) { e.pos.x += wx * 1.2 * dt; e.pos.z += wz * 1.2 * dt; }
+      if (!mapZ.storm) { mapZ.stormT = rand(28, 40); scene.fog.near = 42; scene.fog.far = 120; scene.fog.color.setHex(ARENA_THEMES[arenaTheme].bg); }
+    }
+  }
+  if (mapZ.wells) for (const w of mapZ.wells) {
+    w.a += dt * 0.12;
+    const x = Math.sin(w.a) * w.r, z = Math.cos(w.a) * w.r;
+    w.g.position.set(x, 0, z);
+    const pull = (o, k) => { const dx = x - o.pos.x, dz = z - o.pos.z, d = Math.hypot(dx, dz); if (d < WELL_REACH && d > 0.3) { const f = k * (1 - d / WELL_REACH) ** 0.6 * dt; o.pos.x += dx / d * f; o.pos.z += dz / d * f; } return d; };
+    for (const pl of players) {
+      if (pl.dashT > 0) continue;
+      const d = pull(pl, 5.5);
+      pl.wellT = (pl.wellT || 0) - dt;
+      if (d < 1.4 && pl.wellT <= 0) { pl.wellT = 0.8; withPlayer(pl, () => hurtPlayer(Math.round(12 * W.dmgMul))); }
+    }
+    for (const e of enemies) if (!e.dead && !e.boss && !e.anchored) pull(e, 6);
+  }
+}
+// the scenery's own little life, even on the title screen
+function mapAmbient(dt) {
+  if (!mapZ) return;
+  const t = performance.now() / 1000;
+  if (mapZ.glow) for (const [i, m] of mapZ.glow.entries()) m.material.color.setHSL(0.04, 1, 0.48 + Math.sin(t * 1.7 + i) * 0.06);
+  if (mapZ.snow) {
+    const a = mapZ.snow.geometry.attributes.position;
+    for (let i = 0; i < a.count; i++) { let y = a.getY(i) - dt * 2.2; if (y < 0) y += 30; a.setY(i, y); a.setX(i, a.getX(i) + Math.sin(t + i) * dt * 0.3); }
+    a.needsUpdate = true;
+  }
+  if (mapZ.float) for (const f of mapZ.float) { f.g.position.y = f.y + Math.sin(t * 0.6 + f.ph) * 0.8; f.g.rotation.y += dt * 0.05; }
+  if (mapZ.wells) for (const w of mapZ.wells) w.halo.rotation.set(Math.PI / 2 + Math.sin(t) * 0.3, t * 2, 0);
+  if (mapZ.pits) for (const p of mapZ.pits) p.sw.rotation.z += dt * 0.8;
+  if (mapZ.storm > 0) { const k = Math.min(1, mapZ.storm / 1.5, (9 - mapZ.storm) / 1.5); scene.fog.near = 42 - 36 * k; scene.fog.far = 120 - 95 * k; scene.fog.color.setHex(k > 0.3 ? 0x3a2a14 : ARENA_THEMES[arenaTheme].bg); }
 }
 
 frame();
