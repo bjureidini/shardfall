@@ -360,12 +360,14 @@ body.tut-on .intros { top: calc(150px + env(safe-area-inset-top, 0px)); }
 /* touch */
 #touch { position: fixed; inset: 0; pointer-events: none; }
 #stick { position: absolute; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; border: 2px solid #ece6d633; background: #ece6d60d; opacity: 0; transition: opacity .15s; }
-#stick.on { opacity: 1; }
+#stick.on, #aimStick.on { opacity: 1; }
+#aimStick { position: absolute; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; border: 2px solid #ff5a6a66; background: #ff5a6a14; opacity: 0; transition: opacity .15s; }
+#aimKnob { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: #ff5a6a88; }
 #knob { position: absolute; left: 50%; top: 50%; width: 46px; height: 46px; margin: -23px 0 0 -23px; border-radius: 50%; background: #ece6d655; }
 #dashBtn {
   pointer-events: auto; position: absolute;
-  right: calc(24px + env(safe-area-inset-right, 0px)); bottom: calc(40px + env(safe-area-inset-bottom, 0px));
-  width: 84px; height: 84px; border-radius: 50%; border: 2px solid var(--bolt); background: #6fe3d61f;
+  right: calc(24px + env(safe-area-inset-right, 0px)); bottom: calc(190px + env(safe-area-inset-bottom, 0px));
+  width: 72px; height: 72px; border-radius: 50%; border: 2px solid var(--bolt); background: #6fe3d61f;
   color: var(--bolt); font: 700 14px var(--display); letter-spacing: .1em; text-transform: uppercase;
 }
 
@@ -937,6 +939,7 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
 </div>
 <div id="touch" hidden>
   <div id="stick"><div id="knob"></div></div>
+  <div id="aimStick"><div id="aimKnob"></div></div>
   <button id="dashBtn" type="button">Dash</button>
 </div>
 
@@ -958,8 +961,8 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
       <dt><kbd>Controller</kbd></dt><dd>Left stick moves, right stick aims and fires (or hold RT). X, Y and B cast actives (buttons 2, 3 and 4 on numbered controllers), LB dashes, A or button 1 opens boxes. Change any of it in Controller setup.</dd>
     </dl>
     <dl class="controls" id="controlsTouch" hidden>
-      <dt><kbd>Left thumb</kbd></dt><dd>Drag to move</dd>
-      <dt><kbd>Auto</kbd></dt><dd>You fire at the nearest monster</dd>
+      <dt><kbd>Left thumb</kbd></dt><dd>Drag anywhere on the left side to move</dd>
+      <dt><kbd>Right thumb</kbd></dt><dd>Hold anywhere on the right side and drag to aim. You shoot while you hold (a quick tap shoots straight ahead)</dd>
       <dt><kbd>Dash</kbd></dt><dd>Button, bottom right</dd>
       <dt><kbd>Slots</kbd></dt><dd>Tap an active slot to cast it</dd>
       <dt><kbd>Loadout</kbd></dt><dd>Button, top right, to choose which abilities to equip</dd>
@@ -7233,6 +7236,8 @@ function updateBar() {
 const keys = {};
 const mouse = { ndc: new THREE.Vector2(0, 0.3), down: false };
 const joy = { x: 0, y: 0, id: null, ox: 0, oy: 0 };
+// touch: the right thumb is a second stick that aims and shoots while held, like a twin-stick game
+const aimJoy = { x: 0, y: 0, id: null, ox: 0, oy: 0, tapT: 0 };
 addEventListener('keydown', e => {
   if (e.target.matches?.('input[type="text"]')) {
     if (e.key === 'Enter' || e.key === 'Escape') e.target.blur();
@@ -7680,30 +7685,37 @@ $('#padLabelBtn').addEventListener('click', () => {
 addEventListener('gamepadconnected', () => { if (state === 'play') banner('Controller connected'); });
 addEventListener('mousemove', () => document.body.classList.remove('pad-nav'));
 
-const stickEl = $('#stick'), knobEl = $('#knob');
+const stickEl = $('#stick'), knobEl = $('#knob'), aimStickEl = $('#aimStick'), aimKnobEl = $('#aimKnob');
 addEventListener('touchstart', e => {
   if (state !== 'play') return;
   for (const t of e.changedTouches) {
-    if (joy.id === null && t.clientX < innerWidth * 0.6 && t.target === canvas) {
-      joy.id = t.identifier; joy.ox = t.clientX; joy.oy = t.clientY;
-      stickEl.style.left = t.clientX + 'px'; stickEl.style.top = t.clientY + 'px';
-      stickEl.classList.add('on'); knobEl.style.transform = '';
-      e.preventDefault();
-    }
+    if (t.target !== canvas) continue;
+    const left = t.clientX < innerWidth / 2, j = left ? joy : aimJoy, el = left ? stickEl : aimStickEl;
+    if (j.id !== null) continue;
+    j.id = t.identifier; j.ox = t.clientX; j.oy = t.clientY; j.x = j.y = 0;
+    el.style.left = t.clientX + 'px'; el.style.top = t.clientY + 'px';
+    el.classList.add('on'); (left ? knobEl : aimKnobEl).style.transform = '';
+    e.preventDefault();
   }
 }, { passive: false });
 addEventListener('touchmove', e => {
   for (const t of e.changedTouches) {
-    if (t.identifier !== joy.id) continue;
-    let dx = t.clientX - joy.ox, dy = t.clientY - joy.oy;
+    const j = t.identifier === joy.id ? joy : t.identifier === aimJoy.id ? aimJoy : null;
+    if (!j) continue;
+    let dx = t.clientX - j.ox, dy = t.clientY - j.oy;
     const l = Math.hypot(dx, dy), max = 50;
     if (l > max) { dx = dx / l * max; dy = dy / l * max; }
-    joy.x = dx / max; joy.y = dy / max;
-    knobEl.style.transform = `translate(${dx}px, ${dy}px)`;
+    j.x = dx / max; j.y = dy / max;
+    (j === joy ? knobEl : aimKnobEl).style.transform = `translate(${dx}px, ${dy}px)`;
     e.preventDefault();
   }
 }, { passive: false });
-const endTouch = e => { for (const t of e.changedTouches) if (t.identifier === joy.id) { joy.id = null; joy.x = joy.y = 0; stickEl.classList.remove('on'); } };
+const endTouch = e => {
+  for (const t of e.changedTouches) {
+    if (t.identifier === joy.id) { joy.id = null; joy.x = joy.y = 0; stickEl.classList.remove('on'); }
+    if (t.identifier === aimJoy.id) { aimJoy.id = null; aimJoy.x = aimJoy.y = 0; aimJoy.tapT = 0.12; aimStickEl.classList.remove('on'); }
+  }
+};
 addEventListener('touchend', endTouch); addEventListener('touchcancel', endTouch);
 $('#dashBtn').addEventListener('pointerdown', e => { e.preventDefault(); tryDash(); });
 
@@ -11356,9 +11368,13 @@ function updateWorld(dt, pass) {
     }
     reticle.position.set(P.pos.x + P.face.x * 6, 0.05, P.pos.z + P.face.z * 6);
   } else if (touchMode) {
-    const t = nearestEnemy(P.pos, 20);
-    if (t) { ax = t.pos.x - P.pos.x; az = t.pos.z - P.pos.z; wantFire = true; }
+    // right thumb: drag to aim, shoot while held; no auto-aim. Otherwise you face the way you walk
+    const al = Math.hypot(aimJoy.x, aimJoy.y);
+    if (aimJoy.id !== null && al > 0.25) { ax = aimJoy.x / al; az = aimJoy.y / al; }
     else if (ml > 0.1) { ax = mx; az = mz; }
+    aimJoy.tapT -= dt;
+    wantFire = aimJoy.id !== null || aimJoy.tapT > 0;
+    reticle.position.set(P.pos.x + (ax || P.face.x) * 6, 0.05, P.pos.z + (az || P.face.z) * 6);
   } else {
     raycaster.setFromCamera(mouse.ndc, camera);
     if (raycaster.ray.intersectPlane(groundPlane, aimPt)) {
@@ -11370,10 +11386,8 @@ function updateWorld(dt, pass) {
   const al = Math.hypot(ax, az);
   if (al > 0.01) P.face.set(ax / al, 0, az / al);
   if (coop && padPlayer === 1) aimWorld.set(P.pos.x + P.face.x * 9, 0, P.pos.z + P.face.z * 9);
-  else if (touchMode) {
-    const t = nearestEnemy(P.pos, 20);
-    if (t) aimWorld.set(t.pos.x, 0, t.pos.z); else aimWorld.set(P.pos.x + P.face.x * 7, 0, P.pos.z + P.face.z * 7);
-  } else if (pad.active && !coop && !fpOn()) aimWorld.set(P.pos.x + P.face.x * 9, 0, P.pos.z + P.face.z * 9);
+  else if (touchMode) aimWorld.set(P.pos.x + P.face.x * 7, 0, P.pos.z + P.face.z * 7);
+  else if (pad.active && !coop && !fpOn()) aimWorld.set(P.pos.x + P.face.x * 9, 0, P.pos.z + P.face.z * 9);
   else aimWorld.copy(aimPt);
   P.fireT -= dt;
   if (wantFire && !P.down && !P.boxing && P.fireT <= 0) { shoot(); P.fireT = 1 / (S.fireRate * (warpT > 0 ? 1.3 : 1) * rateBoost(P)); }
@@ -12308,7 +12322,7 @@ function frame() {
   }
   const fe = fpEase();
   $('#crosshair').hidden = !(fp && state === 'play' && fe > 0.7);
-  reticle.visible = !touchMode && !fp && fe < 0.3;
+  reticle.visible = (!touchMode || aimJoy.id !== null) && !fp && fe < 0.3;
   if (fp && state !== 'play' && document.pointerLockElement) document.exitPointerLock();
   // overhead view
   v3.copy(camBase);
@@ -12473,10 +12487,10 @@ const TUT_RUN = [
     say: () => 'Before a run you pick a <b>power</b>. Powers come from your skill trees, and they last the whole run.', done: () => state === 'play' },
   { enter() { tut.from = P.pos.clone(); tut.moved = 0; }, tick() { tut.moved += Math.hypot(P.pos.x - tut.from.x, P.pos.z - tut.from.z); tut.from.copy(P.pos); },
     mood: 'wave', wait: 'Walk around a bit',
-    say: () => 'Hi! Let’s learn the ropes. ' + by(`Move with ${KB('W')}${KB('A')}${KB('S')}${KB('D')}.`, 'Move with the <b>left stick</b>.', '<b>Drag your left thumb</b> to move.'), done: () => tut.moved > 7 },
+    say: () => 'Hi! Let’s learn the ropes. ' + by(`Move with ${KB('W')}${KB('A')}${KB('S')}${KB('D')}.`, 'Move with the <b>left stick</b>.', '<b>Drag your left thumb</b> on the left side to move.'), done: () => tut.moved > 7 },
   { enter() { tut.foes = [-3, 0, 3].map(x => spawnEnemy('grub', 1, 1, { x: P.pos.x + x, z: P.pos.z - 9 })); }, wait: 'Defeat the grubs',
     say: () => 'Uh oh, grubs! ' + by(`Aim with the <b>mouse</b> and <b>hold click</b> to shoot. (${KB('F')} turns on auto-fire.)`,
-      `Point the <b>right stick</b> where you want to shoot, or hold ${PB('fire')} to shoot ahead.`, 'You shoot at the closest monster <b>all by yourself</b>. Just keep moving!'),
+      `Point the <b>right stick</b> where you want to shoot, or hold ${PB('fire')} to shoot ahead.`, 'Put your <b>right thumb</b> down and drag it to aim. You shoot while you hold it.'),
     done: () => tut.foes.every(e => e.dead) },
   { enter() { tut.t = 0; }, tick(dt) { tut.t += dt; }, wait: 'Pick up the shards',
     say: () => 'They dropped <b>shards</b>, the glowing amber bits. Walk over them to grab them. Shards buy boxes!', done: () => !gems.length || tut.t > 12 },
