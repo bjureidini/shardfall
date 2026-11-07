@@ -290,6 +290,59 @@ body.split .hud-tr .lab-map { justify-self: center; }
 .mm-link.new { background: #ece6d644; }
 .mm-cell.unknown { background: #0d0b16b3; border: 1px dashed #ece6d677; opacity: 1; }
 .mm-stub { position: absolute; background: #ece6d655; }
+/* tutorial: Pip, a little guide at the top of the screen who talks in a speech bubble */
+#tutor {
+  position: fixed; z-index: 60; left: 50%; transform: translateX(-50%);
+  top: calc(10px + env(safe-area-inset-top, 0px));
+  width: min(600px, calc(100vw - 32px)); display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 10px; align-items: start;
+  pointer-events: none; animation: tutIn .35s cubic-bezier(.3, 1.6, .5, 1);
+}
+#tutor[hidden] { display: none; }
+@keyframes tutIn { from { opacity: 0; transform: translate(-50%, -30px); } }
+.tut-pip { width: 76px; height: 92px; pointer-events: auto; cursor: pointer; filter: drop-shadow(0 6px 10px #0008); }
+.tut-pip svg { width: 100%; height: 100%; overflow: visible; }
+.tut-pip .bod { animation: pipBob 1.6s ease-in-out infinite; transform-origin: 38px 88px; }
+@keyframes pipBob { 50% { transform: translateY(-3px) scaleY(1.03); } }
+.tut-pip .lids { animation: pipBlink 4s infinite; transform-origin: 38px 34px; transform: scaleY(0); }
+@keyframes pipBlink { 0%, 94%, 100% { transform: scaleY(0); } 97% { transform: scaleY(1); } }
+.tut-pip .arm { transform-origin: 54px 56px; }
+.tut-pip.talk .mouth { animation: pipTalk .16s steps(2) infinite; }
+@keyframes pipTalk { 50% { transform: scaleY(2.4); } }
+.tut-pip .mouth { transform-origin: 38px 44px; transform-box: view-box; }
+.tut-pip.wave .arm { animation: pipWave .5s ease-in-out 3; }
+@keyframes pipWave { 50% { transform: rotate(-40deg); } }
+.tut-pip.hop .bod { animation: pipHop .45s ease-out 2; }
+@keyframes pipHop { 40% { transform: translateY(-14px); } 70% { transform: translateY(0) scaleY(.9); } }
+.tut-bubble {
+  position: relative; pointer-events: auto; margin-top: 6px;
+  background: var(--bone); color: var(--ink); border-radius: 14px; padding: 11px 14px 10px;
+  font: 600 15px/1.4 var(--ui); box-shadow: 0 8px 26px #000a; border: 2px solid #fff;
+}
+.tut-bubble::before { content: ''; position: absolute; left: -11px; top: 24px; border: 8px solid transparent; border-right: 12px solid var(--bone); border-left: 0; }
+.tut-bubble b, .tut-bubble kbd { color: #7a2f9a; }
+.tut-bubble kbd { font: 700 12px var(--display); background: #fff; border: 1px solid #c9bfa8; border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; }
+.tut-step { font: 700 11px var(--display); letter-spacing: .12em; text-transform: uppercase; color: #8a7f68; margin-bottom: 2px; display: flex; justify-content: space-between; gap: 8px; }
+.tut-step button { all: unset; cursor: pointer; color: #8a7f68; font: 700 11px var(--display); letter-spacing: .08em; text-transform: uppercase; }
+.tut-step button:hover, .tut-step button:focus-visible { color: var(--ink); text-decoration: underline; }
+.tut-text { min-height: 2.8em; }
+.tut-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.tut-btns:empty { display: none; }
+.tut-btns button { font: 700 13px var(--display); letter-spacing: .06em; padding: 6px 12px; border-radius: 6px; border: 2px solid var(--ink); background: var(--ink); color: var(--bone); cursor: pointer; }
+.tut-btns button.alt { background: transparent; color: var(--ink); }
+.tut-btns button:hover, .tut-btns button:focus-visible { background: #7a2f9a; border-color: #7a2f9a; color: #fff; outline: none; }
+.tut-btns small { align-self: center; color: #8a7f68; font: 600 12px var(--ui); }
+.tut-wait { display: inline-block; margin-top: 6px; font: 700 12px var(--display); letter-spacing: .08em; color: #7a2f9a; animation: tutPulse 1.2s ease-in-out infinite; }
+@keyframes tutPulse { 50% { opacity: .45; } }
+body.tut-on .screen { padding-top: calc(150px + env(safe-area-inset-top, 0px)); }
+body.tut-on .intros { top: calc(150px + env(safe-area-inset-top, 0px)); }
+.tut-glow { position: relative; z-index: 2; animation: tutGlow 1s ease-in-out infinite !important; outline: 3px solid var(--shard) !important; outline-offset: 3px; }
+@keyframes tutGlow { 50% { outline-color: #fff; box-shadow: 0 0 22px var(--shard); } }
+@media (max-width: 520px) {
+  #tutor { grid-template-columns: 54px minmax(0, 1fr); }
+  .tut-pip { width: 54px; height: 66px; }
+  .tut-bubble { font-size: 14px; }
+  body.tut-on .screen { padding-top: calc(190px + env(safe-area-inset-top, 0px)); }
+}
 .sound-hint {
   pointer-events: auto; position: fixed; z-index: 50; left: 50%; transform: translateX(-50%);
   top: calc(12px + env(safe-area-inset-top, 0px));
@@ -857,6 +910,31 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
 <button class="sound-hint" id="soundHint" type="button" hidden></button>
 </div>
 
+<div id="tutor" hidden aria-live="polite">
+  <div class="tut-pip" id="tutPip" title="Pip">
+    <svg viewBox="0 0 76 92" aria-hidden="true"><g class="bod">
+      <ellipse cx="38" cy="89" rx="18" ry="3" fill="#0006"/>
+      <rect x="29" y="74" width="7" height="14" rx="3" fill="#3a2f5a"/><rect x="40" y="74" width="7" height="14" rx="3" fill="#3a2f5a"/>
+      <path d="M22 78 Q22 52 38 52 Q54 52 54 78 Z" fill="#2f6f73"/>
+      <path d="M26 56 Q38 64 50 56 L50 60 Q38 68 26 60 Z" fill="#ffb547"/>
+      <path d="M24 60 Q14 66 16 74" stroke="#f2c9a0" stroke-width="6" stroke-linecap="round" fill="none"/>
+      <g class="arm"><path d="M52 60 Q62 52 62 42" stroke="#f2c9a0" stroke-width="6" stroke-linecap="round" fill="none"/></g>
+      <circle cx="38" cy="34" r="20" fill="#f2c9a0"/>
+      <path d="M18 32 Q18 12 38 12 Q58 12 58 32 Q50 22 38 24 Q26 22 18 32 Z" fill="#7a3f22"/>
+      <path d="M36 13 Q34 2 44 4 Q38 6 40 13 Z" fill="#7a3f22"/>
+      <circle cx="31" cy="34" r="4.2" fill="#fff"/><circle cx="45" cy="34" r="4.2" fill="#fff"/>
+      <circle cx="32" cy="35" r="2.3" fill="#1b1729"/><circle cx="46" cy="35" r="2.3" fill="#1b1729"/>
+      <g class="lids"><rect x="26" y="29" width="10" height="10" rx="4" fill="#e8b98c"/><rect x="40" y="29" width="10" height="10" rx="4" fill="#e8b98c"/></g>
+      <circle cx="25" cy="41" r="3" fill="#ff8a8a" opacity=".6"/><circle cx="51" cy="41" r="3" fill="#ff8a8a" opacity=".6"/>
+      <ellipse class="mouth" cx="38" cy="44" rx="4" ry="1.8" fill="#7a2030"/>
+    </g></svg>
+  </div>
+  <div class="tut-bubble" id="tutBubble">
+    <div class="tut-step"><span id="tutStep">Pip</span><button type="button" id="tutSkip">Skip tutorial</button></div>
+    <div class="tut-text" id="tutText"></div>
+    <div class="tut-btns" id="tutBtns"></div>
+  </div>
+</div>
 <div id="touch" hidden>
   <div id="stick"><div id="knob"></div></div>
   <button id="dashBtn" type="button">Dash</button>
@@ -904,6 +982,7 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
       <button class="btn ghost" id="padSetupBtn" type="button">Controller setup</button>
       <button class="btn ghost" id="styleBtn" type="button">Style: Goofy</button>
       <button class="btn ghost" id="gfxBtn" type="button">Graphics: High</button>
+      <button class="btn ghost" id="tutBtn" type="button">Tutorial</button>
     </div>
     <p class="mode-note" id="titleNote">Use Players to set up two-player split screen, pick saves, and choose who has the controller.</p>
     <div id="titleModes" hidden>
@@ -1530,6 +1609,10 @@ const Sound = (() => {
     thud() { if (ok('thud', 0.06)) { tone({ f: 120, f2: 50, dur: 0.18, vol: 0.18 }); noise({ dur: 0.1, vol: 0.1, type: 'lowpass', f: 900 }); } },
     splat() { if (ok('splat', 0.06)) noise({ dur: 0.28, vol: 0.18, type: 'lowpass', f: 1000, f2: 250, q: 3 }); },
     lob() { if (ok('lob', 0.1)) tone({ f: 260, f2: 620, dur: 0.16, vol: 0.06 }); },
+    babble() { if (ok('babble', 0.055)) { const f = 420 + Math.random() * 520; tone({ type: Math.random() < 0.5 ? 'square' : 'triangle', f, f2: f * (0.7 + Math.random() * 0.8), dur: 0.055, vol: 0.03, filter: 2600 }); } },
+    yay() { tone({ type: 'triangle', f: 520, f2: 1100, dur: 0.13, vol: 0.06 }); tone({ type: 'triangle', f: 780, f2: 1650, dur: 0.16, vol: 0.05, at: 0.11 }); },
+    hmm() { tone({ type: 'sine', f: 330, f2: 250, dur: 0.22, vol: 0.06 }); tone({ type: 'sine', f: 250, f2: 360, dur: 0.18, vol: 0.05, at: 0.2 }); },
+    hiya() { tone({ type: 'triangle', f: 380, f2: 760, dur: 0.1, vol: 0.06 }); tone({ type: 'triangle', f: 760, f2: 500, dur: 0.14, vol: 0.05, at: 0.09 }); },
     warn() { if (ok('warn', 0.3)) tone({ type: 'triangle', f: 660, dur: 0.12, vol: 0.04 }); },
     eshot() { if (ok('eshot', 0.08)) tone({ type: 'triangle', f: 520, f2: 300, dur: 0.1, vol: 0.045 }); },
     tick() { if (ok('tick', 0.06)) tone({ type: 'square', f: 1300, f2: 900, dur: 0.04, vol: 0.03, filter: 4000 }); },
@@ -4235,7 +4318,7 @@ let dungeon = false, D = null;
 let progress = { dungeon: false, bestFloor: 0 };
 try { Object.assign(progress, JSON.parse(localStorage.getItem('shardfall-progress')) || {}); } catch (_) {}
 const saveProgress = () => { try { localStorage.setItem('shardfall-progress', JSON.stringify(progress)); } catch (_) {} syncActiveSave(); };
-let sandbox = false, godMode = false, sbWave = 1;
+let sandbox = false, godMode = false, sbWave = 1, tutHold = false, tutActive = false;
 let T = 0, shards = 0, shardsTotal = 0, kills = 0, boxesOpened = 0, autoFire = false, shake = 0;
 const W = { n: 0, queue: [], spawnT: 0, active: false, inter: 2, hpMul: 1, dmgMul: 1 };
 let orbitA = 0;
@@ -4400,6 +4483,7 @@ function bossesFor(n) {
 }
 function updateWaves(dt) {
   if (trial) return updateTrial(dt);
+  if (tutHold) return;
   if (!W.active) {
     W.inter -= dt;
     if (W.inter <= 0) startWave(W.n + 1);
@@ -4581,7 +4665,9 @@ function killEnemy(e) {
   burst(e.pos.x, (e.float ? 1.2 : 0.5), e.pos.z, e.color, e.boss ? 60 : Math.round(8 + e.r * 8), e.boss ? 14 : 7);
   sfx('kill', e.boss);
   // co-op drops twice the shards, since each player buys their own boxes
-  let v = Math.round(e.shards * (hasPet('cat') ? 1.25 : 1) * (coop ? 2 : 1) * (1 + 0.15 * (buildOf(e.lastHit || P1).S.scav || 0)) * (buildOf(e.lastHit || P1).S.shardMul || 1));
+  let v = e.shards * (hasPet('cat') ? 1.25 : 1) * (coop ? 2 : 1) * (1 + 0.15 * (buildOf(e.lastHit || P1).S.scav || 0)) * (buildOf(e.lastHit || P1).S.shardMul || 1);
+  // fractions (the Splitting Demon's splits and monsters) round up by chance, so a quarter of a shard is a 1 in 4 shot at one
+  v = e.fracShards ? Math.floor(v) + (Math.random() < v % 1 ? 1 : 0) : Math.round(v);
   while (v > 0) { const gv = v >= 10 ? 5 : 1; dropGem(e.pos.x, e.pos.z, gv); v -= gv; }
   kills++;
   withPlayer(e.lastHit || P1, () => {
@@ -4595,7 +4681,7 @@ function killEnemy(e) {
 }
 // The Splitting Demon: every death sends a shockwave a second later and splits it in two, seven times over.
 // One line of splits carries the crown down to a single smallest split; killing that one beats the boss.
-const DEMON_SPLITS = 7, DEMON_KEEP = 0.8, DEMON_MOB_CAP = 40;   // each split keeps four fifths of the health of the one before
+const DEMON_SPLITS = 7, DEMON_KEEP = 0.8, DEMON_MOB_CAP = 40, DEMON_SHARDS = 0.25;   // each split keeps four fifths of the health of the one before
 function demonQuake(x, z, gen, dmg) {
   const k = Math.pow(0.78, gen), max = 3 + 13 * k, wd = Math.max(2, Math.round(dmg * 0.85 * Math.pow(0.8, gen)));
   telegraph(x, z, 1.2 + 2.6 * k, 1, 0, 0xff3a4a, () => shockwave(x, z, wd, max), null, gen >= 3);
@@ -4614,12 +4700,13 @@ function demonDied(e) {
     shake = 0.6; ring(e.pos.x, e.pos.z, 0.5, 10, 0.7, 0xc77dff); sfx('kill', true);
     return;
   }
-  // every split that dies lets out monsters, more from bigger ones: 4 from the giant down to 1 from the smallest (capped so the arena doesn't drown)
+  // every split that dies lets out monsters, more from bigger ones: 4 from the giant down to 1, none from the smallest (capped so the arena doesn't drown)
   const live = enemies.reduce((n, o) => n + (!o.dead && o.type !== 'demonspawn' ? 1 : 0), 0);
-  for (let i = 0, n = Math.min(Math.ceil((DEMON_SPLITS + 1 - gen) / 2), DEMON_MOB_CAP - live); i < n; i++) {
+  for (let i = 0, n = Math.min(gen >= DEMON_SPLITS ? 0 : Math.ceil((DEMON_SPLITS + 1 - gen) / 2), DEMON_MOB_CAP - live); i < n; i++) {
     let t; do t = pickMonster(Math.max(W.n || 0, 5)); while (t === 'nest' || t === 'goblin');
     const a = rand(0, TAU), m = spawnEnemy(t, W.n ? W.hpMul : 1, W.n ? W.dmgMul : 1, { x: e.pos.x + Math.sin(a) * 1.5, z: e.pos.z + Math.cos(a) * 1.5 });
     m.kbx = Math.sin(a) * 6; m.kbz = Math.cos(a) * 6;
+    m.shards *= DEMON_SHARDS; m.fracShards = true;   // they come in hundreds, so they drop a quarter of the usual shards
   }
   if (gen >= DEMON_SPLITS) return;
   if (!gen) { e.line = true; banner('It splits!', 'And it keeps on splitting'); }
@@ -4630,7 +4717,7 @@ function demonDied(e) {
     k.gen = ng; k.root = root; k.line = e.line && i === pick; k.crowned = crown;
     k.size = Math.pow(0.78, ng); k.r = TYPES.demonspawn.r * k.size;
     k.hp = k.maxHp = Math.max(1, e.maxHp * DEMON_KEEP); k.dmg = Math.max(4, Math.round(e.dmg * 0.85)); k.speed = Math.min(6.5, e.speed * 1.12);
-    k.shards = crown ? 60 : ng <= 3 ? 1 : 0;
+    k.shards = crown ? 60 : ng <= 3 ? DEMON_SHARDS : 0; k.fracShards = true;
     if (crown) { k.baseEmissive = 0x6a4a00; root.crownAt = k; }
     k.kbx = Math.sin(a) * s * 9; k.kbz = Math.cos(a) * s * 9; k.spawn = 0.5;
   });
@@ -6158,6 +6245,7 @@ function openBox(b, who = P1) {
   removeBox(b); crumbleGroup(b);
   if (!dungeon && !lab) boxTimers.push(7);
   pendingAbility = rollAbility(b.luck);
+  if (tutActive) for (let i = 0; i < 60 && !(pendingAbility && !pendingAbility.isPU && !pendingAbility.isPet && pendingAbility.kind === 'active'); i++) pendingAbility = rollAbility(b.luck);
   sfx('boxOpen');
   state = 'reveal';
   const crate = $('#crate'), card = $('#card');
@@ -7159,6 +7247,7 @@ addEventListener('keydown', e => {
   keys[k] = true;
   if ([' ', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(k)) e.preventDefault();
   if (state === 'cutscene') { if (!e.repeat) skipCut(); return; }
+  if (!e.repeat && (k === 'enter' || (k === 'escape' && tutOffer())) && tutPress(k === 'escape' ? 'back' : 'ok', state === 'play' ? 'play' : 'menu')) { e.preventDefault(); return; }
   if (state === 'pets') {
     if (k === 'escape') closePets();
     return;
@@ -7368,7 +7457,7 @@ function pollPad(dt) {
     pad.look.x = rx; pad.look.y = ry;   // first person turns by how far you push, not just which way
     if (hit(B.view)) setFirstPerson(!firstPerson);
     if (hit(B.dash)) tryDash();
-    if (hit(B.interact)) { const b = nearBox(); if (b) openBox(b); }
+    if (hit(B.interact)) { const b = nearBox(); if (b) openBox(b); else tutPress(); }
     if (hit(B.cast1)) useActive(0);
     if (hit(B.cast2)) useActive(1);
     if (hit(B.cast3)) useActive(2);
@@ -7388,7 +7477,9 @@ function pollPad(dt) {
     if (pad.navT <= 0) { dir = Math.abs(lx) > Math.abs(ly) ? [Math.sign(lx), 0] : [0, Math.sign(ly)]; pad.navT = 0.22; }
   } else if (lm < 0.3) pad.navT = 0;
   if (dir) navFocus(dir[0], dir[1]);
-  if (hit(B.interact)) {
+  if (tutTakesPad() && (hit(B.interact) || hit(B.back))) {
+    tutPress(hit(B.back) ? 'back' : 'ok');
+  } else if (hit(B.interact)) {
     const scr = openScreen(), el = document.activeElement;
     if (scr && el && el !== scr && scr.contains(el)) el.click(); else navFocus(0, 0);
   } else if (hit(B.back) || hit(B.loadout)) {
@@ -7886,6 +7977,7 @@ function slotAction(kind, i) {
     petSlots[i] = { owned: [], equipped: null, asc: {}, dungeon: false, bestFloor: 0, abilities: [], at: Date.now() };
     activeSlot = i; applySave(petSlots[i]);
     slotMsg = `Started a new save in ${slotLabel(i)}: no pets, and the dungeon is locked until you reach wave 10.`;
+    setTimeout(() => tutOfferShow('new'), 300);
   } else if (kind === 'save') {
     petSlots[i] = { owned: [...petSave.owned], equipped: petSave.equipped, asc: JSON.parse(JSON.stringify(petSave.asc || {})), pu: cleanPU(petSave.pu), chars: JSON.parse(JSON.stringify(petSave.chars || {})), bank: petSave.bank || 0, skill: cleanSkill(petSave.skill), at: Date.now(), dungeon: progress.dungeon, bestFloor: progress.bestFloor, abilities: [...codex] };
     activeSlot = i;
@@ -12317,6 +12409,232 @@ $('#fpBtn span').textContent = firstPerson ? '3rd person' : '1st person'; $('#fp
   activeSlot = i; saveActiveSlot(); saveSlots(); applySave(sl);
   try { localStorage.setItem(FLAG, '1'); } catch (_) {}
 })();
+/* ---------- tutorial: Pip, a little guide who shows you how everything works ---------- */
+// Pip never talks out loud: just a speech bubble and some goofy babble. The first part happens in a real
+// arena run (waves wait until you're ready, and you can't be hurt until then); the second part is a tour
+// of the title screen. It's offered the first time you play and whenever you start a new save.
+const TUT_KEY = 'shardfall-tut';
+const tutSeen = () => { try { return !!localStorage.getItem(TUT_KEY); } catch (_) { return true; } };
+const tutMark = () => { try { localStorage.setItem(TUT_KEY, '1'); } catch (_) {} };
+const tdev = () => touchMode ? 'touch' : pad.active ? 'pad' : 'kb';
+const KB = t => `<kbd>${t}</kbd>`, PB = name => KB(padLabel(B[name]));
+const by = (kb, pd, tc) => { const d = tdev(); return d === 'pad' ? pd : d === 'touch' ? (tc ?? kb) : kb; };
+let tut = null, tutTyping = null, tutTypeDone = null, tutCoopBack = false, tutMoodT = null;
+const tutEl = $('#tutor'), tutPip = $('#tutPip');
+
+function tutMood(m) {
+  tutPip.classList.remove('wave', 'hop'); void tutPip.offsetWidth;
+  if (m) tutPip.classList.add(m);
+  clearTimeout(tutMoodT); tutMoodT = setTimeout(() => tutPip.classList.remove('wave', 'hop'), 1600);
+}
+function tutFinishTyping() { if (tutTypeDone) tutTypeDone(); }
+function tutShow(html, { step = 'Pip', btns = [], wait = '', mood = '' } = {}) {
+  tutEl.hidden = false; document.body.classList.add('tut-on');
+  $('#tutStep').textContent = step;
+  tut.btns = btns;
+  const box = $('#tutText');
+  box.innerHTML = html + (wait ? `<br><span class="tut-wait">${wait}…</span>` : '');
+  // type it out a couple of letters at a time, babbling as it goes
+  clearInterval(tutTyping); tutTypeDone = null;
+  const nodes = [], w = document.createTreeWalker(box, NodeFilter.SHOW_TEXT);
+  while (w.nextNode()) { nodes.push([w.currentNode, w.currentNode.nodeValue]); w.currentNode.nodeValue = ''; }
+  let ni = 0, ci = 0, n = 0;
+  tutPip.classList.add('talk');
+  tutTypeDone = () => { clearInterval(tutTyping); tutTyping = null; tutTypeDone = null; for (const [nd, full] of nodes) nd.nodeValue = full; tutPip.classList.remove('talk'); };
+  tutTyping = setInterval(() => {
+    for (let k = 0; k < 2 && ni < nodes.length; k++) { const [nd, full] = nodes[ni]; ci++; nd.nodeValue = full.slice(0, ci); if (ci >= full.length) { ni++; ci = 0; } }
+    if (ni >= nodes.length) tutTypeDone?.(); else if (n++ % 2 === 0) sfx('babble');
+  }, 30);
+  $('#tutBtns').replaceChildren(...btns.map(b => {
+    const el = document.createElement('button');
+    el.type = 'button'; el.textContent = b.label; if (b.alt) el.className = 'alt';
+    el.addEventListener('click', e => { e.stopPropagation(); sfx('tick'); b.fn(); });
+    return el;
+  }));
+  if (btns.length && !touchMode) { const hint = document.createElement('small'); hint.textContent = tdev() === 'pad' ? `${padLabel(B.interact)}: ${btns[0].label}${btns.find(b => b.back) ? ` · ${padLabel(B.back)}: ${btns.find(b => b.back).label}` : ''}` : `Enter: ${btns[0].label}`; $('#tutBtns').appendChild(hint); }
+  if (mood) tutMood(mood);
+}
+function tutGlow(sel) {
+  document.querySelectorAll('.tut-glow').forEach(el => el.classList.remove('tut-glow'));
+  const el = sel && $(sel);
+  if (el && el.offsetParent !== null) { el.classList.add('tut-glow'); el.scrollIntoView({ block: 'center' }); }
+}
+
+// ---- the run part ----
+function tutGiveActive() {
+  if (slots.active.some(Boolean)) return null;
+  const a = ABILITIES.find(x => x.kind === 'active' && x.tier === 'common' && !x.only && !x.fusion);
+  if (!a) return null;
+  levels[a.id] = levels[a.id] || 1; slots.active[0] = a.id; recompute(); renderBar();
+  return a.name;
+}
+const TUT_RUN = [
+  { skipIf: () => state !== 'powerpick', wait: 'Pick one',
+    say: () => 'Before a run you pick a <b>power</b>. Powers come from your skill trees, and they last the whole run.', done: () => state === 'play' },
+  { enter() { tut.from = P.pos.clone(); tut.moved = 0; }, tick() { tut.moved += Math.hypot(P.pos.x - tut.from.x, P.pos.z - tut.from.z); tut.from.copy(P.pos); },
+    mood: 'wave', wait: 'Walk around a bit',
+    say: () => 'Hi! Let’s learn the ropes. ' + by(`Move with ${KB('W')}${KB('A')}${KB('S')}${KB('D')}.`, 'Move with the <b>left stick</b>.', '<b>Drag your left thumb</b> to move.'), done: () => tut.moved > 7 },
+  { enter() { tut.foes = [-3, 0, 3].map(x => spawnEnemy('grub', 1, 1, { x: P.pos.x + x, z: P.pos.z - 9 })); }, wait: 'Defeat the grubs',
+    say: () => 'Uh oh, grubs! ' + by(`Aim with the <b>mouse</b> and <b>hold click</b> to shoot. (${KB('F')} turns on auto-fire.)`,
+      `Point the <b>right stick</b> where you want to shoot, or hold ${PB('fire')} to shoot ahead.`, 'You shoot at the closest monster <b>all by yourself</b>. Just keep moving!'),
+    done: () => tut.foes.every(e => e.dead) },
+  { enter() { tut.t = 0; }, tick(dt) { tut.t += dt; }, wait: 'Pick up the shards',
+    say: () => 'They dropped <b>shards</b>, the glowing amber bits. Walk over them to grab them. Shards buy boxes!', done: () => !gems.length || tut.t > 12 },
+  { enter() { tut.cd0 = P.dashCd || 0; }, wait: 'Dash once',
+    say: () => by(`Press ${KB('Space')} to <b>dash</b>.`, `Press ${PB('dash')} to <b>dash</b>.`, 'Tap <b>Dash</b> to dash.') + ' You zip ahead and can’t get hurt while dashing. The thin bar under your health shows when it’s ready again.',
+    done: () => P.dashT > 0 || (P.dashCd || 0) > tut.cd0 + 0.05 },
+  { enter() { const c = boxCost(); tut.gift = shards < c ? c - shards : 0; shards = Math.max(shards, c); }, wait: 'Open a box', mood: 'hop',
+    say: () => (tut.gift ? `Here, ${tut.gift} shards from me! ` : '') + 'See the glowing <b>boxes</b>? ' + by(`Walk up to one and press ${KB('E')}.`, `Walk up to one and press ${PB('interact')}.`, 'Walk up to one and tap the button that pops up.') + ' Each box costs a bit more than the last.',
+    done: () => boxesOpened > 0 },
+  { wait: 'Claim it', say: () => 'A new <b>ability</b>! Boxes roll random ones: common, rare, epic and legendary. Sometimes you get a power-up or even a pet instead. Claim it to keep it.', done: () => state === 'play' },
+  { enter() { tut.gave = tutGiveActive(); }, wait: 'Cast it',
+    say: () => (tut.gave ? `Here’s one from me: <b>${tut.gave}</b>! ` : '') + 'Active abilities go in the <b>big slots</b> at the bottom. ' +
+      by(`Press ${KB('1')} to cast it! ${KB('2')} and ${KB('3')} cast the others.`, `Press ${PB('cast1')} to cast it! ${PB('cast2')} and ${PB('cast3')} cast the others.`, '<b>Tap the slot</b> to cast it!') + ' Then it needs to recharge.',
+    done: () => Object.values(cds).some(v => v > 0) },
+  { say: () => 'The <b>small slots</b> are for passive abilities: they’re always on, no button needed. Find an ability you already have and it <b>levels up</b>. Max out the right two and they can <b>fuse</b> into something stronger!',
+    btns: () => [{ label: 'Got it', fn: () => tutGo(tut.i + 1) }] },
+  { enter() { tut.sawLo = false; }, tick() { if (state === 'loadout') tut.sawLo = true; }, wait: 'Open and close your loadout',
+    say: () => by(`Press ${KB('Q')} to open your <b>loadout</b>`, `Press ${PB('loadout')} to open your <b>loadout</b>`, 'Tap <b>Loadout</b> at the top right') +
+      '. It pauses the game. That’s where you choose which abilities sit in your slots, and where you fuse them. ' + by(`Press ${KB('Q')} again to close it.`, `Press ${PB('back')} to close it.`, 'Tap <b>Back to the fight</b> to close it.'),
+    done: () => tut.sawLo && state === 'play' },
+  { enter() { tut.gift = shards < 5 ? 10 : 0; shards += tut.gift; tut.bank0 = bankOf(P1).bank || 0; }, wait: 'Bank your shards',
+    say: () => (tut.gift ? 'Here are a few more shards. ' : '') + 'Careful: if you fall, the shards you’re holding are <b>lost</b>! ' + by(`Press ${KB('B')}`, `Press ${PB('bank')}`, 'Tap <b>Bank</b>') +
+      ' to put them in your <b>bank</b>. Banked shards are safe, and you spend them on the title screen.',
+    done: () => (bankOf(P1).bank || 0) > tut.bank0 },
+  { say: () => 'Now for the real fight! Monsters come in <b>waves</b>, and each wave is tougher. Every <b>5th wave</b> brings a boss! Your <b>health</b> is at the top left. If it runs out, the run ends.',
+    btns: () => [{ label: 'I’m ready!', fn: () => tutGo(tut.i + 1) }] },
+  { enter() { tutHold = false; godMode = false; tut.w0 = W.n; }, wait: 'Clear wave 1', mood: 'hop',
+    say: () => 'Here they come! When a wave is cleared, its shards fly to you. Use the break to open boxes.', done: () => W.n > tut.w0 && !W.active },
+  { mood: 'hop', say: () => 'You did it! Keep fighting as long as you like. Want me to show you the menus on the title screen?',
+    btns: () => [{ label: 'Show me the menus', fn: tutTour }, { label: 'Keep playing first', alt: true, back: true, fn: tutLater }] },
+];
+
+// ---- the title screen part ----
+const TUT_TOUR = [
+  { sel: '#startBtn', say: () => '<b>Enter the arena</b> lets you pick a mode: the <b>Arena</b> you just played, the <b>Dungeon</b> (it opens once you reach wave 10), the giant <b>Labyrinth</b>, and <b>Sandbox</b>, where you can try everything.' },
+  { sel: '#coopBtn', say: () => '<b>Players</b>: play with a friend in split screen, choose which save each of you uses, and turn friendly fire on or off.' },
+  { sel: '#petsBtn', say: () => '<b>Pets</b>: sometimes a box gives you a pet instead of an ability. Your pet fights next to you in every run. Your <b>save slots</b> are in here too.' },
+  { sel: '#charBtn', say: () => '<b>Characters</b>: spend banked shards on character boxes. Each character has a special trait and abilities only they can get.' },
+  { sel: '#puBtn', say: () => '<b>Power-ups</b>: the power-ups you find in boxes live here. Slot them in, and spend banked shards to make them stronger.' },
+  { sel: '#skillBtn', say: () => '<b>Skills</b>: spend banked shards to level up. Every level gives a skill point for your skill trees, and the trees unlock the powers you pick at the start of a run.' },
+  { sel: '#codexBtn', say: () => '<b>Abilities</b>: every ability you’ve found. The dark ones are still out there waiting for you!' },
+  { sel: '#padSetupBtn', say: () => '<b>Controller setup</b>: plug in a controller and change any button you like.' },
+  { sel: '#styleBtn', say: () => '<b>Style</b> switches goofy mode: googly eyes, silly words and boss entrances. Very important stuff.' },
+  { sel: '#gfxBtn', say: () => '<b>Graphics</b>: if the game feels laggy, turn this down to Normal or Low.' },
+  { sel: '#tutBtn', mood: 'wave', say: () => 'That’s everything! If you forget something, press <b>Tutorial</b> and I’ll show you again. Press ' + by(KB('Esc'), PB('pause'), 'pause') + ' in a run to pause. Good luck out there!',
+    btns: () => [{ label: 'Done', fn: () => tutEnd() }, { label: 'Back', alt: true, back: true, fn: () => tutGo(tut.i - 1) }] },
+];
+
+function tutGo(i) {
+  if (!tut) return;
+  const steps = tut.part === 'tour' ? TUT_TOUR : TUT_RUN;
+  while (i < steps.length && steps[i].skipIf?.()) i++;
+  if (i < 0) i = 0;
+  if (i >= steps.length) return tut.part === 'tour' ? tutEnd() : tutTour();
+  tut.i = i;
+  const st = steps[i];
+  st.enter?.();
+  if (tut.part === 'tour') {
+    showModes(false); tutGlow(st.sel);
+    const btns = st.btns ? st.btns() : [{ label: 'Next', fn: () => tutGo(tut.i + 1) }, ...(i ? [{ label: 'Back', alt: true, back: true, fn: () => tutGo(tut.i - 1) }] : [])];
+    tutShow(st.say(), { step: `Menus · ${i + 1} of ${steps.length}`, btns, mood: st.mood });
+  } else {
+    tutShow(st.say(), { step: `Lesson ${i + 1} of ${steps.length}`, btns: st.btns ? st.btns() : [], wait: st.wait, mood: st.mood });
+  }
+}
+function tutTick() {
+  const dt = 0.12;
+  if (tutCoopBack && state === 'title') { tutCoopBack = false; coop = true; renderCoopBtn(); }
+  if (!tut) return;
+  if (tut.part === 'offer') { if (state !== 'title' && state !== 'pets') tutEnd(false); return; }
+  if (tut.part === 'later') { if (state === 'title') tutTour(); return; }
+  if (tut.part === 'run') {
+    if (state === 'title') return tutTour();
+    if (state === 'over') {
+      if (!tut.fell) {
+        tut.fell = true; tutHold = false;
+        tutShow('Oops, you fell! It happens to everyone. Remember: the shards you didn’t bank are gone, so bank often. Want to see the menus now?',
+          { step: 'Pip', mood: 'hop', btns: [{ label: 'Show me the menus', fn: tutTour }, { label: 'Skip', alt: true, back: true, fn: () => tutEnd() }] });
+        sfx('hmm');
+      }
+      return;
+    }
+    const st = TUT_RUN[tut.i];
+    if (!st || state === 'paused') return;
+    st.tick?.(dt);
+    if (st.done?.()) { sfx('yay'); tutMood('hop'); tutGo(tut.i + 1); }
+    return;
+  }
+  if (tut.part === 'tour') {
+    // step aside while you look inside a screen, then pick up where you left off
+    const away = state !== 'title';
+    if (away && !tutEl.hidden) { tutEl.hidden = true; tutGlow(null); }
+    else if (!away && tutEl.hidden) tutGo(tut.i);
+  }
+}
+setInterval(tutTick, 120);
+
+function tutOfferShow(why) {
+  if (tut && tut.part !== 'offer') return;
+  tut = { part: 'offer' };
+  tutShow(why === 'new' ? 'A brand new save! Want me to show you how everything works?' : 'Hi! I’m <b>Pip</b>. Is this your first time here? I can show you how everything works!',
+    { step: 'Pip', mood: 'wave', btns: [{ label: 'Yes, show me!', fn: tutStart }, { label: 'No thanks', alt: true, back: true, fn: () => tutEnd() }] });
+  sfx('hiya');
+}
+function tutStart() {
+  tutMark();
+  if (state === 'pets') closePets();
+  if (state !== 'title') { tutEnd(false); return; }
+  tut = { part: 'run', i: 0 };
+  if (coop) { coop = false; tutCoopBack = true; renderCoopBtn(); }
+  showModes(false);
+  begin('normal');
+  tutActive = true; tutHold = true; godMode = true;
+  tutGo(0);
+}
+function tutTour() {
+  if (!tut) return;
+  tutActive = false; tutHold = false;
+  if (state !== 'title') { $('#overScreen').hidden = true; toTitle(); }
+  tut.part = 'tour';
+  tutGo(0);
+}
+function tutLater() {
+  tut.part = 'later'; tutActive = false;
+  tutEl.hidden = true; document.body.classList.remove('tut-on');
+}
+function tutEnd(mark = true) {
+  if (mark) tutMark();
+  if (tut && (tut.part === 'run' || tut.part === 'later')) { tutHold = false; tutActive = false; if (state === 'play' && !sandbox) godMode = false; }
+  tut = null;
+  clearInterval(tutTyping); tutTyping = null; tutTypeDone = null;
+  tutGlow(null);
+  tutEl.hidden = true; document.body.classList.remove('tut-on');
+}
+// Enter (or the controller's confirm button) presses Pip's first button; Esc or back takes the "No" / "Back" one
+function tutPress(kind = 'ok', ctx) {
+  if (!tut || tutEl.hidden || !(state === 'play' || state === 'title' || state === 'over' || tut.part === 'offer')) return false;
+  if (tutTyping) { if (kind === 'ok') { tutFinishTyping(); return true; } }
+  const bs = tut.btns || [];
+  if (!bs.length) return false;
+  const b = kind === 'back' ? bs.find(x => x.back) : bs[0];
+  if (!b) return false;
+  sfx('tick'); b.fn(); return true;
+}
+const tutOffer = () => !!tut && !tutEl.hidden && (tut.btns || []).some(b => b.back);
+const tutTakesPad = () => !!tut && !tutEl.hidden && state !== 'play' && (tut.btns || []).length > 0 && (tut.part === 'offer' || state === 'title' || state === 'over');
+$('#tutBubble').addEventListener('click', tutFinishTyping);
+$('#tutSkip').addEventListener('click', () => tutEnd());
+tutPip.addEventListener('click', () => { tutMood('wave'); sfx('hiya'); });
+$('#tutBtn').addEventListener('click', () => { tut = null; tutStart(); });
+// first time here (nothing played yet on this device)? Pip offers to help
+{
+  let played = false;
+  try { played = !!localStorage.getItem('shardfall-best') || (petSave.owned || []).length > 0 || codex.size > 0 || activeSlot >= 0; } catch (_) {}
+  if (played) tutMark();
+  else if (!tutSeen()) setTimeout(() => { if (state === 'title') tutOfferShow('first'); }, 900);
+}
+
 frame();
 })();
 </script>
