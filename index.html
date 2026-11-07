@@ -2299,6 +2299,137 @@ const MONSTER = {
   },
 };
 const M_GOLD = 0xe2b74a;
+// the monsters that belong to one map each
+Object.assign(MONSTER, {
+  gloombat(f, c) {
+    // a round furry bat with big ears and leathery wings that flap
+    f.add(blobG('bat', (x, y, z) => 1 + 0.04 * bumpy(x * 2, y * 2, z * 2)), c, { s: [0.85, 0.85, 0.8] });
+    f.add(blobG('batB', () => 1), shade(c, 1.4), { p: [0, -0.3, 0.35], s: [0.55, 0.45, 0.4] });
+    f.both(s => {
+      f.add(cone(6), shade(c, 0.7), { p: [s * 0.38, 0.95, 0], r: [0, 0, s * -0.3], s: [0.2, 0.55, 0.12] });
+      // wing: a fan of thin bony fingers with a membrane
+      f.add(cone(3), shade(c, 0.55), { p: [s * 1.3, 0.15, -0.1], r: [Math.PI / 2, 0, s * 1.35], s: [0.75, 1.4, 0.05], wig: wiggle(0.45, 0, 14, 0), ramp: [0, 1] });
+      f.limb([s * 0.7, 0.3, 0], [s * 1.9, 0.5, -0.1], 0.06, 0.03, shade(c, 0.4), { wig: wiggle(0.45, 0, 14, 0), ramp: [0, 1] });
+      f.add(cone(5), BONE, { p: [s * 0.18, -0.05, 0.78], r: [Math.PI, 0, 0], s: [0.07, 0.2, 0.07] });
+    });
+    brows(f, shade(c, 0.4));
+  },
+  magmaslug(f, c) {
+    // a long low slug of cooled rock, with lava glowing through the cracks and dripping off its tail
+    f.add(blobG('slug', (x, y, z) => (1 + 0.06 * bumpy(x * 1.5, y * 1.5, z * 1.5)) * (y < -0.4 ? 0.9 : 1) * (z < 0 ? 1 + z * 0.25 : 1)), c, { s: [0.85, 0.75, 1.5] });
+    for (let i = 0; i < 14; i++) { const z = 0.9 - i * 0.16, a = (i % 2 ? 1 : -1) * rand(0.2, 0.9); f.add(sph(6), 0xff7a2a, { p: [Math.sin(a) * 0.7, 0.4 + Math.cos(a) * 0.25, z], s: [0.18, 0.05, 0.1], r: [0, rand(0, 3), 0], glow: 1.5 }); }
+    for (let i = 0; i < 4; i++) f.add(sph(8), 0xffb03a, { p: [rand(-0.3, 0.3), -0.55, -1.25 - i * 0.12], s: 0.12 - i * 0.02, glow: 1.8 });
+    f.both(s => { f.limb([s * 0.25, 0.55, 1.1], [s * 0.42, 1.1, 1.35], 0.06, 0.04, shade(c, 0.8), { wig: wiggle(0.05, 0.04, 4, s) }); f.add(sph(8), 0xffd040, { p: [s * 0.42, 1.12, 1.36], s: 0.11, glow: 1.6, wig: wiggle(0.05, 0.04, 4, s) }); });
+    mouth(f, -0.2, 1.32, 0.5, 0.08);
+  },
+  cinder(f, c) {
+    // a floating hooded fire mage, flames instead of a face
+    const robe = prim('lathe:cinder', () => new THREE.LatheGeometry([[0, 1], [0.4, 0.9], [0.5, 0.4], [0.58, 0], [0.7, -0.55], [0.82, -1]].map(p => new THREE.Vector2(p[0], p[1])), seg(18)));
+    f.add(robe, 0x3a1a14, { wig: wiggle(0.05, 0.08, 5, 0), wigFn: t => (1 - t) * (1 - t) });
+    f.add(blobG('cinH', (x, y, z) => (y > 0.3 ? 1 + (y - 0.3) * 0.7 : 1)), 0x2a1210, { p: [0, 0.35, 0], s: [0.78, 0.74, 0.84] });
+    f.add(sph(10), c, { p: [0, 0.3, 0.38], s: [0.45, 0.38, 0.4], glow: 1.6 });
+    for (let i = 0; i < 5; i++) f.add(cone(6), i % 2 ? 0xffd040 : c, { p: [(i - 2) * 0.14, 0.75 + (2 - Math.abs(i - 2)) * 0.08, 0.3], s: [0.1, 0.4, 0.1], glow: 1.6, wig: wiggle(0.08, 0, 10, i) });
+    f.both(s => { f.limb([s * 0.5, 0.1, 0.2], [s * 0.85, -0.05, 0.6], 0.16, 0.11, 0x3a1a14, { wig: wiggle(0.05, 0, 3, s) }); f.add(sph(8), 0xffb03a, { p: [s * 0.88, -0.02, 0.68], s: 0.17, glow: 2, wig: wiggle(0.05, 0, 3, s) }); });
+    f.add(tor(0.6, 0.05, 16), c, { p: [0, -0.25, 0], r: [Math.PI / 2, 0, 0], glow: 0.8 });
+  },
+  frostwolf(f, c) {
+    f.add(blobG('wolf', (x, y, z) => (1 + 0.05 * bumpy(x * 2.5, y * 2.5, z * 2.5)) * (z > 0.3 ? 1 + y * 0.12 : 1)), c, { s: [0.72, 0.72, 1.25] });
+    // a shaggy ruff of fur and a long snout
+    for (let i = 0; i < 9; i++) { const a = (i / 8 - 0.5) * 2.6; f.add(cone(5), shade(c, 1.12), { p: [Math.sin(a) * 0.72, 0.25 + Math.cos(a) * 0.45, 0.55], r: [0.6, 0, -a * 0.9], s: [0.16, 0.42, 0.14] }); }
+    f.add(blobG('snout', () => 1), shade(c, 1.1), { p: [0, 0.05, 1.25], s: [0.32, 0.26, 0.45] }); f.add(sph(6), INK, { p: [0, 0.14, 1.66], s: 0.08 });
+    mouth(f, -0.14, 1.45, 0.3, 0.05); teeth(f, -0.1, 1.48, 0.24, 3, 0xffffff, 0.09);
+    f.both(s => {
+      f.add(cone(5), shade(c, 0.8), { p: [s * 0.3, 0.85, 0.75], r: [0, 0, s * -0.2], s: [0.14, 0.38, 0.1] });
+      for (const z of [0.7, -0.7]) f.limb([s * 0.45, -0.3, z], [s * 0.5, -1, z + 0.05], 0.16, 0.1, shade(c, 0.82), { wig: walkW(0.12, 0.26, (z > 0 ? 0 : Math.PI) + (s > 0 ? Math.PI : 0)), ramp: [0, 1] });
+    });
+    for (let i = 0; i < 4; i++) f.add(gemG(), 0xbfe8ff, { p: [0, 0.72 - i * 0.04, 0.3 - i * 0.35], r: [-0.4, 0, 0], s: [0.09, 0.3, 0.09], glow: 0.7 });
+    f.add(cone(6), shade(c, 1.15), { p: [0, 0.15, -1.35], r: [-1.9, 0, 0], s: [0.2, 0.7, 0.2], wig: wiggle(0, 0.14, 9, 0), ramp: [0, 1] });
+    brows(f, shade(c, 0.5), 0.5, 1.0);
+  },
+  icegolem(f, c) {
+    // a hulking stack of ice blocks with frost crystals growing out of its shoulders
+    f.add(rbox(1.5, 1.3, 1.2, 0.18), c, { p: [0, 0.15, 0] });
+    f.add(rbox(0.9, 0.7, 0.8, 0.14), shade(c, 1.12), { p: [0, 0.95, 0.15] });
+    f.add(rbox(0.6, 0.1, 0.12), 0x2a6aa8, { p: [0, 0.98, 0.56], glow: 1.4 });
+    f.add(rbox(1.2, 0.45, 0.1), shade(c, 0.8), { p: [0, -0.3, 0.6] });
+    f.both(s => {
+      for (let k = 0; k < 3; k++) f.add(gemG(), 0xdff4ff, { p: [s * (0.75 + k * 0.12), 0.85 + k * 0.1, -0.1 - k * 0.2], r: [rand(-0.3, 0.3), 0, s * (-0.4 - k * 0.15)], s: [0.16, 0.5 - k * 0.08, 0.16], glow: 0.5 });
+      f.add(rbox(0.6, 1.1, 0.6, 0.12), shade(c, 0.9), { p: [s * 1.1, -0.15, 0.1], wig: wiggle(0, 0.06, 4, s) });
+      f.add(rbox(0.7, 0.55, 0.7, 0.12), shade(c, 1.1), { p: [s * 1.12, -0.85, 0.22], wig: wiggle(0, 0.06, 4, s) });
+      f.limb([s * 0.4, -0.55, 0], [s * 0.45, -1, 0.03], 0.32, 0.3, shade(c, 0.85), { wig: walkW(0.05, 0.1, s > 0 ? 0 : Math.PI), ramp: [0, 1] });
+    });
+  },
+  icicle(f, c) {
+    // a little floating sprite made of a cluster of icicles around a cold glowing heart
+    f.add(gemG(), c, { s: [0.55, 0.95, 0.55], glow: 0.3 });
+    f.add(icoF(0), 0xffffff, { s: 0.3, glow: 1.6 });
+    for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; f.add(gemG(), shade(c, 1.15), { p: [Math.sin(a) * 0.8, -0.2 + (i % 2) * 0.35, Math.cos(a) * 0.8], r: [Math.cos(a) * 0.5, 0, -Math.sin(a) * 0.5], s: [0.12, 0.5, 0.12], glow: 0.6, wig: wiggle(0.1, 0, 3, a) }); }
+    for (let i = 0; i < 3; i++) f.add(cone(5), shade(c, 1.2), { p: [(i - 1) * 0.25, -1.05, 0], r: [Math.PI, 0, 0], s: [0.07, 0.45, 0.07], glow: 0.4 });
+  },
+  thornback(f, c) {
+    // a fat hedgehog-ish lump covered in thorns, with a little pink nose
+    f.add(blobG('thorn', (x, y, z) => 1 + 0.05 * bumpy(x * 1.5, y * 1.5, z * 1.5)), c, { s: [1, 0.85, 1.05] });
+    f.add(blobG('thornF', () => 1), 0xc8a878, { p: [0, -0.18, 0.62], s: [0.6, 0.55, 0.5] });
+    f.add(sph(8), 0xff8ac8, { p: [0, -0.05, 1.1], s: 0.12 });
+    for (let i = 0; i < 26; i++) {
+      const y = -0.1 + (i / 26) * 1.0, a = i * 2.4, r = Math.sqrt(Math.max(0, 1 - y * y)), d = V3(Math.sin(a) * r, y, Math.cos(a) * r - 0.15).normalize();
+      if (d.z > 0.55 && d.y < 0.5) continue;
+      f.add(cone(5), i % 3 ? 0x8a6a3a : 0x9acd5a, { p: [d.x * 0.95, d.y * 0.85, d.z], q: new THREE.Quaternion().setFromUnitVectors(V3(0, 1, 0), d), s: [0.09, 0.45, 0.09] });
+    }
+    for (const [x, z] of [[0.4, 0.2], [-0.5, -0.3], [0.1, -0.6]]) f.add(sph(8), 0xff8ac8, { p: [x, 0.85, z], s: 0.1, glow: 0.4 });
+    f.both(s => { for (const z of [0.4, -0.4]) f.limb([s * 0.5, -0.6, z], [s * 0.55, -1, z], 0.14, 0.12, shade(c, 0.6), { wig: walkW(0.05, 0.12, (z > 0 ? 0 : Math.PI) + (s > 0 ? Math.PI : 0)), ramp: [0, 1] }); });
+  },
+  scorpion(f, c) {
+    // a flat armoured body, two big pincers, and a segmented tail curled over its back
+    f.add(blobG('scorp', (x, y, z) => 1 + 0.03 * bumpy(x * 2, y * 2, z * 2)), c, { s: [0.85, 0.5, 1.1] });
+    for (let i = 0; i < 4; i++) f.add(rbox(1.3 - i * 0.12, 0.2, 0.32), shade(c, 0.78), { p: [0, 0.4, 0.4 - i * 0.32] });
+    const seg5 = [[0, 0.4, -1.1], [0, 0.95, -1.35], [0, 1.5, -1.25], [0, 1.95, -0.9], [0, 2.15, -0.4]];
+    for (let i = 0; i < seg5.length; i++) f.add(sph(8), shade(c, 0.9 - i * 0.04), { p: seg5[i], s: 0.3 - i * 0.03, wig: wiggle(0.08, 0.06, 5, 0), ramp: [0, 1] });
+    f.add(cone(6), 0x3a2a10, { p: [0, 2.1, 0.0], r: [2.2, 0, 0], s: [0.12, 0.45, 0.12], wig: wiggle(0.08, 0.06, 5, 0) });
+    f.add(sph(6), 0xc8ff5a, { p: [0, 2.2, -0.15], s: 0.09, glow: 1.5, wig: wiggle(0.08, 0.06, 5, 0) });
+    f.both(s => {
+      f.limb([s * 0.55, 0, 0.7], [s * 0.95, 0, 1.3], 0.13, 0.1, shade(c, 0.85));
+      f.add(blobG('claw', (x, y, z) => (z > 0.2 && Math.abs(x) < 0.25 ? 0.6 : 1)), shade(c, 0.95), { p: [s * 1.0, 0, 1.6], s: [0.35, 0.22, 0.45], wig: wiggle(0, 0.05, 6, s) });
+      stepLegs(f, shade(c, 0.6), { n: 3, wide: 0.7, r: 0.06, inX: 0.6, fromY: -0.1, zs: [0.35, -0.05, -0.45] });
+    });
+    brows(f, shade(c, 0.45), 0.25, 0.95);
+  },
+  dustdevil(f, c) {
+    // a spinning funnel of sand, wider at the top, with grit flying around it
+    for (let i = 0; i < 7; i++) f.add(tor(0.3 + i * 0.12, 0.09, 16), i % 2 ? c : shade(c, 0.82), { p: [Math.sin(i) * 0.08, -0.9 + i * 0.3, Math.cos(i) * 0.08], r: [Math.PI / 2, 0, 0], wig: wiggle(0.05, 0.1, 7, i) });
+    f.add(cone(10), shade(c, 0.7), { p: [0, -0.05, 0], r: [Math.PI, 0, 0], s: [0.85, 1.9, 0.85] });
+    for (let i = 0; i < 10; i++) { const a = i * 2.1, y = -0.7 + i * 0.17; f.add(icoF(0), shade(c, 0.6), { p: [Math.sin(a) * (0.5 + y * 0.4 + 0.4), y, Math.cos(a) * (0.5 + y * 0.4 + 0.4)], s: 0.07, wig: wiggle(0.1, 0.1, 8, a) }); }
+  },
+  wraith(f, c) {
+    // a tattered floating shroud with a hollow face and long claws, trailing into nothing
+    const robe = prim('lathe:wraith', () => new THREE.LatheGeometry([[0.05, 1], [0.45, 0.75], [0.6, 0.2], [0.5, -0.3], [0.3, -0.75], [0.02, -1.1]].map(p => new THREE.Vector2(p[0], p[1])), seg(16)));
+    f.add(robe, c, { wig: wiggle(0.06, 0.2, 4, 0), wigFn: t => (1 - t) * (1 - t) });
+    f.add(blobG('wrH', (x, y, z) => (y > 0.3 ? 1 + (y - 0.3) * 0.6 : 1)), shade(c, 0.7), { p: [0, 0.7, 0.05], s: [0.55, 0.55, 0.6] });
+    f.add(sph(10), 0x05020a, { p: [0, 0.62, 0.32], s: [0.36, 0.3, 0.3] });
+    f.both(s => {
+      f.add(sph(6), 0xd06bff, { p: [s * 0.13, 0.66, 0.6], s: [0.07, 0.05, 0.04], glow: 2 });
+      f.limb([s * 0.5, 0.3, 0], [s * 0.95, -0.1, 0.5], 0.1, 0.06, shade(c, 0.7), { wig: wiggle(0.06, 0, 3, s) });
+      for (const k of [-0.1, 0, 0.1]) f.add(cone(5), 0xe2b0ff, { p: [s * (1.0 + k), -0.4, 0.7 + k], r: [0.7, 0, 0], s: [0.04, 0.42, 0.04], glow: 0.9, wig: wiggle(0.06, 0, 3, s) });
+    });
+    for (let i = 0; i < 5; i++) { const a = i / 5 * TAU; f.add(icoF(0), 0xb06bff, { p: [Math.sin(a) * 0.9, -0.6 + (i % 2) * 0.4, Math.cos(a) * 0.9], s: 0.06, glow: 1.4, wig: wiggle(0.14, 0.05, 2, a) }); }
+  },
+  voideye(f, c) {
+    // one huge floating eye in a cage of dark crystal shards
+    f.add(sph(18), 0xf0e8ff, { s: 0.85 });
+    f.add(sph(14), 0x7a2aff, { p: [0, 0, 0.62], s: [0.42, 0.42, 0.28], glow: 1.1 });
+    f.add(sph(10), 0x05020a, { p: [0, 0, 0.8], s: [0.2, 0.26, 0.12] });
+    f.add(blobG('lid', (x, y, z) => (y > 0.35 ? 1 : 0.2)), c, { s: 0.9 });
+    for (let i = 0; i < 7; i++) { const a = i / 7 * TAU; f.add(gemG(), shade(c, 1.4), { p: [Math.sin(a) * 1.15, Math.cos(a) * 1.15, -0.15], r: [0, 0, -a], s: [0.12, 0.38, 0.12], glow: 0.7, wig: wiggle(0.08, 0.05, 3, a) }); }
+    for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + 0.4; f.limb([Math.sin(a) * 0.35, -0.75, Math.cos(a) * 0.35 - 0.2], [Math.sin(a) * 0.6, -1.5, Math.cos(a) * 0.6 - 0.3], 0.1, 0.03, shade(c, 0.8), { wig: wiggle(0.1, 0.1, 4, a), ramp: [0, 1] }); }
+  },
+  gravling(f, c) {
+    // a little dark orb with a spinning ring around it, like a tiny planet that eats light
+    f.add(sph(16), 0x0a0614, { s: 0.75 });
+    f.add(tor(1.05, 0.08, 28), c, { r: [Math.PI / 2 - 0.35, 0, 0.2], glow: 1.2 });
+    f.add(tor(1.35, 0.04, 28), shade(c, 1.4), { r: [Math.PI / 2 + 0.4, 0, -0.3], glow: 1 });
+    for (let i = 0; i < 6; i++) { const a = i / 6 * TAU; f.add(icoF(0), shade(c, 1.3), { p: [Math.sin(a) * 1.6, Math.sin(a * 3) * 0.2, Math.cos(a) * 1.6], s: 0.09, glow: 1.5, wig: wiggle(0.12, 0.12, 3, a) }); }
+  },
+});
 const FACING = { shaman: 1, darklord: 1, stalker: 1, phylactery: 0 };
 // where a monster's eyes sit, in its body's own units, when they aren't in the usual spot
 const EYES_AT = { skitter: [0.3, 0.26, 0.82], sniper: [0.22, 0.3, 0.72], reflector: [0.22, 0.38, 0.66], bones: [0.3, 0.38, 0.74], shaman: [0.2, 0.26, 0.74], darklord: [0.17, 0.7, 0.42], stalker: [0.14, 0.82, 0.42], warden: [0.33, 0.38, 0.78], colossus: [0.17, 1.0, 0.42] };
@@ -4232,6 +4363,18 @@ const TYPES = {
   roller:  { hp: 110,  speed: 2.2, dmg: 18, r: 0.9,  sy: 1,    color: 0x7a6ab8, emissive: 0x120a2a, shards: 6,  geo: 'dodeca', label: 'Roller', intro: 'Curls into a ball and rolls across the arena, bouncing off the walls' },
   splitter:{ hp: 80,   speed: 2.8, dmg: 12, r: 1.0,  sy: 0.9,  color: 0xe06aa8, emissive: 0x2a0618, shards: 4,  geo: 'blob', label: 'Splitter', intro: 'Splits into two smaller copies when it dies. Twice' },
   reflector:{ hp: 95,  speed: 1.9, dmg: 12, r: 0.75, sy: 1.15, color: 0x9fb8d8, emissive: 0x10203a, shards: 7,  geo: 'octa', label: 'Reflector', intro: 'Holds up a mirror wall that bounces your shots back at you. Get around the side, or shoot the mirror until it shatters (it comes back 15 s later)' },
+  gloombat: { hp: 30,  speed: 4.2, dmg: 11, r: 0.55, sy: 0.8,  color: 0x4a3a6a, emissive: 0x1a0a2a, shards: 3,  geo: 'blob', float: true, label: 'Gloom Bat', intro: 'Flutters from side to side, then swoops at you down a red lane' },
+  magmaslug:{ hp: 120, speed: 1.8, dmg: 16, r: 1.0,  sy: 0.6,  color: 0x3a2424, emissive: 0x2a0800, shards: 6,  geo: 'blob', label: 'Magma Slug', intro: 'Crawls slowly after you and leaves a trail of fire behind it' },
+  cinder:   { hp: 50,  speed: 2.4, dmg: 14, r: 0.6,  sy: 1.2,  color: 0xff7a2a, emissive: 0x4a1400, shards: 5,  geo: 'octa', float: true, label: 'Cinder Caster', intro: 'Hangs back and rains three fireballs down around you' },
+  frostwolf:{ hp: 34,  speed: 5.4, dmg: 12, r: 0.7,  sy: 0.75, color: 0xd6e4f0, emissive: 0x0a1a2a, shards: 3,  geo: 'blob', label: 'Frost Wolf', intro: 'Hunts in packs of three and lunges at you when it gets close' },
+  icegolem: { hp: 220, speed: 1.7, dmg: 24, r: 1.3,  sy: 1.0,  color: 0x8fc0e8, emissive: 0x0a2030, shards: 10, geo: 'dodeca', label: 'Ice Golem', intro: 'Lumbers up and slams the ground in front of it, leaving a patch of frost' },
+  icicle:   { hp: 34,  speed: 3.0, dmg: 10, r: 0.5,  sy: 1.1,  color: 0xbfe8ff, emissive: 0x204060, shards: 4,  geo: 'octa', float: true, noEyes: true, label: 'Icicle Sprite', intro: 'Floats at range and throws fans of three ice shards' },
+  thornback:{ hp: 90,  speed: 2.3, dmg: 14, r: 0.85, sy: 0.8,  color: 0x5f7a3a, emissive: 0x0a1400, shards: 6,  geo: 'blob', label: 'Thornback', intro: 'Curls into a ball, then fires a ring of thorns in every direction' },
+  scorpion: { hp: 75,  speed: 3.0, dmg: 18, r: 0.85, sy: 0.6,  color: 0xc89a50, emissive: 0x1a1000, shards: 6,  geo: 'blob', label: 'Sand Scorpion', intro: 'Scuttles up and stabs where you stand with its stinger, leaving poison' },
+  dustdevil:{ hp: 60,  speed: 3.4, dmg: 10, r: 0.8,  sy: 1.4,  color: 0xd8c090, emissive: 0x2a1a00, shards: 5,  geo: 'blob', noEyes: true, label: 'Dust Devil', intro: 'A little whirlwind that weaves toward you and flings you away' },
+  wraith:   { hp: 55,  speed: 2.6, dmg: 20, r: 0.6,  sy: 1.3,  color: 0x3a2a5a, emissive: 0x2a0a4a, shards: 6,  geo: 'octa', float: true, noEyes: true, label: 'Void Wraith', intro: 'Blinks right next to you, then strikes everything around it a moment later' },
+  voideye:  { hp: 45,  speed: 2.0, dmg: 13, r: 0.65, sy: 1.0,  color: 0x2a1838, emissive: 0x3a0a5a, shards: 5,  geo: 'octa', float: true, noEyes: true, label: 'Void Eye', intro: 'Watches from far away and fires bursts of three dark bolts' },
+  gravling: { hp: 40,  speed: 2.8, dmg: 10, r: 0.6,  sy: 0.9,  color: 0x7a3aff, emissive: 0x3a0a8a, shards: 5,  geo: 'octa', float: true, noEyes: true, label: 'Gravling', intro: 'A tiny black hole that drags you toward it. Dash to break free' },
   brute:   { hp: 150,  speed: 2.1, dmg: 22, r: 1.25, sy: 0.9,  color: 0xa8434f, emissive: 0x000000, shards: 9,  geo: 'dodeca', horns: true, label: 'Brute', intro: 'Slow and tough, and hits very hard up close' },
   king:     { hp: 1400, speed: 2.4, dmg: 30, r: 2.6, sy: 0.9, color: 0x5a2a6e, emissive: 0x1a0626, shards: 60,  geo: 'dodeca', horns: true, crown: true, boss: true, name: 'The Hollow King', intro: 'Slams send out shockwave rings. Enraged, he slams three times in a row' },
   demon:    { hp: 600, speed: 2.2, dmg: 28, r: 3.0, sy: 0.9, color: 0xb02a3a, emissive: 0x3a0610, shards: 20,  geo: 'blob', horns: true, boss: true, name: 'The Splitting Demon', intro: 'A giant splitter. It splits in two every time it dies, seven times over, and each split only loses a fifth of the health of the one before. Every split that dies lets out monsters, more from bigger splits. Every split that dies sends out a shockwave a second later, bigger from bigger splits' },
@@ -4472,6 +4615,8 @@ const ROSTER = [
   ['grub', 1, 10], ['skitter', 2, 7], ['wisp', 3, 4], ['bloater', 3, 3], ['brute', 4, 2.5],
   ['spitter', 4, 3], ['charger', 5, 2.5], ['bomber', 6, 3], ['shaman', 7, 2],
   ['splitter', 5, 2.5], ['leaper', 6, 3], ['roller', 7, 2.5], ['burrower', 8, 2.5], ['sniper', 9, 2], ['reflector', 8, 2],
+  ['gloombat', 4, 3], ['magmaslug', 6, 2.5], ['cinder', 7, 2.5], ['frostwolf', 5, 2], ['icegolem', 8, 2], ['icicle', 6, 3],
+  ['thornback', 6, 2.5], ['scorpion', 6, 2.5], ['dustdevil', 6, 2.5], ['wraith', 8, 2.5], ['voideye', 7, 2.5], ['gravling', 8, 2],
 ];
 function pickMonster(n) {
   const pool = mapOn() ? mapRoster(n) : ROSTER.filter(r => n >= r[1]);
@@ -5960,8 +6105,142 @@ function clearHazards() {
   warpT = 0; P.whirlT = 0;
 }
 
+// attacks for the monsters that belong to one map each
+const M_ICE = new THREE.MeshBasicMaterial({ color: 0xbfe8ff }), M_THORN = new THREE.MeshBasicMaterial({ color: 0x9acd5a });
+// a monster swaying from side to side as it comes at you
+const weave = (e, dt, dirx, dirz, amt, sp) => { const k = Math.sin(T * sp + e.seed * 3) * amt * dt; e.pos.x += -dirz * k; e.pos.z += dirx * k; };
+const MOB_AI = {
+  gloombat(e, dt, d, dirx, dirz) {
+    weave(e, dt, dirx, dirz, 5, 3.4);
+    e.aT -= dt;
+    if (e.aT <= 0 && e.windT <= 0 && e.chargeT <= 0 && d < 11) { e.aT = rand(3, 4.2); startCharge(e, dirx, dirz, 0.5, 0.45, 20); sfx('dash'); }
+  },
+  magmaslug(e, dt, d, dirx, dirz) {
+    e.trailT = (e.trailT ?? 0.5) - dt;
+    if (e.trailT <= 0) { e.trailT = 0.55; pool('fire', e.pos.x - dirx * e.r, e.pos.z - dirz * e.r, 1.2, 3.5); }
+  },
+  cinder(e, dt, d) {
+    e.aT -= dt;
+    if (e.aT <= 0 && d < 20) {
+      e.aT = rand(4, 4.8);
+      const { x: tx, z: tz } = leadAim(1.1);
+      for (let k = 0; k < 3; k++) {
+        const a = rand(0, TAU), off = k ? rand(1.8, 3.2) : 0;
+        lob(e.pos, tx + Math.sin(a) * off, tz + Math.cos(a) * off, 1.7, 1.0 + k * 0.25, e.dmg, 0xff8a3d, sl => pool('fire', sl.x, sl.z, 1.7, 2.5));
+      }
+      burst(e.pos.x, 1.6, e.pos.z, 0xffb03a, 10, 3);
+    }
+  },
+  frostwolf(e, dt, d, dirx, dirz) {
+    // wolves come in packs: the first one brings two friends along
+    if (!e.packed) {
+      e.packed = true;
+      if (!e.pup && enemies.length < 36) for (let k = 0; k < 2; k++) {
+        const a = rand(0, TAU), m = spawnEnemy('frostwolf', W.hpMul, W.dmgMul, { x: e.pos.x + Math.sin(a) * 2, z: e.pos.z + Math.cos(a) * 2 });
+        m.pup = m.packed = true; m.shards = 2; m.aT = rand(1, 2.5);
+      }
+    }
+    e.aT -= dt;
+    if (e.aT <= 0 && e.windT <= 0 && e.chargeT <= 0 && d < 7) { e.aT = rand(2.6, 3.6); startCharge(e, dirx, dirz, 0.35, 0.3, 17); sfx('dash'); }
+  },
+  icegolem(e, dt, d, dirx, dirz) {
+    e.slamT = Math.max(0, (e.slamT || 0) - dt);
+    e.aT -= dt;
+    if (e.aT <= 0 && d < 5.5) {
+      e.aT = rand(4.2, 5); e.slamT = 1.1;
+      const x = e.pos.x + dirx * 1.8, z = e.pos.z + dirz * 1.8;
+      telegraph(x, z, 3.4, 1.0, e.dmg, 0x9fd8ff, sl => { pool('frost', sl.x, sl.z, 3.4, 4); burst(sl.x, 0.5, sl.z, 0xdff4ff, 20, 6); sfx('thud'); shake = Math.max(shake, 0.25); });
+    }
+    e.squash = e.slamT > 0.2 ? 1 + 0.15 * Math.sin((1.1 - e.slamT) * 3) : 1;
+  },
+  icicle(e, dt, d, dirx, dirz) {
+    e.aT -= dt;
+    if (e.aT <= 0 && d < 18) {
+      e.aT = rand(2.6, 3.2);
+      const a0 = Math.atan2(dirx, dirz);
+      for (const da of [-0.28, 0, 0.28]) enemyShoot(e, Math.sin(a0 + da), Math.cos(a0 + da), e.dmg, 11);
+      for (const sh of shots.slice(-3)) sh.m.material = M_ICE;
+    }
+  },
+  thornback(e, dt, d) {
+    if (e.curlT > 0) {
+      e.curlT -= dt; e.squash = 0.7 + 0.3 * (e.curlT / 0.7); e.body.rotation.y += dt * 9;
+      if (e.curlT <= 0) {
+        const off = rand(0, TAU), n = 10;
+        for (let k = 0; k < n; k++) { const a = off + k / n * TAU; enemyShoot(e, Math.sin(a), Math.cos(a), Math.round(e.dmg * 0.7), 9); }
+        for (const sh of shots.slice(-n)) sh.m.material = M_THORN;
+        burst(e.pos.x, 0.8, e.pos.z, 0x9acd5a, 14, 5); e.squash = 1.25; e.aT = rand(3.4, 4.4);
+      }
+      return;
+    }
+    if (e.squash > 1) e.squash = Math.max(1, e.squash - dt * 2);
+    e.aT -= dt;
+    if (e.aT <= 0 && d < 14) { e.curlT = 0.7; sfx('warn'); }
+  },
+  scorpion(e, dt, d) {
+    e.stingT = Math.max(0, (e.stingT || 0) - dt);
+    e.aT -= dt;
+    if (e.aT <= 0 && d < 5) {
+      e.aT = rand(2.6, 3.4); e.stingT = 0.7;
+      telegraph(P.pos.x, P.pos.z, 1.6, 0.7, e.dmg, 0xd8b040, sl => { pool('acid', sl.x, sl.z, 1.5, 3); burst(sl.x, 0.4, sl.z, 0xc8ff5a, 10, 4); });
+    }
+  },
+  dustdevil(e, dt, d, dirx, dirz) {
+    weave(e, dt, dirx, dirz, 6, 2.2);
+    e.body.rotation.y += dt * 11;
+    if (Math.random() < dt * 14) burst(e.pos.x + rand(-0.6, 0.6), rand(0.2, 2), e.pos.z + rand(-0.6, 0.6), 0xd8c090, 1, 2.5);
+    // anyone close gets flung away
+    for (const pl of coop ? [P1, P2] : [P1]) {
+      if (pl.down || !here(pl) || pl.dashT > 0) continue;
+      const dx = pl.pos.x - e.pos.x, dz = pl.pos.z - e.pos.z, dd = Math.hypot(dx, dz);
+      if (dd < 3.2 && dd > 0.05) { const f = 8 * (1 - dd / 3.2) * dt; pl.pos.x += dx / dd * f; pl.pos.z += dz / dd * f; }
+    }
+  },
+  wraith(e, dt, d) {
+    e.strikeT = Math.max(0, (e.strikeT || 0) - dt);
+    e.aT -= dt;
+    if (e.aT <= 0 && d < 20) {
+      e.aT = rand(4, 5.2);
+      const a = rand(0, TAU), x = P.pos.x + Math.sin(a) * 2.2, z = P.pos.z + Math.cos(a) * 2.2;
+      if ((walls.length && pointInWall(x, z)) || (!lab && Math.hypot(x, z) > ARENA_R - 1)) return;
+      burst(e.pos.x, 1.2, e.pos.z, 0xb06bff, 12, 4); ring(e.pos.x, e.pos.z, 0.3, 2, 0.3, 0xb06bff);
+      e.pos.x = x; e.pos.z = z; e.g.position.set(x, e.g.position.y, z);
+      burst(x, 1.2, z, 0xb06bff, 12, 4); sfx('cast', 'blink');
+      e.strikeT = 0.8;
+      telegraph(x, z, 2.5, 0.8, e.dmg, 0xb06bff, sl => { burst(sl.x, 0.6, sl.z, 0xe2b0ff, 14, 6); });
+    }
+  },
+  voideye(e, dt, d, dirx, dirz) {
+    e.aT -= dt;
+    if (e.aT <= 0 && d < 20 && !(e.volley > 0)) { e.aT = rand(3.4, 4.2); e.volley = 3; e.volleyT = 0; sfx('warn'); }
+    if (e.volley > 0) {
+      e.volleyT -= dt;
+      if (e.volleyT <= 0) { e.volley--; e.volleyT = 0.2; enemyShoot(e, dirx, dirz, e.dmg, 12); shots[shots.length - 1].m.material = M_DARK; }
+    }
+  },
+  gravling(e, dt) {
+    if (Math.random() < dt * 10) swirlIn(e.pos.x, e.pos.z, 5, 0x9a6aff);
+    for (const pl of coop ? [P1, P2] : [P1]) {
+      if (pl.down || !here(pl) || pl.dashT > 0) continue;
+      const dx = e.pos.x - pl.pos.x, dz = e.pos.z - pl.pos.z, dd = Math.hypot(dx, dz);
+      if (dd < 8 && dd > 1) { const f = 3 * (1 - dd / 8) ** 0.6 * dt; pl.pos.x += dx / dd * f; pl.pos.z += dz / dd * f; }
+    }
+  },
+};
+// how each one moves: 1 comes at you, 0 holds, below 0 backs off
+const MOB_MOVE = {
+  cinder: (e, d) => d < 9 ? -0.8 : d < 14 ? 0 : 1,
+  icicle: (e, d) => d < 8 ? -0.8 : d < 12 ? 0 : 1,
+  voideye: (e, d) => d < 10 ? -0.7 : d < 15 ? 0 : 1,
+  icegolem: e => e.slamT > 0 ? 0 : 1,
+  thornback: e => e.curlT > 0 ? 0 : 1,
+  scorpion: e => e.stingT > 0 ? 0 : 1,
+  wraith: (e, d) => e.strikeT > 0 ? 0 : d < 4 ? 0 : 1,
+  gravling: (e, d) => d < 6 ? 0 : 1,
+};
 // special behaviour for the non-boss monsters
 function monsterAI(e, dt, d, dirx, dirz) {
+  if (MOB_AI[e.type]) return MOB_AI[e.type](e, dt, d, dirx, dirz);
   if (e.type === 'bloater') {
     if (d < e.r + 0.8) killEnemy(e);
   } else if (e.type === 'spitter') {
@@ -11571,6 +11850,7 @@ function updateWorld(dt, pass) {
     if (e.type === 'drakeboss' || e.type === 'owlboss') move = e.diving ? 0 : d < 7 ? -0.6 : d < 11 ? 0 : 1;
     if (e.type === 'reflector') move = d < 6 ? -0.5 : d < 9 ? 0 : 1;
     if (e.type === 'sniper') move = e.aimT > 0 ? 0 : d < 11 ? -0.8 : d < 16 ? 0 : 1;
+    if (MOB_MOVE[e.type]) move = MOB_MOVE[e.type](e, d);
     if (e.windT > 0 && !frozen) {
       e.windT -= dt;
       if (e.windT <= 0) { e.chargeT = e.chargeDur; if (e.tele) { scene.remove(e.tele); e.tele.material.dispose(); e.tele = null; } }
@@ -12794,18 +13074,19 @@ function endFinale() {
 // Grubs, skitters and brutes turn up everywhere; every other monster belongs to one map.
 const MAP_COMMON = ['grub', 'skitter', 'brute'];
 const MAP_INFO = [
-  { key: 'dusk', mobs: ['wisp', 'splitter'], blurb: 'Wisps and Splitters haunt the ruins' },
-  { key: 'ember', mobs: ['bomber', 'charger'], blurb: 'Lava vents erupt · Ember Imps and Chargers roam' },
-  { key: 'frost', mobs: ['shaman', 'reflector'], blurb: 'Slippery ice patches · Frost Shamans and Reflectors' },
-  { key: 'verdant', mobs: ['spitter', 'bloater'], blurb: 'Healing blossoms grow · Spitters and Bloaters lurk' },
-  { key: 'sands', mobs: ['burrower', 'roller'], blurb: 'Quicksand and sandstorms · Burrowers and Rollers' },
-  { key: 'abyss', mobs: ['sniper', 'leaper'], blurb: 'Three void wells drag you in · Snipers and Leapers' },
+  { key: 'dusk', mobs: ['wisp', 'splitter', 'gloombat', 'sniper'], blurb: 'Wisps, Splitters, Gloom Bats and Snipers haunt the ruins' },
+  { key: 'ember', mobs: ['bomber', 'magmaslug', 'charger', 'cinder'], blurb: 'Lava vents erupt · Ember Imps, Magma Slugs, Chargers and Cinder Casters' },
+  { key: 'frost', mobs: ['frostwolf', 'icicle', 'shaman', 'icegolem'], blurb: 'Slippery ice · Frost Wolves, Icicle Sprites, Frost Shamans and Ice Golems' },
+  { key: 'verdant', mobs: ['spitter', 'bloater', 'thornback', 'leaper'], blurb: 'Blossoms heal you… or bite · Spitters, Bloaters, Thornbacks and Leapers' },
+  { key: 'sands', mobs: ['scorpion', 'dustdevil', 'burrower', 'roller'], blurb: 'Quicksand and sandstorms · Scorpions, Dust Devils, Burrowers and Rollers' },
+  { key: 'abyss', mobs: ['gravling', 'voideye', 'wraith', 'reflector'], blurb: 'Three void wells drag you in · Gravlings, Void Eyes, Wraiths and Reflectors' },
 ];
 const mapOn = () => !dungeon && !lab && !trial;
 // which monsters can show up in this map's waves (a map's own monsters come out early, they're what it's about)
 function mapRoster(n) {
   const own = MAP_INFO[arenaTheme].mobs;
-  return ROSTER.filter(r => MAP_COMMON.includes(r[0]) ? n >= r[1] : own.includes(r[0]) && n >= Math.min(r[1], 3));
+  // the map's own monsters arrive one by one, from wave 2 to wave 5, in the order they're listed
+  return ROSTER.filter(r => MAP_COMMON.includes(r[0]) ? n >= r[1] : own.includes(r[0]) && n >= Math.min(r[1], 2 + own.indexOf(r[0])));
 }
 let mapG = null, mapZ = null;   // the scenery group, and the twist's live state
 const defaultDecor = () => arenaDecor.filter(o => !arenaLines.includes(o));
@@ -12845,10 +13126,10 @@ const MAP_BUILD = {
       const c = mk(new THREE.CylinderGeometry(4, 3, 1, 9), lava, x, h - 2, z); mapZ.glow.push(c);
     }
     // vents in the arena floor that erupt into fire
-    mapZ.vents = spots(6, 6, ARENA_R - 5, 9).map(p => {
+    mapZ.vents = spots(10, 5, ARENA_R - 5, 9.5).map(p => {
       const g = new THREE.Group(); g.position.set(p.x, 0.03, p.z); mapG.add(g);
-      const d = new THREE.Mesh(new THREE.CircleGeometry(1.5, 20), glowM(0x1a0806)); d.rotation.x = -Math.PI / 2; g.add(d);
-      const cr = []; for (let k = 0; k < 4; k++) { const c = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 2.6), glowM(0xff5a1a)); c.rotation.set(-Math.PI / 2, 0, k * 0.8 + rand(-0.2, 0.2)); c.position.y = 0.01; g.add(c); cr.push(c); }
+      const d = new THREE.Mesh(new THREE.CircleGeometry(VENT_R * 0.6, 24), glowM(0x1a0806)); d.rotation.x = -Math.PI / 2; g.add(d);
+      const cr = []; for (let k = 0; k < 4; k++) { const c = new THREE.Mesh(new THREE.PlaneGeometry(0.22, VENT_R * 1.05), glowM(0xff5a1a)); c.rotation.set(-Math.PI / 2, 0, k * 0.8 + rand(-0.2, 0.2)); c.position.y = 0.01; g.add(c); cr.push(c); }
       return { ...p, g, cr, t: rand(3, 9) };
     });
   },
@@ -12868,7 +13149,7 @@ const MAP_BUILD = {
     for (let i = 0; i < 5; i++) { const [x, z] = outer(i + 0.5, 5, 85, 100), h = rand(30, 45); mk(new THREE.ConeGeometry(22, h, 7), lit(0x3a4a62), x, h / 2 - 1, z); mk(new THREE.ConeGeometry(9.5, h * 0.42, 7), snow, x, h * 0.79 - 1, z); }
     // slippery ice sheets in the arena
     const sheet = new THREE.MeshStandardMaterial({ color: 0x9fd8ff, roughness: 0.05, metalness: 0.4, transparent: true, opacity: 0.5 });
-    mapZ.ice = spots(6, 5, ARENA_R - 5, 11).map(p => { const r = rand(3.2, 5); const d = flatDisc(r, sheet, p.x, p.z, 0.03); d.scale.set(1, rand(0.6, 1), 1); d.rotation.z = rand(0, 3); return { ...p, r, sx: 1, sy: d.scale.y, rot: d.rotation.z }; });
+    mapZ.ice = spots(13, 3, ARENA_R - 4, 8.5).map(p => { const r = rand(3, 5); const d = flatDisc(r, sheet, p.x, p.z, 0.03); d.scale.set(1, rand(0.6, 1), 1); d.rotation.z = rand(0, 3); return { ...p, r, sx: 1, sy: d.scale.y, rot: d.rotation.z }; });
     // falling snow
     const n = lowGfx() ? 300 : 900, pos = new Float32Array(n * 3);
     for (let i = 0; i < n; i++) pos.set([rand(-60, 60), rand(0, 30), rand(-60, 60)], i * 3);
@@ -12889,8 +13170,8 @@ const MAP_BUILD = {
       for (let k = 0; k < 3; k++) mk(new THREE.TorusGeometry(1.0, 0.09, 5, 14), vine, x, h * (0.25 + k * 0.25), z).rotation.set(Math.PI / 2 + rand(-0.4, 0.4), 0, 0);
     }
     for (let i = 0; i < 30; i++) { const [x, z] = outer(i, 30, ARENA_BASE + 1.5, ARENA_BASE + 12); mk(new THREE.IcosahedronGeometry(1, 0), leaf[i % 3], x, 0.3, z, rand(0.6, 1.4), rand(0.4, 0.8), rand(0.6, 1.4)); }
-    // healing blossoms that wilt after use and grow back
-    mapZ.blooms = spots(3, 8, ARENA_R - 6, 14).map(p => {
+    // blossoms that wilt after use and grow back: each time one grows, it's a coin flip whether it heals or bites
+    mapZ.blooms = spots(7, 5, ARENA_R - 5, 9).map(p => {
       const g = new THREE.Group(); g.position.set(p.x, 0, p.z); mapG.add(g);
       const pad = new THREE.Mesh(new THREE.CircleGeometry(2.2, 28), glowM(0x7fe08a, 0.22)); pad.rotation.x = -Math.PI / 2; pad.position.y = 0.03; g.add(pad);
       const fl = new THREE.Group(); g.add(fl);
@@ -12945,7 +13226,7 @@ const MAP_BUILD = {
     });
   },
 };
-const WELL_REACH = 9;   // how far a void well's pull reaches
+const WELL_REACH = 9, VENT_R = 3.6;   // how far a void well's pull reaches
 function buildMap(i) {
   if (mapG) { scene.remove(mapG); mapG.traverse(o => { o.geometry?.dispose(); o.material?.dispose(); }); mapG = null; }
   mapZ = null;
@@ -12969,14 +13250,22 @@ function tickMap(dt) {
     for (const c of v.cr) c.material.color.setHex(warm > 0 ? 0xffd040 : 0xff5a1a);
     if (v.t <= 0 && W.active) {
       v.t = rand(7, 13);
-      telegraph(v.x, v.z, 2.6, 1.2, Math.round(16 * W.dmgMul), 0xff6a1a, () => { pool('fire', v.x, v.z, 2.4, 4); burst(v.x, 0.5, v.z, 0xff8a3a, 16, 7); });
+      telegraph(v.x, v.z, VENT_R, 1.2, Math.round(16 * W.dmgMul), 0xff6a1a, () => { pool('fire', v.x, v.z, VENT_R * 0.92, 4); burst(v.x, 0.5, v.z, 0xff8a3a, 24, 8); shake = Math.max(shake, 0.15); });
     } else if (v.t <= 0) v.t = 2;
   }
   if (mapZ.blooms) for (const b of mapZ.blooms) {
-    if (b.juice <= 0) { b.regrow -= dt; if (b.regrow <= 0) { b.juice = 1; burst(b.x, 0.6, b.z, 0xff8ac8, 10, 3); } }
+    if (b.juice <= 0) { b.regrow -= dt; if (b.regrow <= 0) { b.juice = 1; b.bad = undefined; burst(b.x, 0.6, b.z, 0xff8ac8, 10, 3); } }
     let used = false;
     if (b.juice > 0) for (const pl of players) {
       if (Math.hypot(pl.pos.x - b.x, pl.pos.z - b.z) > 2.2) continue;
+      // the first step onto a fresh blossom decides it: half of them are biters in disguise
+      if (b.bad === undefined) b.bad = Math.random() < 0.5;
+      if (b.bad) {
+        withPlayer(pl, () => hurtPlayer(Math.round(18 * W.dmgMul)));
+        burst(b.x, 0.7, b.z, 0x9a2a5a, 22, 6); ring(b.x, b.z, 0.4, 2.6, 0.35, 0xc8306a); sfx('splat');
+        comicWord(b.x, 2.4, b.z, 'CHOMP!');
+        b.juice = 0; b.regrow = 22; break;
+      }
       withPlayer(pl, () => { if (P.hp < S.maxHp) { P.hp = Math.min(S.maxHp, P.hp + 9 * dt); used = true; } });
     }
     if (used) { b.juice -= dt / 5; if (Math.random() < dt * 8) specks(b.x, 0.6, b.z, 0x7fe08a, 1, 0.8, { g: -2, up: 1.5, life: 0.8, size: 0.9, spread: 1.5 }); if (b.juice <= 0) { b.regrow = 22; sfx('splat'); } }
