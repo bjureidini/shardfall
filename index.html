@@ -3303,6 +3303,7 @@ function recompute() {
   S.shardMul = 1 + 0.05 * R('u_shard');
   if (hasPower('pw_phase')) S.dashCd *= 0.7;
   if (dungeon && D) { S.damage *= 1 + D.might; S.maxHp += D.vigor; }
+  if (ow) owStats();
   charStats();
   if (ffOn()) S.maxHp *= 10;
   P.hp = Math.min(P.hp, S.maxHp);
@@ -3469,7 +3470,7 @@ const skData = sv => sv ? (sv.skill?.ranks ? sv.skill : (sv.skill = cleanSkill(s
 const treePoints = (sk, t) => Object.entries(sk.ranks).reduce((a, [id, r]) => a + (SKILL_NODES[id].tree === t ? r : 0), 0) + sk.powers.filter(id => POWER[id].tree === t).length * POWER_COST;
 const spentPoints = sk => Object.values(sk.ranks).reduce((a, r) => a + r, 0) + sk.powers.length * POWER_COST;
 const freePoints = sk => sk.level - 1 - spentPoints(sk);
-const rank = (id, pl = curPl) => skData(puSaveOf(pl)).ranks[id] || 0;
+const rank = (id, pl = curPl) => ow ? 0 : skData(puSaveOf(pl)).ranks[id] || 0;
 // powers picked for this run (per player)
 const hasPower = (id, pl = curPl) => !!pl.runPowers?.includes(id);
 
@@ -3487,7 +3488,7 @@ const PU = id => puOn[curPl === P2 ? 1 : 0].has(id);
 // a slotted power-up's number at its level (undefined when it isn't slotted)
 const PV = (id, key, pl = curPl) => { const l = puOn[pl === P2 ? 1 : 0].get(id); return l ? PUD[id].v[key][l - 1] : undefined; };
 function refreshPU() {
-  puOn = [P1, P2].map(pl => new Map(pl === P2 && !coop ? [] : Object.values(puSlots(pl)).flat().filter(Boolean).map(id => [id, puLevel(id, pl)])));
+  puOn = [P1, P2].map(pl => new Map((pl === P2 && !coop) || ow ? [] : Object.values(puSlots(pl)).flat().filter(Boolean).map(id => [id, puLevel(id, pl)])));
   if (typeof recompute === 'function') for (const pl of coop ? [P1, P2] : [P1]) withPlayer(pl, recompute);
 }
 // Ascension: a few pets have a stronger form. Find the pet 2 more times, reach wave 20 with it,
@@ -3503,6 +3504,7 @@ const ascOf = (sv, id) => (sv.asc ||= {})[id] ||= { dupes: 0, wave20: false, don
 const saveOf = owner => owner === P2 ? p2Save() : petSave;
 let sandboxAsc = false;   // sandbox: trying the ascended form of the sandbox pet
 function petAscended(owner, id) {
+  if (ow) return false;
   if (sandbox && owner === P1) return !!(ASCEND[id] && sandboxAsc && sandboxPet === id);
   const sv = saveOf(owner);
   return !!(ASCEND[id] && sv?.asc?.[id]?.done && sv.asc[id].on !== false);
@@ -3534,7 +3536,7 @@ let sandboxPet = null;    // sandbox lets you try any pet without adding it to y
 let pet = null, pet2 = null;   // Player 1's pet, and Player 2's in co-op
 const hasPet = id => pet?.id === id || pet2?.id === id;
 const petOwned = id => sandbox || petSave.owned.includes(id);
-const currentPetId = () => trial ? null : sandbox ? sandboxPet : petSave.equipped;
+const currentPetId = () => ow ? (OWS?.pet || null) : trial ? null : sandbox ? sandboxPet : petSave.equipped;
 function setPet(id, asc = false) {
   if (sandbox) { sandboxPet = id; sandboxAsc = asc; } else { petSave.equipped = id; savePets(); }
   refreshPet();
@@ -3747,7 +3749,7 @@ function floatNum(x, y, z, value) {
   el.className = 'dmg';
   el.textContent = value;
   $('#floats').appendChild(el);
-  floats.push({ el, x, y, z, t: 0, dx: rand(-0.4, 0.4) });
+  floats.push({ el, x, y: y + gy(x, z), z, t: 0, dx: rand(-0.4, 0.4) });
   while (floats.length > 24) floats.shift().el.remove();
 }
 // goofy comic-book words that pop out of big moments ("BONK!", "SPLAT!")
@@ -3761,7 +3763,7 @@ function comicWord(x, y, z, word) {
   el.style.setProperty('--rot', rand(-14, 14).toFixed(1) + 'deg');
   el.style.setProperty('--hue', String(Math.floor(rand(0, 360))));
   $('#floats').appendChild(el);
-  floats.push({ el, x, y, z, t: 0, dx: rand(-0.4, 0.4), comic: true });
+  floats.push({ el, x, y: y + gy(x, z), z, t: 0, dx: rand(-0.4, 0.4), comic: true });
   while (floats.length > 24) floats.shift().el.remove();
 }
 // goofy mode: a stunned boss complains in a speech bubble over its head (no cutscene)
@@ -4324,10 +4326,10 @@ function updateOnePet(p, dt, active) {
       scene.add(p.bubble);
     }
     p.bubble.visible = !!O.shield && state !== 'title';
-    p.bubble.position.set(O.pos.x, 1, O.pos.z);
+    p.bubble.position.set(O.pos.x, 1 + gy(O.pos.x, O.pos.z), O.pos.z);
   }
   const bob = hops ? (d > 0.3 ? Math.abs(Math.sin(p.t * 14)) * 0.12 : 0) : Math.sin(p.t * 3) * 0.12;
-  p.g.position.set(p.pos.x, y + bob, p.pos.z);
+  p.g.position.set(p.pos.x, y + bob + gy(p.pos.x, p.pos.z), p.pos.z);
   if (p.fx) animateAscended(p.fx, p.t, dt, p.pos.x, (y + bob) * 1, p.pos.z);
   // little animations
   if (p.parts.wings) for (const w of p.parts.wings) w.rotation.z = w.userData.sx * Math.sin(p.t * (p.id === 'moth' ? 22 : 9)) * 0.6;
@@ -4377,7 +4379,7 @@ const TYPES = {
   gravling: { hp: 40,  speed: 2.8, dmg: 10, r: 0.6,  sy: 0.9,  color: 0x7a3aff, emissive: 0x3a0a8a, shards: 5,  geo: 'octa', float: true, noEyes: true, label: 'Gravling', intro: 'A tiny black hole that drags you toward it. Dash to break free' },
   brute:   { hp: 150,  speed: 2.1, dmg: 22, r: 1.25, sy: 0.9,  color: 0xa8434f, emissive: 0x000000, shards: 9,  geo: 'dodeca', horns: true, label: 'Brute', intro: 'Slow and tough, and hits very hard up close' },
   king:     { hp: 1400, speed: 2.4, dmg: 30, r: 2.6, sy: 0.9, color: 0x5a2a6e, emissive: 0x1a0626, shards: 60,  geo: 'dodeca', horns: true, crown: true, boss: true, name: 'The Hollow King', intro: 'Slams send out shockwave rings. Enraged, he slams three times in a row' },
-  demon:    { hp: 600, speed: 2.2, dmg: 28, r: 3.0, sy: 0.9, color: 0xb02a3a, emissive: 0x3a0610, shards: 20,  geo: 'blob', horns: true, boss: true, name: 'The Splitting Demon', intro: 'A giant splitter. It splits in two every time it dies, seven times over, and each split only loses a fifth of the health of the one before. Every split that dies lets out monsters, more from bigger splits. Every split that dies sends out a shockwave a second later, bigger from bigger splits' },
+  demon:    { hp: 600, speed: 2.2, dmg: 28, r: 3.0, sy: 0.9, color: 0xb02a3a, emissive: 0x3a0610, shards: 20,  geo: 'blob', horns: true, boss: true, name: 'The Splitting Demon', intro: 'A giant splitter. It splits in two every time it dies, six times over, and each split only loses a fifth of the health of the one before. Every split that dies lets out monsters, more from bigger splits, except the smallest. Every split that dies sends out a shockwave a second later, bigger from bigger splits' },
   demonspawn: { hp: 100, speed: 2.4, dmg: 22, r: 3.0, sy: 0.9, color: 0xb02a3a, emissive: 0x3a0610, shards: 0, geo: 'blob', horns: true, label: 'Demon Split' },
   brood:    { hp: 1800, speed: 2.0, dmg: 26, r: 2.3, sy: 0.7, color: 0x9a7a32, emissive: 0x1a1000, shards: 70,  geo: 'blob', boss: true, name: 'The Brood Mother', intro: 'Lobs acid, hatches skitters, and channels a Brood Call that floods the arena with monsters' },
   darklord: { hp: 4200, speed: 2.0, dmg: 21, r: 2.3, sy: 1.25, color: 0x2a1838, emissive: 0x3a0a4a, shards: 130, geo: 'octa', float: true, horns: true, crown: true, boss: true, name: 'The Dark Lord', intro: 'Commands storms of dark bolts: rings that close in from every edge of the arena, and a rain from the sky that leaves only a few spots safe' },
@@ -4492,7 +4494,7 @@ let dungeon = false, D = null;
 let progress = { dungeon: false, bestFloor: 0 };
 try { Object.assign(progress, JSON.parse(localStorage.getItem('shardfall-progress')) || {}); } catch (_) {}
 const saveProgress = () => { try { localStorage.setItem('shardfall-progress', JSON.stringify(progress)); } catch (_) {} syncActiveSave(); };
-let sandbox = false, godMode = false, sbWave = 1, tutHold = false, tutActive = false;
+let sandbox = false, godMode = false, sbWave = 1, tutHold = false, tutActive = false, ow = false;   // ow: the open world
 let T = 0, shards = 0, shardsTotal = 0, kills = 0, boxesOpened = 0, autoFire = false, shake = 0;
 const W = { n: 0, queue: [], spawnT: 0, active: false, inter: 2, hpMul: 1, dmgMul: 1 };
 let orbitA = 0;
@@ -4686,9 +4688,13 @@ function fireBolt(x, z, a, y = 1.15, extra) {
   if (!extra?.build) m.scale.set(1, 1, 2.4);
   m.rotation.y = a;
   if (extra?.big) m.scale.multiplyScalar(2.4);
-  m.position.set(x + Math.sin(a) * 0.8, y, z + Math.cos(a) * 0.8);
+  const g0 = gy(x, z);
+  m.position.set(x + Math.sin(a) * 0.8, y + g0, z + Math.cos(a) * 0.8);
+  // open world, first person: aim up a mountain or down into a valley and the bolt goes that way
+  const pitch = ow && fpOn() && curPl === P1 && !extra?.flat ? Math.max(-1.1, Math.min(1.1, fpPitch)) : 0, hs2 = Math.cos(pitch);
+  if (pitch) { m.rotation.order = 'YXZ'; m.rotation.x = -pitch; m.position.y = g0 + 1.45; }
   scene.add(m);
-  bolts.push({ m, vx: Math.sin(a) * 28, vz: Math.cos(a) * 28, life: 0.95 * (1 + 0.2 * (S.rebound || 0)) * (1 + 0.2 * (S.reach || 0)), pierce: S.pierce, bounce: S.bounce, keep: S.bounceKeep, mul: 1, hit: new Set(), owner: curPl, src: dmgSrc || 'bolts',
+  bolts.push({ m, hy: y, vy: pitch ? Math.sin(pitch) * 28 : 0, vx: Math.sin(a) * 28 * hs2, vz: Math.cos(a) * 28 * hs2, life: 0.95 * (1 + 0.2 * (S.rebound || 0)) * (1 + 0.2 * (S.reach || 0)), pierce: S.pierce, bounce: S.bounce, keep: S.bounceKeep, mul: 1, hit: new Set(), owner: curPl, src: dmgSrc || 'bolts',
     home: S.homing ? (0.5 + S.homing) * (PV('pu_lockon', 'mul') || 1) : 0, rebound: S.rebound > 0, trail: S.frost ? frostTrail : null, ...extra });
 }
 // War Cry and Adrenaline speed you up for a while: how much faster to fire and move right now
@@ -4800,6 +4806,7 @@ function damageEnemy(e, amt, kx, kz, force) {
 }
 function killEnemy(e) {
   e.dead = true;
+  if (ow) owKilled(e);
   if (!e.boss && comicT <= 0 && Math.random() < 0.3) { comicT = 0.35; comicWord(e.pos.x, 1.2 + e.r, e.pos.z, KILL_WORDS[Math.floor(Math.random() * KILL_WORDS.length)]); }
   if (e.boss) comicWord(e.pos.x, 2 + e.r * 1.5, e.pos.z, 'KA-BLOOEY!');
   scene.remove(e.g); e.mat.dispose();
@@ -4855,9 +4862,9 @@ function killEnemy(e) {
   });
   if (e.boss && e.type !== 'demon' && !startFinale(e)) { banner(`${bossName(e.type).replace('The ', '')} slain`, `+${e.shards} shards`); shake = 0.6; ring(e.pos.x, e.pos.z, 0.5, 10, 0.7, 0xc77dff); }
 }
-// The Splitting Demon: every death sends a shockwave a second later and splits it in two, seven times over.
+// The Splitting Demon: every death sends a shockwave a second later and splits it in two, six times over.
 // One line of splits carries the crown down to a single smallest split; killing that one beats the boss.
-const DEMON_SPLITS = 7, DEMON_KEEP = 0.8, DEMON_MOB_CAP = 40, DEMON_SHARDS = 0.25;   // each split keeps four fifths of the health of the one before
+const DEMON_SPLITS = 6, DEMON_KEEP = 0.8, DEMON_MOB_CAP = 40, DEMON_SHARDS = 0.25;   // each split keeps four fifths of the health of the one before
 function demonQuake(x, z, gen, dmg) {
   const k = Math.pow(0.78, gen), max = 3 + 13 * k, wd = Math.max(2, Math.round(dmg * 0.85 * Math.pow(0.8, gen)));
   telegraph(x, z, 1.2 + 2.6 * k, 1, 0, 0xff3a4a, () => shockwave(x, z, wd, max), null, gen >= 3);
@@ -4930,6 +4937,7 @@ function hitByBolt(e, b) {
   }
 }
 function hurtPlayer(d) {
+  if (ow && P.air && P.ay - gy(P.pos.x, P.pos.z) > 2.2) return;
   if (P.invuln > 0 || P.down || P.boxing || state !== 'play' || godMode) return;
   if (P.shield) {
     // the turtle's shell bubble eats the hit
@@ -4972,6 +4980,7 @@ function hurtPlayer(d) {
     sfx('cast', 'nova');
     return;
   }
+  if (ow) { owDied(); return; }
   const other = P === P1 ? P2 : P1;
   if (coop && !other.down) {
     // in co-op you go down instead of dying, and get back up if your partner holds on
@@ -5045,7 +5054,7 @@ const hurtWho = (who, d) => withPlayer(who, () => hurtPlayer(d));
 const SNIPER_SHOT = 96;   // how fast a sniper's shot flies
 function enemyShoot(e, dx, dz, dmg = e.dmg, speed = 9) {
   const m = new THREE.Mesh(G.shot, M.shot);
-  m.position.set(e.pos.x, 1.2, e.pos.z); scene.add(m);
+  m.position.set(e.pos.x, 1.2 + gy(e.pos.x, e.pos.z), e.pos.z); scene.add(m);
   shots.push({ m, vx: dx * speed, vz: dz * speed, life: 3.5, dmg });
   sfx('eshot');
 }
@@ -5608,7 +5617,7 @@ function bossAI(e, dt, d, dirx, dirz) {
 function telegraph(x, z, r, dur, dmg, color, then, glob, quiet) {
   const mk = (geo, op) => {
     const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: op, depthWrite: false }));
-    m.rotation.x = -Math.PI / 2; m.position.set(x, 0.04, z); scene.add(m); return m;
+    m.rotation.x = -Math.PI / 2; m.position.set(x, 0.04 + gy(x, z), z); scene.add(m); return m;
   };
   const disc = mk(G.disc, 0.18), edge = mk(G.ring, 0.8);
   edge.scale.setScalar(r); disc.scale.setScalar(0.01);
@@ -5775,7 +5784,7 @@ function standUp(m, height, mat = m.material) {
 function debris(x, z, color, n, sp, up = 5, geo = FX3.rock) {
   for (let i = 0; i < n; i++) {
     const m = new THREE.Mesh(geo, fxMat(color)), a = rand(0, TAU), v = rand(0.3, 1) * sp;
-    m.position.set(x, 0.15, z); m.rotation.set(rand(0, 3), rand(0, 3), rand(0, 3)); m.scale.setScalar(rand(0.6, 1.4));
+    m.position.set(x, 0.15 + gy(x, z), z); m.rotation.set(rand(0, 3), rand(0, 3), rand(0, 3)); m.scale.setScalar(rand(0.6, 1.4));
     parts.push({ m, vx: Math.sin(a) * v, vy: rand(0.5, 1) * up, vz: Math.cos(a) * v, life: rand(0.5, 0.9), max: 0.9 });
     scene.add(m);
   }
@@ -5812,7 +5821,7 @@ function flameRing(x, z, rad, n) {
 }
 // what stands on a hazard pool: a bubbling mound of acid, licking flames, or jagged ice
 function poolFx(kind, x, z, r) {
-  const g = new THREE.Group(); g.position.set(x, 0, z); scene.add(g);
+  const g = new THREE.Group(); g.position.set(x, gy(x, z), z); scene.add(g);
   const fx = { g, kind, r, bubbles: [], flames: [] };
   if (kind === 'acid') {
     fx.mat = new THREE.MeshStandardMaterial({ color: 0x7fc63f, emissive: 0x4a8a1a, emissiveIntensity: 0.5, roughness: 0.25, transparent: true, opacity: 0.85 });
@@ -5928,7 +5937,7 @@ function crimsonSword(a) {
 function fxAdd(m, dur, tick) { scene.add(m); fx3.push({ m, t: 0, dur, tick }); return m; }
 // a ball of light that swells and fades
 function flash(x, y, z, color, size, dur = 0.35) {
-  const m = new THREE.Mesh(FX3.bubble, addMat(color, 0.85)); m.position.set(x, y, z);
+  const m = new THREE.Mesh(FX3.bubble, addMat(color, 0.85)); m.position.set(x, y + gy(x, z), z);
   fxAdd(m, dur, (f, dt, k) => { m.scale.setScalar(Math.max(0.01, size * (0.25 + 0.75 * Math.sqrt(k)))); m.material.opacity = 0.85 * (1 - k); });
 }
 // a column of light from the sky that narrows away
@@ -5939,6 +5948,7 @@ function beam(x, z, color, r = 0.6, dur = 0.45, h = 40) {
 }
 // small glowing specks: g is gravity (negative floats them up), they fade as they shrink
 function specks(x, y, z, color, n, sp, { g = 3, up = 2, life = 0.8, size = 1, spread = 0, geo = G.bit } = {}) {
+  y += gy(x, z);
   if (parts.length > (lowGfx() ? 150 : 500)) return;
   if (lowGfx()) n = Math.ceil(n / 3);
   for (let i = 0; i < n; i++) {
@@ -5950,6 +5960,7 @@ function specks(x, y, z, color, n, sp, { g = 3, up = 2, life = 0.8, size = 1, sp
 }
 // a flat ring of sparks flying straight out along the ground (novas, war cries)
 function sparkRing(x, z, color, n, speed, y = 0.6, life = 0.5) {
+  y += gy(x, z);
   if (parts.length > (lowGfx() ? 150 : 500)) return;
   if (lowGfx()) n = Math.ceil(n / 3);
   for (let i = 0; i < n; i++) {
@@ -5961,11 +5972,11 @@ function sparkRing(x, z, color, n, speed, y = 0.6, life = 0.5) {
 }
 // specks that spiral into a point (black holes, gravity wells)
 function swirlIn(x, z, rad, color) {
-  const m = new THREE.Mesh(FX3.bubble, addMat(color, 0.9)), a0 = rand(0, TAU), r0 = rand(rad * 0.5, rad), life = rand(0.7, 1.1), y0 = rand(0.1, 0.6);
+  const m = new THREE.Mesh(FX3.bubble, addMat(color, 0.9)), a0 = rand(0, TAU), r0 = rand(rad * 0.5, rad), life = rand(0.7, 1.1), y0 = rand(0.1, 0.6), gh = gy(x, z);
   m.scale.setScalar(rand(0.06, 0.14));
   fxAdd(m, life, (f, dt, k) => {
     const r = r0 * (1 - k) ** 1.4 + 0.3, a = a0 + k * k * 9;
-    m.position.set(x + Math.sin(a) * r, y0 + (1.2 - y0) * k, z + Math.cos(a) * r); m.material.opacity = 0.9 * Math.min(1, k * 4);
+    m.position.set(x + Math.sin(a) * r, gh + y0 + (1.2 - y0) * k, z + Math.cos(a) * r); m.material.opacity = 0.9 * Math.min(1, k * 4);
   });
 }
 // bolt trails: called every frame for bolts that have one
@@ -6038,13 +6049,13 @@ let hazards = [], waves = [];
 function pool(kind, x, z, r, dur) {
   const H = HAZ[kind];
   const disc = new THREE.Mesh(G.disc, new THREE.MeshBasicMaterial({ color: H.color, transparent: true, opacity: 0, depthWrite: false }));
-  disc.rotation.x = -Math.PI / 2; disc.position.set(x, 0.03 + Math.random() * 0.01, z); disc.scale.setScalar(r);
+  disc.rotation.x = -Math.PI / 2; disc.position.set(x, 0.03 + Math.random() * 0.01 + gy(x, z), z); disc.scale.setScalar(r);
   scene.add(disc);
   hazards.push({ kind, x, z, r, t: 0, dur, disc, dps: H.dps * W.dmgMul, slow: H.slow, fx: kind === 'fire' || (kind === 'acid' && !lowGfx()) || fpOn() ? poolFx(kind, x, z, r) : null });
 }
 function shockwave(x, z, dmg, max) {
   const m = new THREE.Mesh(G.ring, new THREE.MeshBasicMaterial({ color: 0xffb070, transparent: true, opacity: 0.9, depthWrite: false }));
-  m.rotation.x = -Math.PI / 2; m.position.set(x, 0.06, z); m.scale.setScalar(0.5);
+  m.rotation.x = -Math.PI / 2; m.position.set(x, 0.06 + gy(x, z), z); m.scale.setScalar(0.5);
   scene.add(m);
   standUp(m, r => 1.1 * (1 - r / max) + 0.25);
   sfx('shock');
@@ -6464,6 +6475,7 @@ function monsterAI(e, dt, d, dirx, dirz) {
 
 /* ---------- effects ---------- */
 function burst(x, y, z, color, n, sp) {
+  y += gy(x, z);
   if (lowGfx()) { if (parts.length > 150) return; n = Math.ceil(n / 3); }
   for (let i = 0; i < n; i++) {
     const m = new THREE.Mesh(G.bit, bitMat(color));
@@ -6475,7 +6487,7 @@ function burst(x, y, z, color, n, sp) {
 }
 function ring(x, z, from, to, dur, color) {
   const m = new THREE.Mesh(G.ring, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 1, depthWrite: false }));
-  m.rotation.x = -Math.PI / 2; m.position.set(x, 0.08, z); m.scale.setScalar(from);
+  m.rotation.x = -Math.PI / 2; m.position.set(x, 0.08 + gy(x, z), z); m.scale.setScalar(from);
   scene.add(m); rings.push({ m, t: 0, dur, from, to });
   standUp(m, () => 0.7);
 }
@@ -6485,7 +6497,8 @@ function zap(points) {
     const a = points[i], b = points[i + 1];
     for (let k = 0; k < 6; k++) {
       const t = k / 6;
-      pts.push(new THREE.Vector3(a.x + (b.x - a.x) * t + rand(-.3, .3), 1.2 + rand(-.3, .3), a.z + (b.z - a.z) * t + rand(-.3, .3)));
+      const zx = a.x + (b.x - a.x) * t, zz = a.z + (b.z - a.z) * t;
+      pts.push(new THREE.Vector3(zx + rand(-.3, .3), 1.2 + gy(zx, zz) + rand(-.3, .3), zz + rand(-.3, .3)));
     }
   }
   const last = points[points.length - 1]; pts.push(new THREE.Vector3(last.x, 1.2, last.z));
@@ -6498,8 +6511,8 @@ function dropGem(x, z, value) {
   const m = new THREE.Mesh(G.gem, M.gem);
   const s = value >= 5 ? 1.7 : 1; m.scale.setScalar(s);
   const a = rand(0, TAU), sp = rand(1, 4);
-  m.position.set(x, 0.6, z); scene.add(m);
-  gems.push({ m, value, x, z, y: 0.6, vx: Math.sin(a) * sp, vz: Math.cos(a) * sp, vy: rand(3, 6), pull: false, pullT: 0 });
+  m.position.set(x, 0.6 + gy(x, z), z); scene.add(m);
+  gems.push({ m, value, x, z, y: 0.6 + gy(x, z), vx: Math.sin(a) * sp, vz: Math.cos(a) * sp, vy: rand(3, 6), pull: false, pullT: 0 });
 }
 
 /* ---------- boxes ---------- */
@@ -6736,6 +6749,7 @@ function puCardText(a, pl = boxOpener) {
 // the shard bank: shards banked during a run are kept forever (per save) and spent on power-up upgrades
 const bankOf = pl => puSaveOf(puFinder(pl));
 function bankShards(pl = P1) {
+  if (ow) return;
   if (state !== 'play' || sandbox || trial) return;
   withPlayer(pl, () => {
     const who = coop ? (pl === P2 ? 'Player 2' : 'Player 1') + ' banked' : 'Banked';
@@ -6916,7 +6930,7 @@ function openLoadout(who = P1, dev) {
   if (who !== P2) who = P1;
   if (who === P2) swapIn(P2);   // the loadout edits whoever opened it
   loPlayer = who;
-  if (!sandbox && !trial) {
+  if (!sandbox && !trial && !ow) {
     dev ||= devFor(who);
     if (who.loDev !== dev) { useDevLoadout(dev); recompute(); renderBar(); }
   }
@@ -7614,7 +7628,8 @@ addEventListener('keydown', e => {
       else if (k === 'escape' || k === 'p') pause(true);
       return;
     }
-    if (k === ' ' || k === 'shift') { if (kh === P1) tryDash(); else dashHero(kh, ...kbDir()); }
+    if (k === ' ' && ow) owJump();
+    else if (k === ' ' || k === 'shift') { if (kh === P1) tryDash(); else dashHero(kh, ...kbDir()); }
     if (k === 'e') withWorld(worldOf(kh), () => { const b = nearBox(kh.pos); if (b) openBox(b, kh); });
     if (k === '1' || k === '2' || k === '3') castAs(kh, +k - 1);
     if (k === 'q') openLoadout(kh, KB_DEV);
@@ -7772,12 +7787,12 @@ function pollPad(dt) {
     pad.look.x = rx; pad.look.y = ry;   // first person turns by how far you push, not just which way
     if (hit(B.view)) setFirstPerson(!firstPerson);
     if (hit(B.dash)) tryDash();
-    if (hit(B.interact)) { const b = nearBox(); if (b) openBox(b); else tutPress(); }
+    if (hit(B.interact)) { if (!owInteract()) { const b = nearBox(); if (b) openBox(b); else tutPress(); } }
     if (hit(B.cast1)) useActive(0);
     if (hit(B.cast2)) useActive(1);
     if (hit(B.cast3)) useActive(2);
     if (hit(B.auto)) { autoFire = !autoFire; $('#autoTag').hidden = !autoFire; }
-    if (hit(B.bank)) bankShards(P1);
+    if (hit(B.bank)) { if (ow) owJump(); else bankShards(P1); }
     if (hit(B.pause)) pause(true);
     else if (hit(B.loadout)) openLoadout(P1, padDevKey());
     return;
@@ -8082,6 +8097,7 @@ $('#loadoutClose').addEventListener('click', closeLoadout);
 const modesOpen = () => !$('#titleModes').hidden;
 function showModes(on) {
   $('#titleModes').hidden = !on;
+  if (on) owRefreshTitle();
   $('#titleMain').hidden = on; $('#titleNote').hidden = on;
   $('#startScreen .panel').classList.toggle('picking', on);
   $('#startScreen .panel').scrollTop = 0;
@@ -8178,7 +8194,7 @@ function begin(mode) {
   for (const pl of [P1, P2]) Object.assign(pl, { runPowers: [], blood: 0, bloodT: 0, lastStandUsed: false, barrierT: 10, stormT: 3, chronoT: 25, frostCd: 0, auraT: 0.5, hurtAt: -9 });
   refreshPU();
   trial = typeof mode === 'string' && mode.startsWith('ascend:') ? mode.slice(7) : null;
-  lab = mode === 'lab';
+  lab = mode === 'lab'; ow = mode === 'ow';
   sandboxPet = petSave.equipped; sandboxAsc = false;
   seenTypes.clear();
   for (const c of introCards) c.el.remove(); introCards = [];
@@ -8190,7 +8206,7 @@ function begin(mode) {
   // sandbox: every ability is in the collection, starting at level I
   if (sandbox) for (const a of ABILITIES) levels[a.id] = 1;
   applyCharKit();
-  P1.loDev = null; if (!sandbox && !trial) useDevLoadout(devFor(P1));
+  P1.loDev = null; if (!sandbox && !trial && !ow) useDevLoadout(devFor(P1));
   if (!sandbox && !trial) { const c = CHAR[P1.charId]; let grew = false; for (const id of charKit(c)) if (!codex.has(id)) { codex.add(id); grew = true; } if (grew) saveCodex(); }
   recompute();
   Object.assign(P, { hp: S.maxHp, fireT: 0, dashT: 0, dashCd: 0, invuln: 0, regenT: 0, hazT: 0, slowMul: 1, naturalT: 5, phoenixUsed: false, shield: false, down: false, downT: 0 });
@@ -8199,7 +8215,7 @@ function begin(mode) {
   P.pos.set(0, 0, 0); P.face.set(0, 0, -1);
   T = 0; shards = 0; shardsTotal = 0; kills = 0; boxesOpened = 0; shake = 0;
   Object.assign(W, { n: 0, queue: [], active: false, inter: 1.5, hpMul: 1, dmgMul: 1, trialT: 3, trialBoss: null, trialWon: false, winT: 0 });
-  if (!sandbox && !dungeon && !trial && !lab) { spawnBox(); spawnBox(); }
+  if (!sandbox && !dungeon && !trial && !lab && !ow) { spawnBox(); spawnBox(); }
   renderBar();
   for (const id of ['#startScreen', '#overScreen', '#pauseScreen', '#revealScreen', '#loadoutScreen']) $(id).hidden = true;
   state = 'play';
@@ -8219,7 +8235,8 @@ function begin(mode) {
   if (sandbox) openLoadout();
   if (trial) startTrial();
   if (lab) startLab();
-  if (!sandbox && !trial) startPowerPick();
+  if (ow) owStart();
+  if (!sandbox && !trial && !ow) startPowerPick();
 }
 // Ascension trial: no waves and no boxes. You get a random kit, and the ascended pet comes for you.
 function trialKit() {
@@ -8805,7 +8822,8 @@ const charOwned = (id, pl = P1) => CHAR[id]?.s === 0 || charData(charSaveOf(pl))
 const charKey = pl => pl === P2 && !p2Save() ? 'pick2' : 'pick';
 const charPick = pl => { const id = charData(charSaveOf(pl))[charKey(pl)]; return id && charOwned(id, pl) ? id : 'wanderer'; };
 let sbTry = null, sbTryWho = P1, charWho = P1, charShown = null;
-const charForRun = pl => sandbox && sbTry && sbTryWho === pl ? sbTry : charPick(pl);
+// in the open world everyone is the plain Wanderer: no character traits or starting abilities
+const charForRun = pl => ow ? 'wanderer' : sandbox && sbTry && sbTryWho === pl ? sbTry : charPick(pl);
 function setCharOf(pl, id) {
   pl.charId = id;
   const c = CHAR[id], other = pl === P2 ? P1 : P2;
@@ -9095,12 +9113,12 @@ function renderLoPet() {
   now.lastChild.innerHTML = shown ? `<b>${shown.name}</b> · ${shown.desc}` : 'No pet with you.';
   const btn = document.createElement('button');
   btn.type = 'button'; btn.className = 'sb-btn'; btn.textContent = 'Change pet';
-  btn.addEventListener('click', openPets);
+  btn.addEventListener('click', () => { if (ow) { closeLoadout(); owOpenJournal('gear'); } else openPets(); });
   box.append(now, btn);
   const lw = loPlayer === P2 ? P2 : P1, pubox = $('#loPU'), on = [...puOn[lw === P2 ? 1 : 0].keys()].map(id => PUD[id]);
   const pnow = document.createElement('span');
   pnow.className = 'mode-note';
-  pnow.textContent = (on.length ? on.map(d => d.name).join(' · ') : 'No power-ups slotted in.') + (sandbox ? '' : ' Change them from the title screen between runs.');
+  pnow.textContent = ow ? 'Power-ups and the skill tree don\'t work in the open world. You grow by levelling up and finding gear.' : (on.length ? on.map(d => d.name).join(' · ') : 'No power-ups slotted in.') + (sandbox ? '' : ' Change them from the title screen between runs.');
   if (sandbox) {
     const pbtn = document.createElement('button');
     pbtn.type = 'button'; pbtn.className = 'sb-btn'; pbtn.textContent = 'Change power-ups';
@@ -9263,6 +9281,7 @@ function startDungeon() {
   nextFloor();
 }
 function leaveDungeon() {
+  owEnd();
   if (roomGroup) { scene.remove(roomGroup); roomGroup = null; }
   obstacles = []; doorObjs = []; cracks = []; altars = []; stairs = null; torches = []; runeObjs = []; mimicObj = null;
   walls = []; spikeTiles = []; sawBars = []; turrets = []; lever = null; goalPlate = null; blocks = []; plates = []; crystals = []; echo = null;
@@ -10924,6 +10943,7 @@ function renderDungeonBtn() {
 }
 
 function toTitle() {
+  if (ow) owSave(true);
   swapIn(P1);
   resetWorlds();
   clearAll();
@@ -10931,7 +10951,7 @@ function toTitle() {
   for (const bl of P2.build.blades) scene.remove(bl);
   P2.build.blades = [];
   hideHalfReveals(); setSplit(false);
-  leaveDungeon(); dungeon = false; lab = false; renderDungeonBtn();
+  leaveDungeon(); dungeon = false; lab = false; ow = false; renderDungeonBtn();
   for (const id of ['#overScreen', '#pauseScreen', '#revealScreen', '#loadoutScreen']) $(id).hidden = true;
   if (cut) endCutscene(); cutQueue = [];
   sandbox = false; sbTry = null; godMode = false; trial = null; refreshPet(); renderPetBtn(); renderCodexBtn(); refreshHeroes(); $('#sandboxTag').hidden = true;
@@ -11023,7 +11043,7 @@ function showDmgMeter(on) {
 }
 $('#dmgBtn').addEventListener('click', () => showDmgMeter($('#dmgMeter').hidden));
 function pause(on) {
-  if (on && state === 'play') { state = 'paused'; showDmgMeter(false); $('#pauseScreen').hidden = false; $('#resumeBtn').focus({ preventScroll: true }); }
+  if (on && state === 'play') { if ($('#owSaveNow')) $('#owSaveNow').textContent = 'Save game'; state = 'paused'; showDmgMeter(false); $('#pauseScreen').hidden = false; $('#resumeBtn').focus({ preventScroll: true }); }
   else if (!on && state === 'paused') { state = 'play'; $('#pauseScreen').hidden = true; }
 }
 function gameOver() {
@@ -11061,6 +11081,7 @@ const raycaster = new THREE.Raycaster();
 const groundPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const aimPt = new THREE.Vector3();
 const camBase = new THREE.Vector3(0, 20, 13);
+let camH = 0;   // how high the ground under the camera is (open world hills)
 
 function dashHero(pl, mx, mz) {
   if (!coop || pl.down || pl.boxing || pl.dashCd > 0 || state !== 'play') return;
@@ -11610,7 +11631,7 @@ function updateWorld(dt, pass) {
     if (v > cap) { P.vx *= cap / v; P.vz *= cap / v; }
     const fr = Math.exp(-dt * 0.5); P.vx *= fr; P.vz *= fr;
     P.pos.x += P.vx * dt; P.pos.z += P.vz * dt;
-  } else { const sp = S.speed * P.slowMul * moveBoost(P) * (P.whirlT > 0 ? 1.3 : 1); P.pos.x += mx * sp * dt; P.pos.z += mz * sp * dt; }
+  } else { const sp = S.speed * P.slowMul * moveBoost(P) * (P.whirlT > 0 ? 1.3 : 1) * owSlope(P, mx, mz); P.pos.x += mx * sp * dt; P.pos.z += mz * sp * dt; }
   const pr = Math.hypot(P.pos.x, P.pos.z);
   if (pr > ARENA_R) {
     P.pos.x *= ARENA_R / pr; P.pos.z *= ARENA_R / pr;
@@ -11642,6 +11663,7 @@ function updateWorld(dt, pass) {
   if (blocks.length) pushBlocks();
 
   // aim & fire
+  groundPlane.constant = -gy(P.pos.x, P.pos.z);
   let ax = P.face.x, az = P.face.z, wantFire = false;
   if (fpOn()) {
     // first person: you shoot where you look; abilities land where the crosshair meets the ground (or 20 m ahead)
@@ -11697,6 +11719,7 @@ function updateWorld(dt, pass) {
     wantFire = mouse.down || autoFire;
   }
   const al = Math.hypot(ax, az);
+  if (ow) reticle.position.y = 0.05 + gy(reticle.position.x, reticle.position.z);
   if (al > 0.01) P.face.set(ax / al, 0, az / al);
   if (coop && padPlayer === 1) aimWorld.set(P.pos.x + P.face.x * 9, 0, P.pos.z + P.face.z * 9);
   else if (touchMode) aimWorld.set(P.pos.x + P.face.x * 7, 0, P.pos.z + P.face.z * 7);
@@ -11706,7 +11729,7 @@ function updateWorld(dt, pass) {
   if (wantFire && !P.down && !P.boxing && P.fireT <= 0) { shoot(); P.fireT = 1 / (S.fireRate * (warpT > 0 ? 1.3 : 1) * rateBoost(P)); }
 
   // player visuals
-  pg.position.set(P.pos.x, ml > 0.1 ? Math.abs(Math.sin(T * 11)) * 0.12 : 0, P.pos.z);
+  pg.position.set(P.pos.x, (ml > 0.1 && !P.air ? Math.abs(Math.sin(T * 11)) * 0.12 : 0) + owPY(P), P.pos.z);
   pg.rotation.y = Math.atan2(P.face.x, P.face.z);
   tickWhirl(dt);
   pg.visible = !(P.invuln > 0 && P.dashT <= 0 && Math.floor(T * 20) % 2 === 0);
@@ -11737,6 +11760,11 @@ function updateWorld(dt, pass) {
       }
     }
     b.life -= dt; b.m.position.x += b.vx * dt; b.m.position.z += b.vz * dt;
+    if (ow) {
+      const gh = gy(b.m.position.x, b.m.position.z);
+      if (b.vy) { b.m.position.y += b.vy * dt; if (b.m.position.y < gh + 0.1) b.life = 0; }   // flew into the hillside
+      else b.m.position.y = gh + (b.hy ?? 1.15);
+    }
     if (b.trail) b.trail(b);
     let dead = b.life <= 0;
     // Rebound Bolts: bounce off the arena's edge and off walls
@@ -11762,6 +11790,7 @@ function updateWorld(dt, pass) {
     if (!dead) for (const e of enemies) {
       if (e.dead || e.hidden || b.hit.has(e)) continue;
       const dx = e.pos.x - b.m.position.x, dz = e.pos.z - b.m.position.z;
+      if (b.vy) { const base = gy(e.pos.x, e.pos.z) + (e.float ? 0.9 : 0) + (e.hy || 0), y = b.m.position.y; if (y < base - 0.4 || y > base + 2 * e.r * (e.sy || 1) + 0.7) continue; }
       if (dx * dx + dz * dz < (e.r + 0.25) ** 2) {
         b.hit.add(e);
         withPlayer(b.owner || P1, () => { withSrc(b.src, () => hitByBolt(e, b)); if (S.reaction && !e.anchored) withSrc('reaction', () => chainReaction(b, e)); });
@@ -11805,7 +11834,7 @@ function updateWorld(dt, pass) {
     if (e.sleep) {
       const w = nearestPlayer(e.pos.x, e.pos.z);
       if (Math.hypot(w.pos.x - e.pos.x, w.pos.z - e.pos.z) < (e.wakeR || 13) || e.hp < e.maxHp) { e.sleep = false; if (e.boss && !e.cutDone && goofy) cutQueue.push(e); }
-      else { e.g.position.set(e.pos.x, e.float ? 0.9 : 0, e.pos.z); continue; }
+      else { e.g.position.set(e.pos.x, (e.float ? 0.9 : 0) + gy(e.pos.x, e.pos.z), e.pos.z); continue; }
     }
     const tgt = nearestPlayer(e.pos.x, e.pos.z);
     const dx = tgt.pos.x - e.pos.x, dz = tgt.pos.z - e.pos.z, d = Math.hypot(dx, dz) || 1;
@@ -11908,7 +11937,7 @@ function updateWorld(dt, pass) {
       }
     }
     if (e.dead) continue;
-    e.g.position.set(e.pos.x, (e.float ? 0.9 + Math.sin(T * 3 + e.seed) * 0.25 : 0) + (e.hy || 0), e.pos.z);
+    e.g.position.set(e.pos.x, (e.float ? 0.9 + Math.sin(T * 3 + e.seed) * 0.25 : 0) + (e.hy || 0) + gy(e.pos.x, e.pos.z), e.pos.z);
     if (e.type === 'reflector') e.g.rotation.y = e.faceA;
     else if (e.type === 'capyling') e.g.rotation.y = Math.atan2(e.vx, e.vz);
     else if (e.rollPh !== 2) e.g.rotation.y = Math.atan2(dirx, dirz);
@@ -11966,6 +11995,7 @@ function updateWorld(dt, pass) {
     const steps = Math.max(1, Math.ceil(Math.hypot(s.vx, s.vz) * dt / 0.5));
     for (let k = 0; k < steps && !dead; k++) {
       s.m.position.x += s.vx * dt / steps; s.m.position.z += s.vz * dt / steps;
+      if (ow) s.m.position.y = 1.2 + gy(s.m.position.x, s.m.position.z);
       const dx = s.m.position.x - P.pos.x, dz = s.m.position.z - P.pos.z;
       if (walls.length && pointInWall(s.m.position.x, s.m.position.z)) dead = true;
       if (!dead && p2Also() && !P2.down && (s.m.position.x - P2.pos.x) ** 2 + (s.m.position.z - P2.pos.z) ** 2 < 0.5) { hurtP2(s.dmg); dead = true; }
@@ -12172,7 +12202,8 @@ function updateWorld(dt, pass) {
   for (let i = gems.length - 1; i >= 0; i--) {
     const g = gems[i];
     g.vy -= 20 * dt; g.y += g.vy * dt;
-    if (g.y < 0.45) { g.y = 0.45; g.vy = 0; }
+    const gFloor = 0.45 + gy(g.x, g.z);
+    if (g.y < gFloor) { g.y = gFloor; g.vy = 0; }
     const f = Math.exp(-dt * 3); g.vx *= f; g.vz *= f;
     g.x += g.vx * dt; g.z += g.vz * dt;
     const gp = g.target || nearestPlayer(g.x, g.z);
@@ -12193,7 +12224,7 @@ function updateWorld(dt, pass) {
   // boxes
   for (let i = boxTimers.length - 1; i >= 0; i--) { boxTimers[i] -= dt; if (boxTimers[i] <= 0) { boxTimers.splice(i, 1); spawnBox(); } }
 
-  if (dungeon) updateDungeon(dt); else if (lab) updateLab(dt); else updateWaves(dt);
+  if (dungeon) updateDungeon(dt); else if (lab) updateLab(dt); else if (ow) owTick(dt); else updateWaves(dt);
 
   // camera
   if (pass === 2) return;
@@ -12205,7 +12236,8 @@ function updateWorld(dt, pass) {
     zoomTo = 1 + Math.min(0.7, Math.max(0, (Math.hypot(a.pos.x - b.pos.x, a.pos.z - b.pos.z) - 8) / 25));
   }
   camZoom += (zoomTo - camZoom) * (1 - Math.exp(-dt * 3));
-  camBase.lerp(new THREE.Vector3(fx, 20 * tall * camZoom, fz + 13 * tall * camZoom), 1 - Math.exp(-dt * 6));
+  camH += ((ow && P1.air ? P1.ay : gy(fx, fz)) - camH) * (1 - Math.exp(-dt * 6));
+  camBase.lerp(new THREE.Vector3(fx, 20 * tall * camZoom + camH, fz + 13 * tall * camZoom), 1 - Math.exp(-dt * 6));
   if (splitView) camBase2.lerp(new THREE.Vector3(P2.pos.x, 20 * tall, P2.pos.z + 13 * tall), 1 - Math.exp(-dt * 6));
   shake = Math.max(0, shake - dt);
 }
@@ -12236,7 +12268,7 @@ function ambient(dt) {
   for (let i = parts.length - 1; i >= 0; i--) {
     const p = parts[i];
     p.life -= dt; p.vy -= (p.g ?? 18) * dt;
-    p.m.position.x += p.vx * dt; p.m.position.y = Math.max(0.08, p.m.position.y + p.vy * dt); p.m.position.z += p.vz * dt;
+    p.m.position.x += p.vx * dt; p.m.position.y = Math.max(0.08 + (ow ? gy(p.m.position.x, p.m.position.z) : 0), p.m.position.y + p.vy * dt); p.m.position.z += p.vz * dt;
     p.m.rotation.x += dt * 8;
     p.m.scale.setScalar(Math.max(0.01, p.life / p.max) * (p.s || 1));
     if (p.life <= 0) { scene.remove(p.m); parts.splice(i, 1); }
@@ -12267,10 +12299,10 @@ function updateHUD() {
   }
   $('#dashFill').style.transform = `scaleX(${Math.min(1, 1 - Math.max(0, P.dashCd) / S.dashCd)})`;
   if (shards !== hud.shards) { hud.shards = shards; $('#shardCount').textContent = shards; }
-  const wv = dungeon ? D.floor : lab && LB ? LB.floor : Math.max(1, W.n), mode = dungeon ? 'd' : lab ? 'l' : trial ? 't' : 'w';
+  const wv = ow && OWS ? OWS.level : dungeon ? D.floor : lab && LB ? LB.floor : Math.max(1, W.n), mode = ow ? 'o' : dungeon ? 'd' : lab ? 'l' : trial ? 't' : 'w';
   if (wv !== hud.wave || hud.dg !== mode) {
     hud.wave = wv; hud.dg = mode;
-    $('#waveNum').textContent = trial ? '' : wv; $('#waveLabel').textContent = dungeon || lab ? 'Floor' : trial ? 'Trial' : 'Wave';
+    $('#waveNum').textContent = trial ? '' : wv; $('#waveLabel').textContent = ow ? 'Level' : dungeon || lab ? 'Floor' : trial ? 'Trial' : 'Wave';
   }
   if (kills !== hud.kills) { hud.kills = kills; $('#killCount').textContent = kills; }
   // everything alive, plus the rest of this wave still waiting to spawn
@@ -12644,16 +12676,16 @@ function frame() {
   const lookX = camBase.x, lookZ = camBase.z - 13 * (camera.aspect < 1 ? 1.45 : 1) * camZoom;
   if (fe > 0) {
     // eye height, with a little bob while you walk; the camera dives from overhead into your head (or back out)
-    const moving = Math.hypot(P1.vx || 0, P1.vz || 0) > 1, ey = 1.55 + (moving ? Math.sin(performance.now() / 90) * 0.05 : 0);
+    const moving = Math.hypot(P1.vx || 0, P1.vz || 0) > 1, ey = 1.55 + (moving ? Math.sin(performance.now() / 90) * 0.05 : 0) + owPY(P1);
     const dirX = Math.sin(fpYaw) * Math.cos(fpPitch), dirY = Math.sin(fpPitch), dirZ = Math.cos(fpYaw) * Math.cos(fpPitch);
     const lk = 12;   // look at a far point so the view turns smoothly on the way
-    const lx = lookX + (P1.pos.x + dirX * lk - lookX) * fe, ly = (ey + dirY * lk) * fe, lz = lookZ + (P1.pos.z + dirZ * lk - lookZ) * fe;
+    const lx = lookX + (P1.pos.x + dirX * lk - lookX) * fe, ly = camH + (ey + dirY * lk - camH) * fe, lz = lookZ + (P1.pos.z + dirZ * lk - lookZ) * fe;
     camera.position.set(v3.x + (P1.pos.x - v3.x) * fe, v3.y + (ey - v3.y) * fe, v3.z + (P1.pos.z - v3.z) * fe);
     if (fe >= 1 && shake > 0 && !reduceMotion) camera.position.y += rand(-1, 1) * shake * 0.25;
     camera.lookAt(lx, ly, lz);
   } else {
     camera.position.copy(v3);
-    camera.lookAt(lookX, 0, lookZ);
+    camera.lookAt(lookX, camH, lookZ);
   }
   // your own body disappears as the camera reaches your head, so it doesn't block the view
   if (fe > 0.85) { pg.visible = false; fpHid = true; } else if (fpHid) { pg.visible = true; fpHid = false; }
@@ -12667,6 +12699,7 @@ function frame() {
     if (splitView && camera.aspect !== innerWidth / innerHeight) { cut.aspect = camera.aspect; camera.aspect = innerWidth / innerHeight; camera.updateProjectionMatrix(); }
     tickCutscene(dt);
   }
+  if (owCut) owCutTick(dt);
   updateHUD();
   updateBar();
   const p2h = $('#hudP2'), pe2 = $('#prompt2');
@@ -12985,11 +13018,13 @@ function applyArenaTheme(i) {
   buildMap(i);
 }
 let finale = null;
-const finaleOk = () => state === 'play' && !dungeon && !lab && !trial;
+const finaleOk = () => state === 'play' && !dungeon && !lab && !trial && !ow;
 function startFinale(e, name) {
   if (finale || !finaleOk()) return false;
   // only the last boss standing gets the show
-  if (enemies.some(o => o.boss && !o.dead && o !== e)) return false;
+  // a boss still waiting to come out, or a Splitting Demon still in pieces, counts as alive too
+  if (enemies.some(o => !o.dead && o !== e && (o.boss || (o.type === 'demonspawn' && o.root !== e.root)))) return false;
+  if (W.queue.some(t => TYPES[t]?.boss)) return false;
   const x = e.pos.x, z = e.pos.z;
   if (!e.g.parent) scene.add(e.g);
   e.mat.emissive?.setHex(0xffffff);
@@ -13081,7 +13116,7 @@ const MAP_INFO = [
   { key: 'sands', mobs: ['scorpion', 'dustdevil', 'burrower', 'roller'], blurb: 'Quicksand and sandstorms · Scorpions, Dust Devils, Burrowers and Rollers' },
   { key: 'abyss', mobs: ['gravling', 'voideye', 'wraith', 'reflector'], blurb: 'Three void wells drag you in · Gravlings, Void Eyes, Wraiths and Reflectors' },
 ];
-const mapOn = () => !dungeon && !lab && !trial;
+const mapOn = () => !dungeon && !lab && !trial && !ow;
 // which monsters can show up in this map's waves (a map's own monsters come out early, they're what it's about)
 function mapRoster(n) {
   const own = MAP_INFO[arenaTheme].mobs;
@@ -13238,8 +13273,8 @@ function buildMap(i) {
   scene.fog.near = 42; scene.fog.far = 120;   // the new maps let you see further, so their scenery shows
   MAP_BUILD[key]();
 }
-const onMapIce = pos => !!mapZ?.ice && mapOn() && mapZ.ice.some(p => { const dx = pos.x - p.x, dz = pos.z - p.z, c = Math.cos(-p.rot), s = Math.sin(-p.rot), lx = dx * c - dz * s, lz = dx * s + dz * c; return (lx / (p.r * p.sx)) ** 2 + (lz / (p.r * p.sy)) ** 2 < 1; });
-const mapSlowAt = pos => mapZ?.pits && mapOn() && mapZ.pits.some(p => Math.hypot(pos.x - p.x, pos.z - p.z) < p.r) ? 0.45 : 0;
+const onMapIce = pos => (ow && owZoneKind(pos.x, pos.z) === 'ice') || !!mapZ?.ice && mapOn() && mapZ.ice.some(p => { const dx = pos.x - p.x, dz = pos.z - p.z, c = Math.cos(-p.rot), s = Math.sin(-p.rot), lx = dx * c - dz * s, lz = dx * s + dz * c; return (lx / (p.r * p.sx)) ** 2 + (lz / (p.r * p.sy)) ** 2 < 1; });
+const mapSlowAt = pos => ow ? owSlowAt(pos) : mapZ?.pits && mapOn() && mapZ.pits.some(p => Math.hypot(pos.x - p.x, pos.z - p.z) < p.r) ? 0.45 : 0;
 // the twist, while you're playing
 function tickMap(dt) {
   if (!mapZ || !mapOn()) return;
@@ -13302,6 +13337,7 @@ function tickMap(dt) {
 }
 // the scenery's own little life, even on the title screen
 function mapAmbient(dt) {
+  if (OWR) owFx(dt);
   if (!mapZ) return;
   const t = performance.now() / 1000;
   if (mapZ.glow) for (const [i, m] of mapZ.glow.entries()) m.material.color.setHSL(0.04, 1, 0.48 + Math.sin(t * 1.7 + i) * 0.06);
@@ -13314,6 +13350,1870 @@ function mapAmbient(dt) {
   if (mapZ.wells) for (const w of mapZ.wells) w.halo.rotation.set(Math.PI / 2 + Math.sin(t) * 0.3, t * 2, 0);
   if (mapZ.pits) for (const p of mapZ.pits) p.sw.rotation.z += dt * 0.8;
   if (mapZ.storm > 0) { const k = Math.min(1, mapZ.storm / 1.5, (9 - mapZ.storm) / 1.5); scene.fog.near = 42 - 36 * k; scene.fog.far = 120 - 95 * k; scene.fog.color.setHex(k > 0.3 ? 0x3a2a14 : ARENA_THEMES[arenaTheme].bg); }
+}
+
+/* ---------- open world ---------- */
+// One huge world, 2.3 km across (about 30 times the arena), built in chunks around you as you walk.
+// Six realms, villages with people to talk to, a main story with cutscenes, side quests, pets to rescue,
+// achievements that give boxes of weapons and abilities, a Dark Lord who raids the land,
+// and saves you go back to when you fall.
+const OW_HALF = 1150, OW_CHUNK = 64, OW_VIEW = 2, OW_LAIR_R = 36;   // OW_LAIR_R: a guardian's fighting ground, about the size of the arena
+const OW_KEY = () => `shardfall-ow-${activeSlot}`;
+const owHash = (x, z, s = 0) => { let h = Math.imul(x | 0, 374761393) + Math.imul(z | 0, 668265263) + Math.imul(s | 0, 982451653) | 0; h = Math.imul(h ^ (h >>> 13), 1274126177); return ((h ^ (h >>> 16)) >>> 0) / 4294967296; };
+function owNoise(x, z, s = 0) {
+  const ix = Math.floor(x), iz = Math.floor(z), fx = x - ix, fz = z - iz, u = fx * fx * (3 - 2 * fx), v = fz * fz * (3 - 2 * fz);
+  const a = owHash(ix, iz, s), b = owHash(ix + 1, iz, s), c = owHash(ix, iz + 1, s), d = owHash(ix + 1, iz + 1, s);
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+const owFbm = (x, z, s) => owNoise(x, z, s) * 0.55 + owNoise(x * 2.1, z * 2.1, s + 7) * 0.3 + owNoise(x * 4.3, z * 4.3, s + 13) * 0.15;
+function owRng(seed) { let a = seed >>> 0; return () => { a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+
+/* the land */
+// realm i matches ARENA_THEMES[i] and MAP_INFO[i]
+const OW_REALMS = [
+  { i: 0, name: 'Dusk Hollow', x: 0, z: 0, pull: 150, blurb: 'The heartland, where the Great Lantern once burned', ground: 0x3a3352 },
+  { i: 1, name: 'Ember Wastes', x: 790, z: 40, pull: 0, blurb: 'Rivers of fire and mountains that smoke', ground: 0x4a2620 },
+  { i: 2, name: 'Frostfall', x: 0, z: -790, pull: 0, blurb: 'The frozen north, where the snow never stops', ground: 0x5e7088 },
+  { i: 3, name: 'Verdant Ruins', x: -790, z: -20, pull: 0, blurb: 'An old kingdom swallowed by the forest', ground: 0x24452a },
+  { i: 4, name: 'Golden Sands', x: 40, z: 790, pull: 0, blurb: 'Endless dunes over buried tombs', ground: 0x7e6038 },
+  { i: 5, name: 'The Abyss', x: 810, z: -810, pull: -30, blurb: 'Where the falling star tore the world open', ground: 0x1c1430 },
+];
+// places in the world: villages, guardian lairs, landmarks and monster camps
+const OW_POIS = [
+  { id: 'lantern', kind: 'village', name: 'Lantern Village', realm: 0, x: 0, z: 0, r: 30 },
+  { id: 'throne', kind: 'lair', name: 'The Hollow Throne', realm: 0, x: -210, z: 220, r: 26, boss: 'king' },
+  { id: 'tower', kind: 'mark', name: 'The Old Watchtower', realm: 0, x: 250, z: 170 },
+  { id: 'glade', kind: 'mark', name: 'The Moth Glade', realm: 0, x: 170, z: -220 },
+  { id: 'sky', kind: 'lair', name: 'The Shattered Sky', realm: 0, x: 0, z: -80, r: 30, boss: 'darklord', final: true },
+  { id: 'rimewatch', kind: 'village', name: 'Rimewatch', realm: 2, x: 0, z: -450, r: 24 },
+  { id: 'spire', kind: 'lair', name: 'The Frozen Spire', realm: 2, x: 0, z: -890, r: 26, boss: 'owlboss' },
+  { id: 'glacier', kind: 'mark', name: 'The Glacier Shrine', realm: 2, x: -240, z: -700 },
+  { id: 'cinderforge', kind: 'village', name: 'Cinderforge', realm: 1, x: 450, z: 20, r: 24 },
+  { id: 'forge', kind: 'lair', name: 'The Forge of Cinders', realm: 1, x: 890, z: 40, r: 26, boss: 'colossus' },
+  { id: 'ashgate', kind: 'mark', name: 'The Ashen Gate', realm: 1, x: 670, z: 270 },
+  { id: 'pupcamp', kind: 'camp', name: 'The Raider Camp', realm: 1, x: 640, z: -150, pet: 'pup' },
+  { id: 'mossheart', kind: 'village', name: 'Mossheart', realm: 3, x: -450, z: -10, r: 24 },
+  { id: 'temple', kind: 'lair', name: 'The Overgrown Temple', realm: 3, x: -890, z: -20, r: 26, boss: 'brood' },
+  { id: 'eldertree', kind: 'mark', name: 'The Elder Tree', realm: 3, x: -670, z: -280 },
+  { id: 'spritecamp', kind: 'camp', name: 'The Bramble Den', realm: 3, x: -640, z: 210, pet: 'sprite' },
+  { id: 'bazaar', kind: 'village', name: 'Mirage Bazaar', realm: 4, x: 20, z: 450, r: 24 },
+  { id: 'tomb', kind: 'lair', name: 'The Sunken Tomb', realm: 4, x: 40, z: 890, r: 26, boss: 'warden' },
+  { id: 'caravan', kind: 'mark', name: 'The Buried Caravan', realm: 4, x: -250, z: 700 },
+  { id: 'outpost', kind: 'village', name: 'The Void Outpost', realm: 5, x: 500, z: -500, r: 22 },
+  { id: 'riftheart', kind: 'lair', name: 'The Rift Heart', realm: 5, x: 860, z: -860, r: 26, boss: 'stalker', sealed: true },
+  { id: 'brokenstar', kind: 'mark', name: 'The Broken Star', realm: 5, x: 620, z: -900 },
+  { id: 'batcamp', kind: 'camp', name: 'The Gloom Nest', realm: 5, x: 740, z: -600, pet: 'bat' },
+];
+const OW_POI = Object.fromEntries(OW_POIS.map(p => [p.id, p]));
+const OW_ANCHORS = OW_POIS.filter(p => p.kind === 'village' || p.kind === 'lair');
+function owRealmAt(x, z) {
+  // villages and lairs always sit in their own realm
+  for (const p of OW_ANCHORS) if (Math.abs(x - p.x) < 70 && Math.abs(z - p.z) < 70 && Math.hypot(x - p.x, z - p.z) < 70) return p.realm;
+  let best = 0, bd = 1e9;
+  for (const r of OW_REALMS) {
+    const d = Math.hypot(x - r.x, z - r.z) - r.pull + (owFbm(x / 260 + r.i * 9, z / 260, 3 + r.i) - 0.5) * 280;
+    if (d < bd) { bd = d; best = r.i; }
+  }
+  return best;
+}
+const owCol = new THREE.Color(), owCol2 = new THREE.Color();
+function owGroundColor(x, z, out) {
+  const r = owRealmAt(x, z), n = owFbm(x / 18, z / 18, 41);
+  out.setHex(OW_REALMS[r].ground).multiplyScalar(0.55 + n * 0.32);
+  return out;
+}
+/* the shape of the land: rolling hills, mountains where a slow wave of noise runs high, a wall of peaks at the world's edge,
+   and level ground around every village, lair, landmark and camp so those sit flat */
+function owHRaw(x, z) {
+  let h = Math.max(0, owFbm(x / 70, z / 70, 93) - 0.42) * 15;
+  const m = Math.max(0, owFbm(x / 190, z / 190, 91) - 0.56) / 0.44;
+  h += Math.pow(m, 1.5) * 48;
+  const edge = Math.max(Math.abs(x), Math.abs(z));
+  h += Math.max(0, (edge - (OW_HALF - 110)) / 110) ** 2 * 60;
+  let f = 1;
+  for (const p of OW_POIS) {
+    const dx = x - p.x, dz = z - p.z, r0 = (p.r || 12) + 12;
+    if (Math.abs(dx) > r0 + 60 || Math.abs(dz) > r0 + 60) continue;
+    f = Math.min(f, Math.max(0, (Math.hypot(dx, dz) - r0) / 60));
+  }
+  return h * f * f * (3 - 2 * f);
+}
+// fast height: read from the loaded ground tile when there is one
+function owH(x, z) {
+  const ch = owChunkAt(x, z);
+  if (!ch?.hs) return owHRaw(x, z);
+  const n = OW_GRID, s2 = OW_CHUNK / n, fx = (x - ch.cx * OW_CHUNK) / s2, fz = (z - ch.cz * OW_CHUNK) / s2;
+  const i = Math.min(n - 1, Math.max(0, Math.floor(fx))), j = Math.min(n - 1, Math.max(0, Math.floor(fz))), u = fx - i, v = fz - j, H = ch.hs, w = n + 1;
+  const a = H[j * w + i], b = H[j * w + i + 1], c = H[(j + 1) * w + i], d = H[(j + 1) * w + i + 1];
+  return a + (b - a) * u + (c - a) * v + (a - b - c + d) * u * v;
+}
+const OW_GRID = 24;
+// how high the ground is anywhere in the game: the open world has hills, everywhere else is flat
+function gy(x, z) { return ow && OWR ? owH(x, z) : 0; }
+// is a spot free of story places (so trees and rocks don't grow through a village)?
+const owClear = (x, z, pad = 0) => OW_POIS.every(p => Math.hypot(x - p.x, z - p.z) > (p.kind === 'village' ? 44 : p.kind === 'lair' ? 40 : 20) + pad);
+
+// what grows where: each realm fills a chunk with its own scenery, solid things to bump into, and special ground
+const OW_LOOK = {
+  0(c) {   // Dusk Hollow: standing stones, dead trees, broken pillars, grass
+    for (let i = 0; i < 7; i++) { const p = c.spot(2); if (!p) continue; const s = c.rr(0.8, 2); c.solid(icoF(0), 0x4a4060, [p.x, s * 0.5, p.z], [s, s * 0.7, s]); c.col(p.x, p.z, s * 0.9); }
+    for (let i = 0; i < 4; i++) { const p = c.spot(2); if (!p) continue; const h = c.rr(2.5, 5); c.solid(cyl(0.12, 0.25, 6), 0x3a2e2a, [p.x, h / 2, p.z], [1, h, 1]); for (let k = 0; k < 3; k++) c.solid(cyl(0.05, 0.1, 5), 0x3a2e2a, [p.x + c.rr(-0.8, 0.8), h * c.rr(0.6, 0.9), p.z + c.rr(-0.8, 0.8)], [1, 1.6, 1], [c.rr(-0.9, 0.9), 0, c.rr(-0.9, 0.9)]); c.col(p.x, p.z, 0.5); }
+    if (c.r() < 0.5) { const p = c.spot(4); if (p) { const h = c.rr(3, 7); c.solid(cyl(0.9, 1, 8), 0x5a5270, [p.x, h / 2, p.z], [1, h, 1], [c.rr(-0.1, 0.1), 0, c.rr(-0.1, 0.1)]); c.glow(rbox(0.3, 0.3, 0.05), 0xffb547, [p.x, h * 0.7, p.z + 0.95]); c.col(p.x, p.z, 1.1); } }
+    for (let i = 0; i < 12; i++) { const p = c.spot(0); if (p) c.solid(cone(4), 0x3d5a3a, [p.x, 0.25, p.z], [0.25, 0.5, 0.25]); }
+  },
+  1(c) {   // Ember Wastes: black spires, ash rocks, lava pools, little volcanoes
+    for (let i = 0; i < 5; i++) { const p = c.spot(2); if (!p) continue; const h = c.rr(3, 8); c.solid(cone(6), 0x2a1a18, [p.x, h / 2, p.z], [c.rr(0.8, 1.4), h, c.rr(0.8, 1.4)]); c.glow(rbox(0.12, h * 0.5, 0.12), 0xff5a1a, [p.x, h * 0.3, p.z + 0.6]); c.col(p.x, p.z, 1.1); }
+    for (let i = 0; i < 5; i++) { const p = c.spot(1); if (!p) continue; const s = c.rr(0.6, 1.5); c.solid(icoF(0), 0x3a2420, [p.x, s * 0.4, p.z], [s, s * 0.6, s]); c.col(p.x, p.z, s * 0.8); }
+    for (let i = 0; i < 2; i++) { const p = c.spot(5, true); if (!p) continue; const r = c.rr(2.5, 4.5); c.glow(G.disc, 0xff5a1a, [p.x, 0.03, p.z], [r, r, 1], [-Math.PI / 2, 0, 0]); c.solid(tor(1, 0.12, 20), 0x1a0a08, [p.x, 0.05, p.z], [r, r, 1], [Math.PI / 2, 0, 0]); c.zone(p.x, p.z, r * 0.9, 'lava'); }
+    if (c.r() < 0.3) { const p = c.spot(8); if (p) { const h = c.rr(8, 14), r = c.rr(6, 9); c.solid(cyl(0.35, 1, 9), 0x2e1a16, [p.x, h / 2, p.z], [r, h, r]); c.glow(G.disc, 0xff6a2a, [p.x, h + 0.02, p.z], [r * 0.33, r * 0.33, 1], [-Math.PI / 2, 0, 0]); c.col(p.x, p.z, r * 0.95); } }
+  },
+  2(c) {   // Frostfall: snowy pines, ice crystals, frozen lakes
+    for (let i = 0; i < 7; i++) {
+      const p = c.spot(2); if (!p) continue; const s = c.rr(0.9, 1.6);
+      c.solid(cyl(0.25, 0.35, 6), 0x4a3a2a, [p.x, 0.8 * s, p.z], [s, 1.6 * s, s]);
+      for (let k = 0; k < 3; k++) { c.solid(cone(7), 0x2a5a4a, [p.x, (1.8 + k * 1.3) * s, p.z], [(1.7 - k * 0.45) * s, 2.2 * s, (1.7 - k * 0.45) * s]); c.solid(cone(7), 0xeef6ff, [p.x, (2.5 + k * 1.3) * s, p.z], [(1.2 - k * 0.35) * s, 0.9 * s, (1.2 - k * 0.35) * s]); }
+      c.col(p.x, p.z, 0.6 * s);
+    }
+    for (let i = 0; i < 3; i++) { const p = c.spot(2); if (!p) continue; for (let k = 0; k < 3; k++) { const h = c.rr(1.5, 4); c.solid(gemG(0), 0xbfe8ff, [p.x + c.rr(-1, 1), h / 2, p.z + c.rr(-1, 1)], [c.rr(0.4, 0.8), h / 2, c.rr(0.4, 0.8)], [c.rr(-0.3, 0.3), c.rr(0, 3), c.rr(-0.3, 0.3)]); } c.col(p.x, p.z, 1.3); }
+    if (c.r() < 0.55) { const p = c.spot(7, true); if (p) { const r = c.rr(4, 7); c.shiny(G.disc, 0xa8dcf6, [p.x, 0.03, p.z], [r, r, 1], [-Math.PI / 2, 0, 0]); c.solid(tor(1, 0.08, 24), 0xeef6ff, [p.x, 0.04, p.z], [r, r, 1], [Math.PI / 2, 0, 0]); c.zone(p.x, p.z, r, 'ice'); } }
+  },
+  3(c) {   // Verdant Ruins: big leafy trees, bushes, flowers, mossy columns, ponds
+    for (let i = 0; i < 6; i++) {
+      const p = c.spot(2); if (!p) continue; const s = c.rr(1, 1.8);
+      c.solid(cyl(0.35, 0.55, 7), 0x5a3a22, [p.x, 2 * s, p.z], [s, 4 * s, s]);
+      for (let k = 0; k < 3; k++) c.solid(icoF(0), [0x2f7a3a, 0x3f9a46, 0x24603a][k], [p.x + c.rr(-1, 1) * s, (4.2 + c.rr(0, 1.5)) * s, p.z + c.rr(-1, 1) * s], 1.6 * s * c.rr(0.9, 1.3));
+      c.col(p.x, p.z, 0.7 * s);
+    }
+    for (let i = 0; i < 6; i++) { const p = c.spot(1); if (p) c.solid(icoF(0), 0x2f6a34, [p.x, 0.35, p.z], [c.rr(0.6, 1.3), c.rr(0.4, 0.8), c.rr(0.6, 1.3)]); }
+    for (let i = 0; i < 10; i++) { const p = c.spot(0); if (p) { c.solid(cyl(0.03, 0.03, 4), 0x3a8a3a, [p.x, 0.25, p.z], [1, 0.5, 1]); c.glow(sph(6), c.r() < 0.5 ? 0xff8ac8 : 0xffe08a, [p.x, 0.55, p.z], 0.14); } }
+    if (c.r() < 0.35) { const p = c.spot(3); if (p) { const h = c.rr(2.5, 6); c.solid(cyl(0.9, 1, 10), 0xb8b49a, [p.x, h / 2, p.z], [1, h, 1]); for (let k = 0; k < 3; k++) c.solid(tor(1, 0.09, 14), 0x3a8a3a, [p.x, h * (0.25 + k * 0.25), p.z], 1, [Math.PI / 2 + c.rr(-0.4, 0.4), 0, 0]); c.col(p.x, p.z, 1.1); } }
+    if (c.r() < 0.4) { const p = c.spot(6, true); if (p) { const r = c.rr(3.5, 6); c.shiny(G.disc, 0x2a6a8a, [p.x, 0.03, p.z], [r, r, 1], [-Math.PI / 2, 0, 0]); c.solid(tor(1, 0.12, 24), 0x5a4a32, [p.x, 0.04, p.z], [r, r, 1], [Math.PI / 2, 0, 0]); for (let k = 0; k < 4; k++) { const a = c.rr(0, TAU); c.solid(cyl(0.03, 0.03, 4), 0x4a7a3a, [p.x + Math.sin(a) * r * 0.95, 0.5, p.z + Math.cos(a) * r * 0.95], [1, 1, 1]); } c.zone(p.x, p.z, r, 'water'); } }
+  },
+  4(c) {   // Golden Sands: dunes, cacti, obelisks, bones, quicksand
+    for (let i = 0; i < 3; i++) { const p = c.spot(4); if (p) c.solid(sph(10), 0x9a7a48, [p.x, -c.rr(1, 2), p.z], [c.rr(5, 9), c.rr(2.2, 3.4), c.rr(4, 7)], [0, c.rr(0, 3), 0]); }
+    for (let i = 0; i < 5; i++) {
+      const p = c.spot(1); if (!p) continue; const h = c.rr(1.8, 3);
+      c.solid(cyl(0.35, 0.4, 8), 0x4a7a3a, [p.x, h / 2, p.z], [1, h, 1]);
+      for (const s of [-1, 1]) if (c.r() < 0.7) { const y = c.rr(0.8, 1.6); c.solid(cyl(0.22, 0.22, 7), 0x4a7a3a, [p.x + s * 0.55, y, p.z], [1, 0.8, 1], [0, 0, Math.PI / 2]); c.solid(cyl(0.22, 0.22, 7), 0x4a7a3a, [p.x + s * 0.9, y + 0.5, p.z], [1, 1, 1]); }
+      c.col(p.x, p.z, 0.5);
+    }
+    if (c.r() < 0.4) { const p = c.spot(3); if (p) { const h = c.rr(6, 10); c.solid(rbox(1.4, 1, 1.4), 0xb89a6a, [p.x, h / 2, p.z], [1, h, 1]); c.glow(cone(4), 0xffd36e, [p.x, h + 0.7, p.z], [1, 1.4, 1], [0, Math.PI / 4, 0]); c.col(p.x, p.z, 1.1); } }
+    for (let i = 0; i < 3; i++) { const p = c.spot(0); if (p) c.solid(cyl(0.08, 0.08, 5), 0xe7dcc2, [p.x, 0.1, p.z], [1, c.rr(0.8, 1.6), 1], [Math.PI / 2, c.rr(0, 3), 0]); }
+    if (c.r() < 0.5) { const p = c.spot(6, true); if (p) { const r = c.rr(3, 5); c.solid(G.disc, 0x3a2814, [p.x, 0.03, p.z], [r, r, 1], [-Math.PI / 2, 0, 0]); c.zone(p.x, p.z, r, 'sand'); } }
+  },
+  5(c) {   // The Abyss: glowing crystals, dark rocks, floating islands, void pools
+    for (let i = 0; i < 4; i++) { const p = c.spot(2); if (!p) continue; const h = c.rr(2, 6); c.glow(gemG(0), 0xc77dff, [p.x, h / 2, p.z], [c.rr(0.5, 0.9), h / 2, c.rr(0.5, 0.9)], [0, c.rr(0, 3), c.rr(-0.2, 0.2)]); c.col(p.x, p.z, 0.8); }
+    for (let i = 0; i < 5; i++) { const p = c.spot(1); if (!p) continue; const s = c.rr(0.8, 1.8); c.solid(icoF(0), 0x241a36, [p.x, s * 0.45, p.z], [s, s * 0.7, s]); c.col(p.x, p.z, s * 0.85); }
+    for (let i = 0; i < 2; i++) { const p = c.spot(0); if (!p) continue; const s = c.rr(1.5, 3), y = c.rr(6, 14); c.solid(cyl(1, 0.8, 7), 0x241a36, [p.x, y, p.z], [s, s * 0.5, s]); c.solid(cone(7), 0x241a36, [p.x, y - s * 1.15, p.z], [s * 0.8, s * 1.8, s * 0.8], [Math.PI, 0, 0]); }
+    if (c.r() < 0.45) { const p = c.spot(5, true); if (p) { const r = c.rr(2.5, 4); c.solid(G.disc, 0x05020a, [p.x, 0.03, p.z], [r, r, 1], [-Math.PI / 2, 0, 0]); c.glow(tor(1, 0.06, 24), 0x8a3aff, [p.x, 0.06, p.z], [r, r, 1], [Math.PI / 2, 0, 0]); c.zone(p.x, p.z, r * 0.9, 'void'); } }
+  },
+};
+// what each kind of special ground does
+const OW_ZONES = { ice: { slow: 0 }, water: { slow: 0.35 }, sand: { slow: 0.45 }, lava: { slow: 0.2, dps: 14 }, void: { slow: 0.15, dps: 10 } };
+
+/* roads: winding dirt tracks joining the villages, the lairs and the landmarks */
+const OW_ROAD_LINKS = [['lantern', 'rimewatch'], ['rimewatch', 'spire'], ['lantern', 'cinderforge'], ['cinderforge', 'forge'], ['lantern', 'mossheart'], ['mossheart', 'temple'],
+  ['lantern', 'bazaar'], ['bazaar', 'tomb'], ['lantern', 'outpost'], ['outpost', 'riftheart'], ['lantern', 'throne'], ['lantern', 'tower'], ['lantern', 'glade'],
+  ['rimewatch', 'glacier'], ['mossheart', 'eldertree'], ['bazaar', 'caravan'], ['outpost', 'brokenstar'], ['cinderforge', 'ashgate'], ['rimewatch', 'outpost'], ['cinderforge', 'outpost'], ['mossheart', 'bazaar']];
+const OW_ROADS = [];   // segments [x1, z1, x2, z2]
+OW_ROAD_LINKS.forEach(([a, b], ri) => {
+  const A = OW_POI[a], B = OW_POI[b], len = Math.hypot(B.x - A.x, B.z - A.z), n = Math.max(2, Math.round(len / 22)), nx = -(B.z - A.z) / len, nz = (B.x - A.x) / len;
+  let px = A.x, pz = A.z;
+  for (let i = 1; i <= n; i++) {
+    const t = i / n, off = i === n ? 0 : (owFbm(t * 3.2, ri * 7.1, 77) - 0.5) * 120 * Math.sin(t * Math.PI);
+    const x = A.x + (B.x - A.x) * t + nx * off, z = A.z + (B.z - A.z) * t + nz * off;
+    OW_ROADS.push([px, pz, x, z]); px = x; pz = z;
+  }
+});
+function owSegDist(x, z, s) {
+  const dx = s[2] - s[0], dz = s[3] - s[1], l2 = dx * dx + dz * dz, t = Math.max(0, Math.min(1, ((x - s[0]) * dx + (z - s[1]) * dz) / (l2 || 1)));
+  return Math.hypot(x - s[0] - dx * t, z - s[1] - dz * t);
+}
+const owRoadDist = (x, z, list = OW_ROADS) => { let d = 1e9; for (const s2 of list) d = Math.min(d, owSegDist(x, z, s2)); return d; };
+// the road pieces near one chunk, so the ground and scenery only look at those
+const owRoadsNear = (x0, z0, pad) => OW_ROADS.filter(s2 => Math.max(s2[0], s2[2]) > x0 - pad && Math.min(s2[0], s2[2]) < x0 + OW_CHUNK + pad && Math.max(s2[1], s2[3]) > z0 - pad && Math.min(s2[1], s2[3]) < z0 + OW_CHUNK + pad);
+const OW_ROAD_COL = [0x4a3e34, 0x2a1a16, 0x8a8a92, 0x5a4630, 0x5e4628, 0x2e2440];
+const OW_ROAD_W = 3.4;
+
+/* bigger landforms and places to find between the story spots: hills, mountain ranges, hamlets, farms, ruins */
+// a house in its realm's style, facing angle a
+function owHouse(c, x, z, a, realm, big) {
+  const st = [
+    { wall: 0x6a5a48, roof: 0x5a3a6a, win: 0xffc56e },   // dusk: stone and slate
+    { wall: 0x3a2a26, roof: 0x6a1a10, win: 0xff7a2a },   // ember: black stone, red tiles
+    { wall: 0x5a4030, roof: 0xeef6ff, win: 0xffd38a },   // frost: log cabin under snow
+    { wall: 0x7a5a3a, roof: 0x3a6a3a, win: 0xffe08a },   // verdant: timber and moss
+    { wall: 0xc8a070, roof: 0xb88a58, win: 0xffc56e },   // sands: adobe with a flat roof
+    { wall: 0x2a2036, roof: 0x1a1428, win: 0xc77dff },   // abyss: crooked and dark
+  ][realm];
+  const w = big ? 6 : 4.4, d = big ? 5 : 3.8, h = big ? 3.4 : 2.8, ca = Math.cos(a), sa = Math.sin(a);
+  const at = (lx, lz) => [x + lx * ca + lz * sa, z - lx * sa + lz * ca];
+  const tilt = realm === 5 ? c.rr(-0.12, 0.12) : 0;
+  c.solid(rbox(w + 0.3, 3, d + 0.3, 0.1), 0x4a4440, [x, -1.4, z], 1, [0, a, 0]);
+  c.solid(rbox(w, h, d, 0.12), st.wall, [x, h / 2, z], 1, [0, a, tilt]);
+  if (realm === 4) { c.solid(rbox(w + 0.4, 0.35, d + 0.4, 0.1), st.roof, [x, h + 0.15, z], 1, [0, a, 0]); const [ox, oz] = at(w * 0.2, 0); c.solid(sph(10), st.roof, [ox, h + 0.2, oz], [1.1, 0.9, 1.1]); }
+  else { c.solid(cone(4), st.roof, [x, h + 1.25, z], [w * 0.78, 2.5, d * 0.82], [0, a + Math.PI / 4, tilt]); }
+  const [dx, dz] = at(0, d / 2 + 0.04); c.solid(rbox(1, 1.8, 0.12), 0x2a1a10, [dx, 0.9, dz], 1, [0, a, 0]);
+  for (const s of [-1, 1]) { const [wx, wz] = at(s * w * 0.3, d / 2 + 0.05); c.glow(rbox(0.7, 0.6, 0.06), st.win, [wx, h * 0.6, wz], 1, [0, a, 0]); }
+  if (realm === 0 || realm === 2 || realm === 3) { const [cx2, cz2] = at(w * 0.28, -d * 0.15); c.solid(rbox(0.6, 1.6, 0.6), 0x4a4040, [cx2, h + 1.4, cz2], 1, [0, a, 0]); }
+  c.col(x, z, Math.max(w, d) * 0.62);
+}
+function owFeatures(c, realm, x0, z0) {
+  const r = c.r, mx = x0 + OW_CHUNK / 2, mz = z0 + OW_CHUNK / 2;
+  // a hamlet along the road: a few houses, a fence, a well, maybe a field
+  if (c.roads.length && r() < 0.42) {
+    const s2 = c.roads[Math.floor(r() * c.roads.length)], t = r(), rx = s2[0] + (s2[2] - s2[0]) * t, rz = s2[1] + (s2[3] - s2[1]) * t;
+    const ang = Math.atan2(s2[2] - s2[0], s2[3] - s2[1]), side = r() < 0.5 ? 1 : -1, n = 2 + Math.floor(r() * 3);
+    for (let i = 0; i < n; i++) {
+      const along = (i - (n - 1) / 2) * 9, off = side * c.rr(8.5, 11), hx = rx + Math.sin(ang) * along + Math.cos(ang) * off, hz = rz + Math.cos(ang) * along - Math.sin(ang) * off;
+      if (!c.ok(hx, hz, 4) || owRoadDist(hx, hz, c.roads) < 6) continue;
+      owHouse(c, hx, hz, ang + (side > 0 ? -Math.PI / 2 : Math.PI / 2), realm, r() < 0.35);
+    }
+    const wx = rx + Math.cos(ang) * side * 5, wz = rz - Math.sin(ang) * side * 5;
+    if (c.ok(wx, wz, 1.5) && owRoadDist(wx, wz, c.roads) > 3) { c.solid(cyl(1, 1, 12), 0x6a6670, [wx, 0.45, wz], [1, 0.9, 1]); c.solid(G.disc, 0x1a2a3a, [wx, 0.92, wz], [0.75, 0.75, 1], [-Math.PI / 2, 0, 0]); for (const s of [-1, 1]) c.solid(cyl(0.08, 0.08, 5), 0x5a3a22, [wx + s * 0.8, 1.4, wz], [1, 1.4, 1]); c.solid(cone(4), 0x5a3a22, [wx, 2.4, wz], [1.2, 0.7, 1.2], [0, Math.PI / 4, 0]); c.col(wx, wz, 1.1); }
+    // a farm field behind the houses, in the realms where things grow
+    if ((realm === 0 || realm === 3 || realm === 4) && r() < 0.6) {
+      const fx = rx + Math.cos(ang) * side * 20, fz = rz - Math.sin(ang) * side * 20;
+      if (c.ok(fx, fz, 7)) {
+        const crop = [0x6a7a3a, 0, 0, 0x9ab84a, 0xc8a84a][realm];
+        for (let k = -3; k <= 3; k++) c.solid(rbox(12, 0.35, 0.9, 0.15), k % 2 ? crop : shadeHex(crop, 0.75), [fx + Math.sin(ang) * k * 1.6, 0.17, fz + Math.cos(ang) * k * 1.6], 1, [0, ang + Math.PI / 2, 0]);
+        for (let k = 0; k < 10; k++) { const t2 = k / 9 * TAU; c.solid(cyl(0.07, 0.07, 4), 0x6a4a2a, [fx + Math.cos(t2) * 8.2, 0.5, fz + Math.sin(t2) * 8.2], [1, 1, 1]); }
+      }
+    }
+  }
+  // a windmill on a rise in the farm realms
+  if ((realm === 0 || realm === 3) && r() < 0.06) {
+    const p = c.spot(5); if (p) {
+      c.solid(cyl(0.7, 1, 10), 0xd8ccb0, [p.x, 4, p.z], [2, 8, 2]); c.solid(cone(10), 0x6a3a2a, [p.x, 9, p.z], [2.4, 2.2, 2.4]);
+      for (let k = 0; k < 4; k++) c.solid(rbox(0.5, 6, 0.08), 0xe8e0d0, [p.x + Math.sin(k * Math.PI / 2) * 2.8, 7.4 + Math.cos(k * Math.PI / 2) * 2.8, p.z + 2.1], 1, [0, 0, -k * Math.PI / 2]);
+      c.col(p.x, p.z, 2.2);
+    }
+  }
+  // flat-topped mesas in the desert, striped like layer cake
+  if (realm === 4 && r() < 0.18) {
+    const p = c.spot(12); if (p) { const rad = c.rr(7, 11), h = c.rr(6, 11); c.solid(cyl(0.85, 1, 9), 0xa8704a, [p.x, h * 0.35, p.z], [rad, h * 0.7, rad]); c.solid(cyl(0.8, 0.85, 9), 0xc8905a, [p.x, h * 0.85, p.z], [rad, h * 0.3, rad]); c.col(p.x, p.z, rad * 0.95); }
+  }
+  // ruins: a broken wall and an arch, old stones from before the Shardfall
+  if (r() < 0.16) {
+    const p = c.spot(6); if (p) {
+      const stone = [0x5a5270, 0x3a2420, 0x7a8aa0, 0x8a8a70, 0xb89a6a, 0x2a2036][realm], a = r() * TAU;
+      for (let k = -2; k <= 2; k++) { const h = c.rr(0.8, 3.4), x = p.x + Math.sin(a) * k * 2.2, z = p.z + Math.cos(a) * k * 2.2; c.solid(rbox(2.1, h, 0.9, 0.08), stone, [x, h / 2, z], 1, [0, a + Math.PI / 2, 0]); c.col(x, z, 1.1); }
+      const ax = p.x + Math.cos(a) * 6, az = p.z - Math.sin(a) * 6;
+      for (const s of [-1, 1]) { const x = ax + Math.sin(a) * s * 2, z = az + Math.cos(a) * s * 2; c.solid(rbox(0.9, 4.2, 0.9, 0.08), stone, [x, 2.1, z]); c.col(x, z, 0.7); }
+      c.solid(rbox(5, 0.8, 1, 0.08), stone, [ax, 4.5, az], 1, [0, a + Math.PI / 2, 0]);
+      if (realm === 3 || realm === 0) c.solid(tor(1, 0.08, 14), 0x3a8a3a, [ax, 3.2, az], [2, 1.4, 1], [0, a, 0]);
+    }
+  }
+  // the odd lone statue of an old hero
+  if (r() < 0.05) { const p = c.spot(3); if (p) { c.solid(rbox(1.8, 1.2, 1.8, 0.1), 0x6a6670, [p.x, 0.6, p.z]); c.solid(cyl(0.45, 0.6, 8), 0x8a8690, [p.x, 2.4, p.z], [1, 2.4, 1]); c.solid(sph(10), 0x8a8690, [p.x, 4, p.z], 0.5); c.solid(cyl(0.05, 0.05, 5), 0x8a8690, [p.x + 0.6, 3.6, p.z], [1, 3, 1]); c.col(p.x, p.z, 1.3); } }
+}
+
+/* game state */
+// OWS is everything that gets saved; OWR is what only lives while you play
+let OWS = null, OWR = null, owCut = null, owPrevCoop = false;
+const owMats = { solid: null, glow: null };
+function owMat(kind) {
+  if (owMats[kind]) return owMats[kind];
+  if (kind === 'glow') return owMats.glow = new THREE.MeshBasicMaterial({ vertexColors: true });
+  if (kind === 'ground') return owMats.ground = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.95, map: owDetailTex(), bumpMap: owDetailTex(), bumpScale: 0.05 });
+  if (kind === 'shiny') return owMats.shiny = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.12, metalness: 0.35, transparent: true, opacity: 0.88 });
+  if (kind === 'grass') {
+    // grass sways in the wind: each blade bends more toward its tip
+    const m = new THREE.MeshStandardMaterial({ roughness: 0.9, side: THREE.DoubleSide });
+    m.onBeforeCompile = sh => {
+      sh.uniforms.uTime = OW_WIND;
+      sh.vertexShader = 'uniform float uTime;\n' + sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+        { vec2 base = vec2(instanceMatrix[3][0], instanceMatrix[3][2]);
+          float sway = sin(uTime * 1.7 + base.x * 0.35 + base.y * 0.27) * 0.5 + sin(uTime * 3.1 + base.x * 0.9) * 0.18;
+          transformed.x += sway * position.y * 0.45; transformed.z += sway * position.y * 0.2; }`);
+    };
+    return owMats.grass = m;
+  }
+  return owMats.solid = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.88, flatShading: true });
+}
+const OW_WIND = { value: 0 };
+// a grainy, blotchy picture laid over the ground so it isn't flat colour: pebbles, dirt and little cracks
+let owDetail = null;
+function owDetailTex() {
+  if (owDetail) return owDetail;
+  const size = 512, c = document.createElement('canvas'); c.width = c.height = size;
+  const x = c.getContext('2d');
+  x.fillStyle = '#e6e6e6'; x.fillRect(0, 0, size, size);
+  for (let i = 0; i < 260; i++) { const v = 200 + Math.random() * 55 | 0, r = 10 + Math.random() * 46; x.fillStyle = `rgba(${v},${v},${v},0.35)`; x.beginPath(); x.arc(Math.random() * size, Math.random() * size, r, 0, TAU); x.fill(); }
+  for (let i = 0; i < 9000; i++) { const v = Math.random() < 0.5 ? 150 + Math.random() * 40 | 0 : 255; x.fillStyle = `rgba(${v},${v},${v},${0.25 + Math.random() * 0.35})`; const r = 0.6 + Math.random() * 2.2; x.fillRect(Math.random() * size, Math.random() * size, r, r); }
+  for (let i = 0; i < 120; i++) { const v = 175 + Math.random() * 30 | 0, px = Math.random() * size, py = Math.random() * size, r = 2 + Math.random() * 5; x.fillStyle = `rgb(${v},${v},${v})`; x.beginPath(); x.ellipse(px, py, r, r * 0.7, Math.random() * 3, 0, TAU); x.fill(); x.fillStyle = 'rgba(255,255,255,.4)'; x.beginPath(); x.ellipse(px - r * 0.25, py - r * 0.25, r * 0.4, r * 0.3, 0, 0, TAU); x.fill(); }
+  x.strokeStyle = 'rgba(120,120,120,.35)'; x.lineWidth = 1;
+  for (let i = 0; i < 30; i++) { let px = Math.random() * size, py = Math.random() * size; x.beginPath(); x.moveTo(px, py); for (let k = 0; k < 5; k++) { px += (Math.random() - 0.5) * 40; py += (Math.random() - 0.5) * 40; x.lineTo(px, py); } x.stroke(); }
+  owDetail = new THREE.CanvasTexture(c);
+  owDetail.wrapS = owDetail.wrapT = THREE.RepeatWrapping; owDetail.anisotropy = renderer.capabilities.getMaxAnisotropy();
+  return owDetail;
+}
+// how much grass a chunk gets at each graphics level, and what colour it is in each realm (none in the Ember Wastes)
+const owGrassN = () => ({ low: 0, normal: 90, high: 220, ultra: 420 })[gfx] || 0;
+const OW_GRASS = [0x4f6a46, null, 0xc8dcea, 0x3f9a46, 0xa8925a, 0x7a4ac8];
+let owGrassGeo = null;
+function owGrassBlades() {
+  if (owGrassGeo) return owGrassGeo;
+  // a tuft: three thin crossed blades, wide at the root and pointed at the tip
+  const pos = [];
+  for (let k = 0; k < 3; k++) {
+    const a = k / 3 * Math.PI, cx = Math.cos(a) * 0.09, cz = Math.sin(a) * 0.09, h = 0.55 + k * 0.12, lean = (k - 1) * 0.12;
+    pos.push(-cx, 0, -cz, cx, 0, cz, lean, h, 0);
+  }
+  owGrassGeo = new THREE.BufferGeometry(); owGrassGeo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); owGrassGeo.computeVertexNormals();
+  return owGrassGeo;
+}
+const owChunkKey = (cx, cz) => cx + ',' + cz;
+function owBuildChunk(cx, cz) {
+  const x0 = cx * OW_CHUNK, z0 = cz * OW_CHUNK, rand0 = owRng(owHash(cx, cz, 99) * 4294967296);
+  const g = new THREE.Group();
+  // the ground: one tile, coloured by realm at each corner so the realms blend into each other
+  const geo = new THREE.PlaneGeometry(OW_CHUNK, OW_CHUNK, OW_GRID, OW_GRID); geo.rotateX(-Math.PI / 2); geo.translate(x0 + OW_CHUNK / 2, 0, z0 + OW_CHUNK / 2);
+  const pos = geo.attributes.position, cols = new Float32Array(pos.count * 3), hs = new Float32Array(pos.count);
+  const roads = owRoadsNear(x0, z0, 12);
+  for (let i = 0; i < pos.count; i++) {
+    const x = pos.getX(i), z = pos.getZ(i), h = owHRaw(x, z);
+    pos.setY(i, h);
+    hs[Math.round((z - z0) / (OW_CHUNK / OW_GRID)) * (OW_GRID + 1) + Math.round((x - x0) / (OW_CHUNK / OW_GRID))] = h;
+    owGroundColor(x, z, owCol);
+    // bare rock on the mountainsides, snow on the high peaks (glowing cinders in the Ember Wastes, crystal in the Abyss)
+    if (h > 9) { const rl = owRealmAt(x, z); owCol.lerp(owCol2.setHex([0x4a4258, 0x2a1a16, 0x6a7890, 0x4a4a3e, 0x9a7048, 0x2a2040][rl]), Math.min(1, (h - 9) / 8)); if (h > 24) owCol.lerp(owCol2.setHex([0xe8eef8, 0x3a1a10, 0xffffff, 0xd8e8e0, 0xc8a070, 0x6a4aa0][rl]), Math.min(1, (h - 24) / 6)); }
+    if (roads.length) { const d = owRoadDist(x, z, roads); if (d < OW_ROAD_W) { const k = Math.min(1, (OW_ROAD_W - d) / 1.4) * (0.75 + owNoise(x / 3, z / 3, 5) * 0.25); owCol.lerp(owCol2.setHex(OW_ROAD_COL[owRealmAt(x, z)]), k); } }
+    cols.set([owCol.r, owCol.g, owCol.b], i * 3);
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(cols, 3)); geo.computeVertexNormals();
+  const uv = geo.attributes.uv;
+  for (let i = 0; i < pos.count; i++) uv.setXY(i, pos.getX(i) / 9, pos.getZ(i) / 9);
+  const ground = new THREE.Mesh(geo, owMat('ground')); ground.receiveShadow = true; g.add(ground);
+  const solidF = forge(), glowF = forge(), shinyF = forge(), colliders = [], zones = [];
+  let nSolid = 0, nGlow = 0, nShiny = 0;
+  const realm = owRealmAt(x0 + OW_CHUNK / 2, z0 + OW_CHUNK / 2);
+  const lift = p => [p[0], p[1] + owHRaw(p[0], p[2]), p[2]];
+  // level enough for a pond or a lava pool?
+  const flat = (x, z, r) => { const h0 = owHRaw(x, z); return [[r, 0], [-r, 0], [0, r], [0, -r]].every(([a, b]) => Math.abs(owHRaw(x + a, z + b) - h0) < 0.45); };
+  const c = {
+    r: rand0, rr: (a, b) => a + (b - a) * rand0(), roads,
+    // can something this big go here: inside the world, clear of story places and off the roads
+    ok: (x, z, pad) => Math.abs(x) < OW_HALF - 4 - pad && Math.abs(z) < OW_HALF - 4 - pad && owClear(x, z, pad) && (!roads.length || owRoadDist(x, z, roads) > OW_ROAD_W + 1 + pad),
+    // a free spot inside the chunk, away from story places and the world's edge
+    spot(pad, needFlat) {
+      for (let t = 0; t < 6; t++) {
+        const x = x0 + pad + 2 + rand0() * (OW_CHUNK - 2 * pad - 4), z = z0 + pad + 2 + rand0() * (OW_CHUNK - 2 * pad - 4);
+        if (c.ok(x, z, pad) && owRealmAt(x, z) === realm && (!needFlat || flat(x, z, pad))) return { x, z };
+      }
+      return null;
+    },
+    solid(geo, col, p, s = 1, r) { solidF.add(geo, col, { p: lift(p), s, r }); nSolid++; },
+    glow(geo, col, p, s = 1, r) { glowF.add(geo, col, { p: lift(p), s, r }); nGlow++; },
+    shiny(geo, col, p, s = 1, r) { shinyF.add(geo, col, { p: lift(p), s, r }); nShiny++; },
+    h: owHRaw,
+    col(x, z, r) { colliders.push({ x, z, r }); },
+    zone(x, z, r, kind) { zones.push({ x, z, r, kind }); },
+  };
+  OW_LOOK[realm](c);
+  owFeatures(c, realm, x0, z0);
+  if (nSolid) { const m = new THREE.Mesh(solidF.done(), owMat('solid')); m.castShadow = !lowGfx(); m.receiveShadow = true; g.add(m); }
+  if (nGlow) g.add(new THREE.Mesh(glowF.done(), owMat('glow')));
+  if (nShiny) { const m = new THREE.Mesh(shinyF.done(), owMat('shiny')); m.receiveShadow = true; g.add(m); }
+  // grass: one batch of swaying tufts per chunk
+  const gn = owGrassN();
+  if (gn) {
+    const im = new THREE.InstancedMesh(owGrassBlades(), owMat('grass'), gn), mx = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), ps = new THREE.Vector3(), up = new THREE.Vector3(0, 1, 0);
+    let n = 0;
+    for (let i = 0; i < gn; i++) {
+      const x = x0 + rand0() * OW_CHUNK, z = z0 + rand0() * OW_CHUNK, rl = owRealmAt(x, z), gc = OW_GRASS[rl];
+      if (gc === null || zones.some(zn => Math.hypot(x - zn.x, z - zn.z) < zn.r + 0.4) || !owClear(x, z, -12) || (roads.length && owRoadDist(x, z, roads) < OW_ROAD_W - 0.6)) continue;
+      const k = 0.7 + rand0() * 0.9;
+      ps.set(x, owHRaw(x, z), z); q.setFromAxisAngle(up, rand0() * TAU); sc.set(k, k * (rl === 3 ? 1.4 : 1), k);
+      im.setMatrixAt(n, mx.compose(ps, q, sc)); im.setColorAt(n, owCol.setHex(gc).multiplyScalar(0.7 + rand0() * 0.5)); n++;
+    }
+    im.count = n; im.receiveShadow = true;
+    if (n) { im.instanceMatrix.needsUpdate = true; if (im.instanceColor) im.instanceColor.needsUpdate = true; im.frustumCulled = false; g.add(im); }
+  }
+  scene.add(g);
+  return { cx, cz, g, colliders, zones, realm, hs };
+}
+function owDropChunk(ch) { scene.remove(ch.g); ch.g.traverse(o => o.geometry?.dispose()); }
+const owChunkAt = (x, z) => OWR?.chunks.get(owChunkKey(Math.floor(x / OW_CHUNK), Math.floor(z / OW_CHUNK)));
+function owZoneAt(x, z) {
+  const ch = owChunkAt(x, z);
+  if (ch) for (const zn of ch.zones) if (Math.hypot(x - zn.x, z - zn.z) < zn.r) return zn;
+  return null;
+}
+const owZoneKind = (x, z) => owZoneAt(x, z)?.kind || null;
+const owSlowAt = pos => OW_ZONES[owZoneKind(pos.x, pos.z)]?.slow || 0;
+// keep the chunks around the player built; build a couple a frame so walking never hitches
+function owStream(all) {
+  const pcx = Math.floor(P1.pos.x / OW_CHUNK), pcz = Math.floor(P1.pos.z / OW_CHUNK), want = [];
+  for (let i = -OW_VIEW; i <= OW_VIEW; i++) for (let j = -OW_VIEW; j <= OW_VIEW; j++) {
+    const cx = pcx + i, cz = pcz + j;
+    if (Math.abs(cx * OW_CHUNK) > OW_HALF + OW_CHUNK || Math.abs(cz * OW_CHUNK) > OW_HALF + OW_CHUNK) continue;
+    if (!OWR.chunks.has(owChunkKey(cx, cz))) want.push([cx, cz, i * i + j * j]);
+  }
+  want.sort((a, b) => a[2] - b[2]);
+  let built = 0;
+  for (const [cx, cz] of want) { if (!all && built >= 2) break; OWR.chunks.set(owChunkKey(cx, cz), owBuildChunk(cx, cz)); built++; }
+  let dropped = 0;
+  for (const [k, ch] of OWR.chunks) if (Math.max(Math.abs(ch.cx - pcx), Math.abs(ch.cz - pcz)) > OW_VIEW + 1) { owDropChunk(ch); OWR.chunks.delete(k); dropped++; }
+  if (built || dropped || OWR.poiDirty) owColliders();
+}
+// the solid things monsters and players bump into: the loaded chunks plus the story places near you
+function owColliders() {
+  OWR.poiDirty = false;
+  const list = [];
+  for (const ch of OWR.chunks.values()) for (const c of ch.colliders) list.push(c);
+  for (const pg2 of OWR.pois.values()) for (const c of pg2.cols) list.push(c);
+  obstacles = list;
+}
+
+/* story places, built when you come near */
+const owBox = (w, h, d, c, x, y, z, g) => { const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), lit(c)); m.position.set(x, y, z); m.castShadow = true; g.add(m); return m; };
+const owMesh = (geo, mat, x, y, z, g) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); g.add(m); return m; };
+function owBuildPoi(p) {
+  const g = new THREE.Group(); g.position.set(p.x, 0, p.z); scene.add(g);
+  const cols = [], out = { g, cols, p };
+  const col = (x, z, r) => cols.push({ x: p.x + x, z: p.z + z, r });
+  if (p.kind === 'village') {
+    const plaza = owMesh(new THREE.CircleGeometry(p.r - 4, 40), lit(shadeHex(OW_REALMS[p.realm].ground, 0.85), { map: owDetailTex() }), 0, 0.02, 0, g); plaza.rotation.x = -Math.PI / 2;
+    const wall = [0x6a5a48, 0x5a3a30, 0x8a9aaa, 0x6a7a50, 0xb89a6a, 0x3a3050][p.realm], roof = [0x5a3a6a, 0x3a1a14, 0xeef6ff, 0x3a6a3a, 0xc86a3a, 0x6a3aaa][p.realm];
+    const n = p.id === 'lantern' ? 8 : 5;
+    for (let i = 0; i < n; i++) {
+      const a = (i + 0.5) / n * TAU + 0.3, r = p.r - 9, x = Math.sin(a) * r, z = Math.cos(a) * r, h = 3 + (i % 3) * 0.6;
+      const hs = new THREE.Group(); hs.position.set(x, 0, z); hs.rotation.y = a + Math.PI; g.add(hs);
+      owBox(5, h, 4.4, wall, 0, h / 2, 0, hs);
+      const rf = owMesh(new THREE.ConeGeometry(4.1, 2.6, 4), lit(roof), 0, h + 1.3, 0, hs); rf.rotation.y = Math.PI / 4; rf.scale.z = 0.85;
+      owBox(1.1, 1.9, 0.12, 0x2a1a10, 0, 0.95, 2.22, hs);
+      owMesh(new THREE.BoxGeometry(0.8, 0.7, 0.1), glowM(0xffc56e), 1.6, 1.8, 2.24, hs);
+      col(x, z, 3.1);
+    }
+    // the village lantern: in Lantern Village, the cracked Great Lantern itself
+    const big = p.id === 'lantern', lh = big ? 7 : 4;
+    owMesh(new THREE.CylinderGeometry(0.25, 0.35, lh, 8), lit(0x3a3040), 0, lh / 2, 0, g);
+    OWR.lanternGlow = big ? owMesh(new THREE.OctahedronGeometry(big ? 1.1 : 0.5, 0), glowM(big ? 0x6a5a8a : 0xffc56e), 0, lh + 0.8, 0, g) : OWR.lanternGlow;
+    if (!big) owMesh(new THREE.OctahedronGeometry(0.5, 0), glowM(0xffc56e), 0, lh + 0.5, 0, g);
+    col(0, 0, 0.8);
+    for (const npc of OW_NPCS.filter(n2 => n2.poi === p.id)) out.npcs = [...(out.npcs || []), owBuildNpc(npc, g)];
+  } else if (p.kind === 'lair') {
+    const stoneC = [0x4a4060, 0x2a1a18, 0x8a9aaa, 0x6a6a50, 0xb89a6a, 0x241a36][p.realm], rune = ARENA_THEMES[p.realm].rune;
+    const n = 10;
+    for (let i = 0; i < n; i++) { const a = i / n * TAU, x = Math.sin(a) * p.r, z = Math.cos(a) * p.r, h = 4 + (i % 2) * 2.5; owBox(1.6, h, 1.6, stoneC, x, h / 2, z, g).rotation.y = a; col(x, z, 1.2); }
+    const rr = owMesh(new THREE.RingGeometry(p.r * 0.6, p.r * 0.63, 64), glowM(rune, 0.6), 0, 0.04, 0, g); rr.rotation.x = -Math.PI / 2;
+    out.altar = owMesh(new THREE.OctahedronGeometry(0.9, 0), glowM(OWS.bosses.includes(p.id) ? 0xffd36e : 0x2a2030), 0, 1.6, 0, g);
+    owBox(2.4, 1, 2.4, stoneC, 0, 0.5, 0, g);
+    if (p.sealed) { out.seal = owMesh(new THREE.SphereGeometry(p.r + 2, 32, 16, 0, TAU, 0, Math.PI / 2), new THREE.MeshBasicMaterial({ color: 0x8a3aff, transparent: true, opacity: 0.18, side: THREE.DoubleSide, depthWrite: false }), 0, 0, 0, g); }
+    if (p.final) g.visible = OWS.active.includes('m_sky') || OWS.bosses.includes('sky');
+  } else if (p.kind === 'camp') {
+    for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + 0.4, x = Math.sin(a) * 8, z = Math.cos(a) * 8; owMesh(new THREE.ConeGeometry(2.4, 3.2, 6), lit(0x6a4a32), x, 1.6, z, g); col(x, z, 2.2); }
+    owMesh(new THREE.ConeGeometry(0.8, 1.2, 6), glowM(0xff8a3a), 0, 0.6, 3, g);
+    const cage = new THREE.Group(); cage.position.set(0, 0, -2); g.add(cage); out.cage = cage;
+    for (let i = 0; i < 10; i++) { const a = i / 10 * TAU; owMesh(new THREE.CylinderGeometry(0.06, 0.06, 2.6, 5), lit(0x5a5a64), Math.sin(a) * 1.1, 1.3, Math.cos(a) * 1.1, cage); }
+    owMesh(new THREE.CylinderGeometry(1.3, 1.3, 0.2, 12), lit(0x3a3a44), 0, 2.7, 0, cage);
+    const pd = PET[p.pet];
+    out.orb = owMesh(new THREE.SphereGeometry(0.45, 12, 8), glowM(pd ? pd.color : 0xffffff), 0, 1.1, 0, cage);
+    if (OWS.camps.includes(p.id)) cage.visible = false;
+  } else if (p.kind === 'beacon') out.bc = owBuildBeacon(p, g, col);
+  else if (p.kind === 'sanctum') out.sc = owBuildSanctum(p, g, col);
+  else {
+    owBuildMark(p, g, col);
+  }
+  return out;
+}
+function owBuildMark(p, g, col) {
+  if (p.id === 'tower') {
+    owMesh(new THREE.CylinderGeometry(2.2, 2.8, 14, 10), lit(0x5a5270), 0, 7, 0, g); owMesh(new THREE.CylinderGeometry(3.2, 3.2, 1, 10), lit(0x4a4060), 0, 14.5, 0, g);
+    owMesh(new THREE.OctahedronGeometry(0.6, 0), glowM(0xffb547), 0, 15.8, 0, g); col(0, 0, 2.8);
+  } else if (p.id === 'glade') {
+    for (let i = 0; i < 9; i++) { const a = i / 9 * TAU; owMesh(new THREE.CylinderGeometry(0.1, 0.12, 2.6, 6), lit(0x3a3040), Math.sin(a) * 9, 1.3, Math.cos(a) * 9, g); owMesh(new THREE.SphereGeometry(0.32, 10, 8), glowM(0xfff1a8), Math.sin(a) * 9, 2.75, Math.cos(a) * 9, g); }
+  } else if (p.id === 'glacier') {
+    for (const s of [-1, 1]) { const m = owMesh(new THREE.OctahedronGeometry(1, 0), lit(0xbfe8ff, { emissive: 0x204060 }), s * 4, 5, 0, g); m.scale.set(1.5, 6, 1.5); m.rotation.z = s * 0.25; col(s * 4, 0, 1.8); }
+    owMesh(new THREE.BoxGeometry(10, 1.2, 1.6), lit(0xdff4ff), 0, 9.5, 0, g); owMesh(new THREE.OctahedronGeometry(0.7, 0), glowM(0x9fe8ff), 0, 2, 0, g);
+  } else if (p.id === 'ashgate') {
+    for (const s of [-1, 1]) { owBox(2, 11, 2, 0x1a1210, s * 5, 5.5, 0, g); col(s * 5, 0, 1.6); }
+    owBox(13, 1.8, 2.4, 0x1a1210, 0, 11.6, 0, g); owMesh(new THREE.PlaneGeometry(8, 10), new THREE.MeshBasicMaterial({ color: 0xff5a1a, transparent: true, opacity: 0.25, side: THREE.DoubleSide }), 0, 5.5, 0, g);
+  } else if (p.id === 'eldertree') {
+    owMesh(new THREE.CylinderGeometry(2.2, 3.5, 16, 9), lit(0x5a3a22), 0, 8, 0, g); col(0, 0, 3.4);
+    for (let k = 0; k < 7; k++) { const a = k / 7 * TAU; owMesh(new THREE.IcosahedronGeometry(5, 0), lit([0x2f7a3a, 0x3f9a46, 0x24603a][k % 3]), Math.sin(a) * 5, 16 + (k % 2) * 3, Math.cos(a) * 5, g); }
+    for (let k = 0; k < 12; k++) owMesh(new THREE.SphereGeometry(0.18, 8, 6), glowM(0xc8ff7a), rand(-8, 8), rand(2, 14), rand(-8, 8), g);
+  } else if (p.id === 'caravan') {
+    for (let k = 0; k < 3; k++) { const w = new THREE.Group(); w.position.set(k * 5 - 5, -0.4, rand(-2, 2)); w.rotation.set(rand(-0.2, 0.2), rand(0, 3), rand(-0.3, 0.3)); g.add(w); owBox(4, 1.6, 2.2, 0x7a5a38, 0, 1, 0, w); owMesh(new THREE.TorusGeometry(0.8, 0.12, 6, 12), lit(0x4a3a2a), 1.4, 0.6, 1.2, w); col(k * 5 - 5, 0, 2.2); }
+    owMesh(new THREE.SphereGeometry(7, 14, 8), lit(0xc8a060), 2, -4.2, 3, g).scale.y = 0.6;
+  } else if (p.id === 'brokenstar') {
+    owMesh(new THREE.SphereGeometry(7, 20, 12), lit(0x0a0614), 0, -3, 0, g); col(0, 0, 6.5);
+    for (let k = 0; k < 8; k++) { const a = k / 8 * TAU, m = owMesh(new THREE.OctahedronGeometry(1, 0), glowM(0xc77dff), Math.sin(a) * 7, 3, Math.cos(a) * 7, g); m.scale.set(1, rand(3, 6), 1); m.rotation.set(Math.cos(a) * 0.6, 0, -Math.sin(a) * 0.6); }
+  }
+}
+// people: a robed little figure with a head, a hood and a glowing marker when they have something to say
+function owBuildNpc(n, parent) {
+  const g = new THREE.Group(); g.position.set(n.dx, 0, n.dz); parent.add(g);
+  owMesh(new THREE.CylinderGeometry(0.42, 0.75, 1.7, 10), lit(n.color), 0, 0.85, 0, g);
+  owMesh(new THREE.SphereGeometry(0.4, 12, 10), lit(0xe8c8a8), 0, 2.0, 0, g);
+  const hood = owMesh(new THREE.ConeGeometry(0.55, 0.9, 10), lit(shadeHex(n.color, 0.7)), 0, 2.4, -0.05, g); hood.rotation.x = -0.15;
+  for (const s of [-1, 1]) owMesh(new THREE.SphereGeometry(0.06, 6, 6), lit(INK), s * 0.14, 2.05, 0.36, g);
+  if (n.staff) { owMesh(new THREE.CylinderGeometry(0.05, 0.05, 2.6, 6), lit(0x5a3a22), 0.65, 1.3, 0.2, g); owMesh(new THREE.OctahedronGeometry(0.2, 0), glowM(n.color), 0.65, 2.7, 0.2, g); }
+  const mark = owMesh(new THREE.OctahedronGeometry(0.28, 0), glowM(0xffd36e), 0, 3.4, 0, g); mark.scale.y = 1.6;
+  return { n, g, mark, wx: parent.position.x + n.dx, wz: parent.position.z + n.dz };
+}
+function owStreamPois() {
+  for (const p of OW_POIS) {
+    const d = Math.hypot(P1.pos.x - p.x, P1.pos.z - p.z), have = OWR.pois.get(p.id);
+    if (!have && d < 170) { OWR.pois.set(p.id, owBuildPoi(p)); OWR.poiDirty = true; }
+    else if (have && d > 230) { scene.remove(have.g); have.g.traverse(o => { o.geometry?.dispose(); if (o.material && o.material !== owMats.solid) o.material.dispose?.(); }); OWR.pois.delete(p.id); OWR.poiDirty = true; }
+  }
+}
+
+/* people and their words */
+const OW_NPCS = [
+  { id: 'maren', name: 'Elder Maren', title: 'Keeper of the Lantern', poi: 'lantern', dx: 0, dz: -6, color: 0x8a7cff, staff: true },
+  { id: 'tobbin', name: 'Old Tobbin', title: 'Lamplighter', poi: 'lantern', dx: 9, dz: 5, color: 0xc89a50 },
+  { id: 'oda', name: 'Oda', title: 'Shrinekeeper', poi: 'lantern', dx: -9, dz: 5, color: 0x3fa89a, staff: true },
+  { id: 'ysolde', name: 'Ysolde', title: 'Huntress of Rimewatch', poi: 'rimewatch', dx: 0, dz: 6, color: 0x9fd8ff },
+  { id: 'brannoc', name: 'Brannoc', title: 'Smith of Cinderforge', poi: 'cinderforge', dx: 0, dz: 6, color: 0xb85a2a },
+  { id: 'fennick', name: 'Fennick', title: 'Druid of Mossheart', poi: 'mossheart', dx: 0, dz: 6, color: 0x4a9a4a, staff: true },
+  { id: 'zahra', name: 'Zahra', title: 'Trader of the Bazaar', poi: 'bazaar', dx: 0, dz: 6, color: 0xe0a24a },
+  { id: 'watcher', name: 'The Watcher', title: 'Last guard of the Outpost', poi: 'outpost', dx: 0, dz: 6, color: 0x6a3a9a },
+];
+const OW_NPC = Object.fromEntries(OW_NPCS.map(n => [n.id, n]));
+// the backstory, told when a new world begins
+const OW_INTRO = [
+  { t: 'Long ago, the six realms of Aelvar shared one light: the Great Lantern, burning at the heart of the world.', shot: 'high' },
+  { t: 'Then the sky cracked. A star of black glass fell out of the night. The old songs call it the Shardfall.', shot: 'star' },
+  { t: 'It shattered the Lantern into six Heartshards. Each one sank into a realm and twisted its guardian into a monster.', shot: 'lantern' },
+  { t: 'And from the crater where the star landed, something climbed out. The Dark Lord. It has ruled the sky ever since.', shot: 'lord' },
+  { t: 'You wake in the ashes of Lantern Village with no memory, except a voice telling you to get up.', shot: 'you' },
+];
+// the main story and the side quests. goal kinds: kill (any monsters), type (one kind), reach (a place),
+// camp (clear a camp to free a pet), boss / bosses (guardians), talk (go back to someone)
+const OW_QUESTS = {
+  m_teeth: { main: true, name: 'Teeth in the Dark', goal: { kind: 'kill', n: 6 }, desc: 'Defeat 6 monsters around Lantern Village.', next: 'm_crown', xp: 60,
+    lore: 'Elder Maren says I fell out of the sky the same night the monsters got bolder. She thinks that means something.' },
+  m_crown: { main: true, name: 'The Hollow Crown', goal: { kind: 'boss', poi: 'throne' }, desc: 'Defeat the Hollow King at the Hollow Throne, south-west of Lantern Village, and take back the first Heartshard.', next: 'm_realms', xp: 200,
+    lore: 'The Hollow King was once the guardian of Dusk Hollow. The shard inside him turned him cruel. When he fell, he looked almost thankful.' },
+  m_realms: { main: true, name: 'The Four Shards', goal: { kind: 'bosses', pois: ['spire', 'forge', 'temple', 'tomb'] }, desc: 'Take back the Heartshards from the guardians of Frostfall (north), the Ember Wastes (east), the Verdant Ruins (west) and the Golden Sands (south). Each realm has a village: its people know the way.', next: 'm_rift', xp: 600,
+    lore: 'Every guardian I free tells the same story: the Dark Lord gave them the shards, and the shards whispered until they forgot who they were.' },
+  m_rift: { main: true, name: 'Into the Rift', goal: { kind: 'boss', poi: 'riftheart' }, desc: 'Five Heartshards sing together, and the seal on the Rift Heart has broken. Defeat its guardian in the far north-east of the Abyss.', next: 'm_return', xp: 400,
+    lore: 'The Rift Stalker guarded the crater where the star fell. Down there I saw the Dark Lord\'s throne, empty. It is out hunting.' },
+  m_return: { main: true, name: 'The Last Lantern', goal: { kind: 'talk', npc: 'maren' }, desc: 'Bring all six Heartshards home to Elder Maren in Lantern Village.', next: 'm_sky', xp: 100,
+    lore: 'Six shards. Maren cried when she saw them. Then the sky went dark.' },
+  m_sky: { main: true, name: 'Shardfall', goal: { kind: 'boss', poi: 'sky' }, desc: 'The Dark Lord has come for the Heartshards. Face it at the Shattered Sky, just north of Lantern Village.', next: null, xp: 1500,
+    lore: 'The Dark Lord is gone. The Great Lantern burns again, and for the first time in years, the stars over Aelvar are just stars.' },
+  s_pests: { giver: 'tobbin', name: 'Lantern Pests', goal: { kind: 'type', type: 'grub', n: 12 }, desc: 'Squash 12 Grubs for Old Tobbin.', xp: 80, shards: 150 },
+  s_moths: { giver: 'tobbin', name: 'The Moth Glade', goal: { kind: 'reach', poi: 'glade' }, desc: 'Find the Moth Glade, north-east of Lantern Village, where Tobbin\'s old lanterns still glow.', xp: 100, pet: 'moth' },
+  s_wolves: { giver: 'ysolde', name: 'Wolves at the Gate', goal: { kind: 'type', type: 'frostwolf', n: 9 }, desc: 'Hunt 9 Frost Wolves for Ysolde.', xp: 200, shards: 300 },
+  s_owl: { giver: 'ysolde', name: 'The Owl in the Ice', goal: { kind: 'reach', poi: 'glacier' }, desc: 'Find the Glacier Shrine, west of the Frozen Spire, where an owl has been frozen in the ice for a hundred years.', xp: 220, pet: 'owl' },
+  s_slag: { giver: 'brannoc', name: 'Slag Hunt', goal: { kind: 'type', type: 'magmaslug', n: 6 }, desc: 'Bring down 6 Magma Slugs. Brannoc needs their cooled shells for his forge.', xp: 200, shards: 300 },
+  s_pup: { giver: 'brannoc', name: 'The Stolen Pup', goal: { kind: 'camp', poi: 'pupcamp' }, desc: 'Raiders stole Brannoc\'s Ember Pup. Clear the Raider Camp north-east of Cinderforge and set it free.', xp: 250, pet: 'pup' },
+  s_thorns: { giver: 'fennick', name: 'Thorns in the Garden', goal: { kind: 'type', type: 'thornback', n: 6 }, desc: 'Drive off 6 Thornbacks that are trampling Fennick\'s garden.', xp: 200, shards: 300 },
+  s_sprite: { giver: 'fennick', name: 'A Little Light', goal: { kind: 'camp', poi: 'spritecamp' }, desc: 'A Mending Sprite is trapped in the Bramble Den, south-west of Mossheart. Clear the den and free it.', xp: 250, pet: 'sprite' },
+  s_sting: { giver: 'zahra', name: 'Stingers', goal: { kind: 'type', type: 'scorpion', n: 6 }, desc: 'Clear 6 Sand Scorpions off Zahra\'s trade road.', xp: 200, shards: 350 },
+  s_caravan: { giver: 'zahra', name: 'The Buried Caravan', goal: { kind: 'reach', poi: 'caravan' }, desc: 'Find Zahra\'s lost caravan, buried in the dunes south-west of the Bazaar. Her cat was riding on it.', xp: 220, pet: 'cat' },
+  s_eyes: { giver: 'watcher', name: 'Eyes in the Dark', goal: { kind: 'type', type: 'voideye', n: 6 }, desc: 'Shut 6 Void Eyes that keep watching the Outpost.', xp: 260, shards: 400 },
+  s_bat: { giver: 'watcher', name: 'Something Small', goal: { kind: 'camp', poi: 'batcamp' }, desc: 'Something small is squeaking in the Gloom Nest, east of the Outpost. Clear the nest and see what it is.', xp: 300, pet: 'bat' },
+  s_star: { giver: 'watcher', name: 'Where the Star Fell', goal: { kind: 'reach', poi: 'brokenstar' }, desc: 'Visit the Broken Star in the north of the Abyss, the crater the Dark Lord climbed out of.', xp: 300, shards: 500 },
+  s_tower: { giver: 'maren', name: 'The Old Watchtower', goal: { kind: 'reach', poi: 'tower' }, desc: 'Climb to the Old Watchtower, east of Lantern Village, and look out over Aelvar.', xp: 120, shards: 200 },
+};
+// what people say. Each returns pages of words and, at the end, buttons
+function owLines(id) {
+  const q = OWS.active, has = k => q.includes(k), done = k => OWS.done.includes(k);
+  const side = (list, hello) => {
+    const pages = [hello], opts = [];
+    for (const k of list) {
+      const Q = OW_QUESTS[k];
+      if (done(k)) continue;
+      if (has(k)) { pages.push(`"${Q.name}": ${Q.desc} ${owProgressText(k)}`); break; }
+      pages.push(OW_OFFER[k]); opts.push({ label: `Accept: ${Q.name}`, fn: () => owStartQuest(k) }); break;
+    }
+    if (list.every(done)) pages.push(OW_THANKS[id]);
+    return { pages, opts };
+  };
+  switch (id) {
+    case 'maren':
+      if (has('m_return')) return { pages: ['Six shards. Six! I never thought I would see the Lantern whole again.', 'Hold them up to the light, child. Let them… wait. The sky. Why is the sky going dark?'], opts: [{ label: 'Look up', fn: () => owProgress('talk', 'maren') }] };
+      if (!OWS.metMaren) return { pages: ['You\'re awake! You fell out of the sky the same night as the black star, and you\'ve been asleep in my house ever since.', 'I am Maren. I keep what is left of the Great Lantern. Without its light, the monsters grow bolder every night.', 'If you can hold a wand, help us. Start small: there are monsters prowling right outside the village.'], opts: [{ label: 'I\'ll help', fn: () => { OWS.metMaren = true; owStartQuest('m_teeth'); } }] };
+      if (OWS.ended) return { pages: ['The Lantern burns, and the realms are healing. You are always welcome here, Lightbringer.', 'There are still monsters out there, and still treasure. Go and see the world you saved.'], opts: [] };
+      {
+        const main = OWS.active.find(k => OW_QUESTS[k].main);
+        const pages = [main ? `"${OW_QUESTS[main].name}": ${OW_QUESTS[main].desc} ${owProgressText(main)}` : 'Rest a while, then go on.'];
+        const opts = [];
+        if (OWS.bosses.includes('throne') && !done('s_tower') && !has('s_tower')) { pages.push(OW_OFFER.s_tower); opts.push({ label: 'Accept: The Old Watchtower', fn: () => owStartQuest('s_tower') }); }
+        return { pages, opts };
+      }
+    case 'tobbin': return side(['s_pests', 's_moths'], 'Eh? Oh, the one who fell from the sky. I light the lamps around here. Not many left to light, these days.');
+    case 'oda': {
+      const cost = owShrineCost();
+      const pages = ['The shrine still answers, if you bring it shards. Offer enough and it gives back a gift box: a weapon, an ability, maybe even a friend.', `An offering costs ${cost} shards. You have ${shards}.`];
+      const opts = [{ label: `Offer ${cost} shards`, fn: () => owBuyBox() }];
+      pages.push(OWS.seeds >= 4 ? `And you carry ${OWS.seeds} Light Seeds! Four of them and the shrine will make you stronger. Which would you like?` : `Light Seeds come from the Trial Sanctums out in the world. Bring me four and the shrine will make you stronger. You have ${OWS.seeds || 0}.`);
+      if (OWS.seeds >= 4) {
+        opts.unshift({ label: 'Four seeds: +20 health', fn: () => { OWS.seeds -= 4; OWS.hpUp++; recompute(); P.hp = S.maxHp; owToast('Your heart grows stronger', `+20 health (now ${S.maxHp})`, 'gold'); sfx('fuse'); owSave(); } });
+        opts.unshift({ label: 'Four seeds: +25 stamina', fn: () => { OWS.seeds -= 4; OWS.stamUp++; OWR.stam = owStamMax(); owToast('Your breath grows longer', `+25 stamina (now ${owStamMax()})`, 'gold'); sfx('fuse'); owSave(); } });
+      }
+      return { pages, opts };
+    }
+    case 'ysolde': return side(['s_wolves', 's_owl'], 'Keep your voice down. The wolves hear everything up here, and the Owl at the Spire hears more.');
+    case 'brannoc': return side(['s_slag', 's_pup'], 'Mind the anvil, it\'s hot. Everything here is hot. The Iron Colossus at the Forge of Cinders used to work beside me, you know.');
+    case 'fennick': return side(['s_thorns', 's_sprite'], 'Hush. The trees are listening. They remember when the Brood Mother sang to them instead of eating them.');
+    case 'zahra': return side(['s_sting', 's_caravan'], 'Welcome to the Bazaar, friend! Everything is for sale, except my cat. If I could find her.');
+    case 'watcher': return side(['s_eyes', 's_bat', 's_star'], 'You walked here on your own? Then you are either brave or lost. The Rift Heart is sealed, and the Dark Lord is not home. That is the only good news I have.');
+  }
+  return { pages: ['…'], opts: [] };
+}
+const OW_OFFER = {
+  s_pests: 'Grubs keep chewing the lamp oil. Squash a dozen of them and I\'ll give you some shards I\'ve been saving.',
+  s_moths: 'When I was young we kept lanterns in the Moth Glade, north-east of here. If they still glow, the moths will still be there. Go and look?',
+  s_wolves: 'The Frost Wolves come in threes and they come every night. Hunt nine of them and Rimewatch will sleep easy.',
+  s_owl: 'There\'s a shrine in the glacier west of the Spire. My grandmother said an owl sleeps in the ice there, waiting for someone kind. Will you go?',
+  s_slag: 'I need cooled Magma Slug shells to fix my furnace. Six should do. Mind their trails, they burn.',
+  s_pup: 'Raiders took my Ember Pup! Their camp is north-east of here. Clear them out and bring the little one home. It can stay with you if it likes you.',
+  s_thorns: 'Thornbacks are trampling my garden. Six of them. Please, gently. Well. Not too gently.',
+  s_sprite: 'A Mending Sprite is caught in the Bramble Den to the south-west. Monsters keep it in a cage for its light. Free it.',
+  s_sting: 'Scorpions on the trade road. Six of them. Nobody buys from a trader with a stinger in her hat.',
+  s_caravan: 'My caravan was buried in a sandstorm south-west of here. My cat was riding on top. Find it and you\'ll find her, she never leaves it.',
+  s_eyes: 'The Void Eyes are always watching. Shut six of them and we might get some sleep.',
+  s_bat: 'Something small squeaks in the Gloom Nest east of here. Clear the nest and find out what it is.',
+  s_star: 'Go to the Broken Star in the north. Stand where the Dark Lord first stood. Then you will understand what we are fighting.',
+  s_tower: 'Climb the Old Watchtower, east of the village. From the top you can see all six realms. It will help you find your way.',
+};
+const OW_THANKS = {
+  tobbin: 'Thank you, Lightbringer. The lamps are lit again.', ysolde: 'Rimewatch owes you. Walk safe in the snow.', brannoc: 'You\'re always welcome at my forge.',
+  fennick: 'The forest knows your name now. That is a good thing.', zahra: 'For you, friend, everything is half price. Except the cat.', watcher: 'You have done more than any guard ever did. Thank you.',
+};
+
+/* quests */
+function owStartQuest(k) {
+  if (OWS.active.includes(k) || OWS.done.includes(k)) return;
+  OWS.active.push(k); OWS.prog[k] = 0;
+  const Q = OW_QUESTS[k];
+  owToast(`${Q.main ? 'Main quest' : 'New quest'}: ${Q.name}`, Q.desc);
+  sfx('gem');
+  if (Q.main) OWS.track = k;
+  owCheckQuests(); owSave();
+}
+function owProgressText(k) {
+  const g = OW_QUESTS[k].goal, p = OWS.prog[k] || 0;
+  if (g.kind === 'kill' || g.kind === 'type') return `(${Math.min(p, g.n)} / ${g.n})`;
+  if (g.kind === 'bosses') return `(${g.pois.filter(i => OWS.bosses.includes(i)).length} / ${g.pois.length})`;
+  return '';
+}
+// the place a quest wants you to go, for the arrow and the map
+function owQuestTarget(k) {
+  const g = OW_QUESTS[k]?.goal;
+  if (!g) return null;
+  if (g.poi) return OW_POI[g.poi];
+  if (g.kind === 'talk') return OW_POI[OW_NPC[g.npc].poi];
+  if (g.kind === 'bosses') { const left = g.pois.filter(i => !OWS.bosses.includes(i)).map(i => OW_POI[i]); return left.sort((a, b) => Math.hypot(a.x - P1.pos.x, a.z - P1.pos.z) - Math.hypot(b.x - P1.pos.x, b.z - P1.pos.z))[0] || null; }
+  return null;
+}
+function owProgress(kind, what) {
+  for (const k of [...OWS.active]) {
+    const g = OW_QUESTS[k].goal;
+    if (g.kind === 'kill' && kind === 'kill') OWS.prog[k]++;
+    if (g.kind === 'type' && kind === 'kill' && what === g.type) OWS.prog[k]++;
+    if (g.kind === 'talk' && kind === 'talk' && what === g.npc) OWS.prog[k] = 1;
+  }
+  owCheckQuests();
+}
+function owCheckQuests() {
+  for (const k of [...OWS.active]) {
+    const Q = OW_QUESTS[k], g = Q.goal, p = OWS.prog[k] || 0;
+    const ok = g.kind === 'kill' || g.kind === 'type' ? p >= g.n
+      : g.kind === 'reach' ? OWS.seen.includes(g.poi)
+      : g.kind === 'camp' ? OWS.camps.includes(g.poi)
+      : g.kind === 'boss' ? OWS.bosses.includes(g.poi)
+      : g.kind === 'bosses' ? g.pois.every(i => OWS.bosses.includes(i))
+      : g.kind === 'talk' ? p >= 1 : false;
+    if (ok) owFinishQuest(k);
+  }
+}
+function owFinishQuest(k) {
+  const Q = OW_QUESTS[k];
+  OWS.active = OWS.active.filter(x => x !== k); OWS.done.push(k);
+  if (OWS.track === k) OWS.track = null;
+  if (Q.lore) OWS.lore.push(Q.lore);
+  owToast(`Quest complete: ${Q.name}`, [Q.xp ? `+${Q.xp} XP` : '', Q.shards ? `+${Q.shards} shards` : '', Q.pet ? `${PET[Q.pet]?.name || 'A pet'} joins you!` : ''].filter(Boolean).join(' · '), 'gold');
+  sfx('waveClear');
+  if (Q.shards) { shards += Q.shards; shardsTotal += Q.shards; }
+  if (Q.pet) owGivePet(Q.pet);
+  if (Q.xp) owXP(Q.xp);
+  if (k === 'm_return') owCutscene(OW_CUTS.lordComes(), () => owStartQuest('m_sky'));
+  else if (k === 'm_sky') { OWS.ended = true; owCutscene(OW_CUTS.ending(), () => owAch()); }
+  else if (Q.next) owStartQuest(Q.next);
+  owAch(); owSave();
+}
+
+/* growing stronger: levels from experience, weapons from boxes */
+const owNeed = l => Math.round(60 * Math.pow(l, 1.45));
+function owXP(n) {
+  OWS.xp += n;
+  let up = false;
+  while (OWS.xp >= owNeed(OWS.level)) { OWS.xp -= owNeed(OWS.level); OWS.level++; up = true; }
+  if (up) {
+    recompute(); P.hp = S.maxHp;
+    banner(`Level ${OWS.level}!`, 'More health, more damage, fully healed');
+    ring(P.pos.x, P.pos.z, 0.5, 5, 0.6, 0xffd36e); burst(P.pos.x, 1.2, P.pos.z, 0xffd36e, 30, 7); sfx('fuse');
+    owAch();
+  }
+}
+const OW_WEAPONS = [
+  { id: 'wand', tier: 'common', name: 'Wanderer\'s Wand', desc: 'Your trusty wand. No tricks.', mod: () => {} },
+  { id: 'repeater', tier: 'common', name: 'Rapid Repeater', desc: 'Fires 60% faster, each bolt deals 30% less.', mod: s => { s.fireRate *= 1.6; s.damage *= 0.7; } },
+  { id: 'cannon', tier: 'rare', name: 'Heavy Cannon', desc: 'Bolts deal 90% more and pierce one monster, but fire 45% slower.', mod: s => { s.damage *= 1.9; s.fireRate *= 0.55; s.pierce += 1; } },
+  { id: 'scatter', tier: 'rare', name: 'Scattergun', desc: 'Fires 2 extra bolts in a spread, each dealing 40% less.', mod: s => { s.projectiles += 2; s.damage *= 0.6; } },
+  { id: 'longbow', tier: 'rare', name: 'Longbow', desc: 'Bolts deal 30% more and pierce 2 monsters, firing 15% slower.', mod: s => { s.damage *= 1.3; s.pierce += 2; s.fireRate *= 0.85; } },
+  { id: 'twinfang', tier: 'epic', name: 'Twin Fang', desc: 'Fires 1 extra bolt and 10% faster, each bolt dealing 15% less.', mod: s => { s.projectiles += 1; s.fireRate *= 1.1; s.damage *= 0.85; } },
+  { id: 'stormrod', tier: 'epic', name: 'Storm Rod', desc: 'Bolts chain to 2 more monsters.', mod: s => { s.bounce += 2; s.bounceKeep = Math.max(s.bounceKeep, 0.8); } },
+  { id: 'frostbrand', tier: 'epic', name: 'Frostbrand', desc: 'Bolts slow monsters by 35% and deal 10% more.', mod: s => { s.slow = Math.max(s.slow, 0.35); s.damage *= 1.1; } },
+  { id: 'emberstaff', tier: 'legendary', name: 'Ember Staff', desc: 'Bolts explode on hit, dealing 45% of their damage to everything within 2 m.', mod: s => { s.blastR = Math.max(s.blastR, 2); s.blastPct = Math.max(s.blastPct, 0.45); } },
+  { id: 'starpiercer', tier: 'legendary', name: 'Starpiercer', desc: '20% more critical hit chance and critical hits deal 1x more.', mod: s => { s.crit += 0.2; s.critMul = (s.critMul || 2.5) + 1; } },
+];
+const OW_WEAPON = Object.fromEntries(OW_WEAPONS.map(w => [w.id, w]));
+// open world stats: your level and weapon (and nothing from the skill tree or power-ups)
+function owStats() {
+  const l = OWS?.level || 1;
+  S.damage *= 1 + 0.06 * (l - 1); S.maxHp += 10 * (l - 1) + 20 * (OWS?.hpUp || 0);
+  (OW_WEAPON[OWS?.weapon] || OW_WEAPON.wand).mod(S);
+  S.maxHp = Math.round(S.maxHp);
+}
+function owGivePet(id) {
+  if (!PET[id]) return;
+  if (!OWS.pets.includes(id)) OWS.pets.push(id);
+  if (!OWS.pet) { OWS.pet = id; refreshPet(); }
+  owAch();
+}
+// achievement boxes and shrine boxes: a weapon, an ability, or now and then a pet
+const OW_BOX_PETS = ['pup', 'moth', 'owl', 'sprite', 'slime', 'turtle', 'hare', 'cat', 'wolf', 'bat', 'beetle', 'capy', 'drake', 'guardian', 'phoenix', 'seraph'];
+function owRollBox() {
+  const r = Math.random();
+  const petsLeft = OW_BOX_PETS.filter(id => PET[id] && !OWS.pets.includes(id));
+  if (r < 0.14 && petsLeft.length) { const id = petsLeft[Math.floor(Math.random() * petsLeft.length)]; owGivePet(id); return { kind: 'Pet', name: PET[id].name, tier: PET[id].tier || 'rare', desc: PET[id].desc }; }
+  const weaponsLeft = OW_WEAPONS.filter(w => !OWS.weapons.includes(w.id));
+  if (r < 0.45 && weaponsLeft.length) {
+    const w = owPickTier(weaponsLeft);
+    OWS.weapons.push(w.id); owAch();
+    return { kind: 'Weapon', name: w.name, tier: w.tier, desc: w.desc + ' Equip it in your Journal (J).' };
+  }
+  const pool = ABILITIES.filter(a => !a.fusion && !a.only && (a.kind === 'active' || a.kind === 'passive') && L(a.id) < MAX_LVL);
+  const a = owPickTier(pool);
+  if (!a) { shards += 200; return { kind: 'Shards', name: '200 shards', tier: 'common', desc: 'You already have everything at its best.' }; }
+  const had = L(a.id);
+  levels[a.id] = had + 1;
+  discover(a.id);
+  let where = had ? `Now level ${ROMAN[had + 1]}.` : '';
+  if (!had) { const i = slots[a.kind].indexOf(null); if (i >= 0) { slots[a.kind][i] = a.id; where = 'Equipped.'; } else where = 'Equip it in your Loadout (Q).'; }
+  recompute(); renderBar();
+  return { kind: a.kind === 'active' ? 'Ability' : 'Passive', name: a.name, tier: a.tier, desc: `${a.desc(L(a.id))} ${where}` };
+}
+function owPickTier(list) {
+  const w = { common: 50, rare: 30, epic: 14, legendary: 5, mythic: 1 };
+  let tot = list.reduce((n, x) => n + (w[x.tier] || 5), 0), roll = Math.random() * tot;
+  for (const x of list) { roll -= w[x.tier] || 5; if (roll <= 0) return x; }
+  return list[0];
+}
+const owShrineCost = () => 250 + 125 * (OWS.bought || 0);
+function owBuyBox() {
+  const c = owShrineCost();
+  if (shards < c) { owToast('Not enough shards', `The shrine wants ${c}. You have ${shards}.`); sfx('hmm'); return; }
+  shards -= c; OWS.bought = (OWS.bought || 0) + 1; OWS.boxes++;
+  owToast('The shrine gives you a gift box', 'Open it in your Journal (J)', 'gold'); sfx('fuse'); owSave();
+}
+
+/* achievements: each one gives an Achievement Box */
+const OW_ACHS = [
+  { id: 'blood', name: 'First Blood', desc: 'Defeat a monster.', ok: s => s.kills >= 1 },
+  { id: 'k50', name: 'Monster Hunter', desc: 'Defeat 50 monsters.', ok: s => s.kills >= 50 },
+  { id: 'k250', name: 'Monster Slayer', desc: 'Defeat 250 monsters.', ok: s => s.kills >= 250 },
+  { id: 'k1000', name: 'Legend of Aelvar', desc: 'Defeat 1,000 monsters.', ok: s => s.kills >= 1000 },
+  { id: 'kinds', name: 'Know Your Enemy', desc: 'Defeat 15 different kinds of monster.', ok: s => s.kinds.length >= 15 },
+  ...OW_REALMS.map(r => ({ id: 'realm' + r.i, name: `Into ${r.name.replace('The ', 'the ')}`, desc: `Discover ${r.name}.`, ok: s => s.realms.includes(r.i) })),
+  { id: 'walk1', name: 'Wanderer', desc: 'Travel 1 km.', ok: s => s.dist >= 1000 },
+  { id: 'walk5', name: 'Far Walker', desc: 'Travel 5 km.', ok: s => s.dist >= 5000 },
+  { id: 'walk15', name: 'World Strider', desc: 'Travel 15 km.', ok: s => s.dist >= 15000 },
+  { id: 'q1', name: 'Helping Hand', desc: 'Finish a quest.', ok: s => s.done.length >= 1 },
+  { id: 'q6', name: 'Problem Solver', desc: 'Finish 6 quests.', ok: s => s.done.length >= 6 },
+  { id: 'q14', name: 'Hero of the Realms', desc: 'Finish 14 quests.', ok: s => s.done.length >= 14 },
+  { id: 'g1', name: 'Guardian Breaker', desc: 'Free a guardian and take its Heartshard.', ok: s => s.bosses.filter(b => b !== 'sky').length >= 1 },
+  { id: 'g3', name: 'Shard Gatherer', desc: 'Hold 3 Heartshards.', ok: s => s.bosses.filter(b => b !== 'sky').length >= 3 },
+  { id: 'g6', name: 'The Lantern Whole', desc: 'Hold all 6 Heartshards.', ok: s => s.bosses.filter(b => b !== 'sky').length >= 6 },
+  { id: 'lord', name: 'Lightbringer', desc: 'Defeat the Dark Lord.', ok: s => s.bosses.includes('sky') },
+  { id: 'raid', name: 'Defender', desc: 'Drive off one of the Dark Lord\'s raids.', ok: s => s.raids >= 1 },
+  { id: 'raid3', name: 'Shield of Aelvar', desc: 'Drive off 3 raids.', ok: s => s.raids >= 3 },
+  { id: 'lv5', name: 'Getting Stronger', desc: 'Reach level 5.', ok: s => s.level >= 5 },
+  { id: 'lv10', name: 'Seasoned', desc: 'Reach level 10.', ok: s => s.level >= 10 },
+  { id: 'lv20', name: 'Unstoppable', desc: 'Reach level 20.', ok: s => s.level >= 20 },
+  { id: 'pet1', name: 'A Friend Indeed', desc: 'Find a pet.', ok: s => s.pets.length >= 1 },
+  { id: 'pet5', name: 'Menagerie', desc: 'Have 5 pets.', ok: s => s.pets.length >= 5 },
+  { id: 'arms4', name: 'Armory', desc: 'Own 4 weapons.', ok: s => s.weapons.length >= 4 },
+  { id: 'places', name: 'Sightseer', desc: 'Visit 12 named places.', ok: s => s.seen.length >= 12 },
+  { id: 'tw1', name: 'Tower Waker', desc: 'Wake a Lightspire.', ok: s => s.beacons.length >= 1 },
+  { id: 'tw6', name: 'All Lights On', desc: 'Wake all six Lightspires.', ok: s => s.beacons.length >= 6 },
+  { id: 'tr1', name: 'Tried and True', desc: 'Complete a Trial Sanctum.', ok: s => s.sanctums.length >= 1 },
+  { id: 'tr12', name: 'Master of Trials', desc: 'Complete all twelve Trial Sanctums.', ok: s => s.sanctums.length >= 12 },
+  { id: 'sk5', name: 'Peak Seeker', desc: 'Catch 5 Skylings on the mountain tops.', ok: s => s.skylings.length >= 5 },
+  { id: 'sk20', name: 'Sky Collector', desc: 'Catch 20 Skylings.', ok: s => s.skylings.length >= 20 },
+  { id: 'map5', name: 'Mapmaker', desc: 'Explore 5% of Aelvar.', ok: s => (s.exPct || 0) >= 5 },
+  { id: 'map25', name: 'Cartographer', desc: 'Explore 25% of Aelvar.', ok: s => (s.exPct || 0) >= 25 },
+  { id: 'map60', name: 'Seen It All', desc: 'Explore 60% of Aelvar.', ok: s => (s.exPct || 0) >= 60 },
+  { id: 'fall', name: 'Back on Your Feet', desc: 'Fall in battle and get back up.', ok: s => s.deaths >= 1 },
+];
+function owAch() {
+  if (!OWS) return;
+  for (const a of OW_ACHS) {
+    if (OWS.achs.includes(a.id) || !a.ok(OWS)) continue;
+    OWS.achs.push(a.id); OWS.boxes++;
+    owToast(`Achievement: ${a.name}`, `${a.desc} · +1 Achievement Box (J to open)`, 'ach');
+    sfx('fuse');
+    OWR && (OWR.saveSoon = true);
+  }
+}
+
+/* saving: every minute, before anything important, and when you leave */
+function owSave(quiet) {
+  if (!OWS || !ow || state === 'owdead') return;
+  OWS.pos = [Math.round(P1.pos.x * 10) / 10, Math.round(P1.pos.z * 10) / 10];
+  OWS.levels = { ...levels }; OWS.slots = JSON.parse(JSON.stringify(slots)); OWS.shards = shards;
+  if (OWR?.ex) OWS.ex = owExPack();
+  try { localStorage.setItem(OW_KEY(), JSON.stringify(OWS)); } catch (_) {}
+  if (OWR) OWR.saveT = 60;
+  if (!quiet) owSavedFlash();
+}
+// saving whenever you like (not in the middle of a boss fight, or while falling)
+function owManualSave() {
+  if (!ow || !OWS) return;
+  if (state === 'owdead' || owCut) return;
+  if (enemies.some(e => e.boss && !e.dead)) { owToast('Can\'t save right now', 'Finish the boss fight first'); sfx('hmm'); return; }
+  owSave(true);
+  owToast('Game saved', `Level ${OWS.level} · ${OW_REALMS[owRealmAt(P1.pos.x, P1.pos.z)].name}`, 'gold'); sfx('gem');
+  if (state === 'paused') $('#owSaveNow').textContent = 'Saved!';
+}
+function owSavedFlash() { const el = $('#owSaved'); if (!el) return; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); }
+const owHasSave = () => { try { return !!localStorage.getItem(OW_KEY()); } catch (_) { return false; } };
+function owFresh() {
+  return { v: 1, pos: [0, 12], level: 1, xp: 0, shards: 0, kills: 0, kinds: [], levels: null, slots: null, weapon: 'wand', weapons: ['wand'], pets: [], pet: null,
+    active: [], done: [], prog: {}, track: null, bosses: [], achs: [], boxes: 0, realms: [], seen: [], camps: [], dist: 0, time: 0, deaths: 0, raids: 0, bought: 0,
+    lore: [], metMaren: false, introDone: false, ended: false, raidT: 300,
+    beacons: [], sanctums: [], seeds: 0, hpUp: 0, stamUp: 0, skylings: [] };
+}
+// put the saved world back: where you were, what you had, what you'd done
+function owApply() {
+  if (OWS.levels) { levels = { ...OWS.levels }; slots = JSON.parse(JSON.stringify(OWS.slots)); cds = {}; }
+  shards = OWS.shards || 0; kills = OWS.kills || 0;
+  recompute(); P.hp = S.maxHp; renderBar(); refreshPet();
+  P1.pos.set(OWS.pos[0], 0, OWS.pos[1]); P1.vx = P1.vz = 0;
+  camBase.set(P1.pos.x, 20, P1.pos.z + 13);
+  OWR.lastPos = P1.pos.clone(); OWR.lastG = undefined; P1.air = false; P1.glide = false;
+  owExLoad(); owExMark(P1.pos.x, P1.pos.z);
+  owStream(true); owStreamPois(); owColliders();
+}
+
+/* starting and stopping */
+function owBegin(fresh) {
+  if (coop) { owPrevCoop = true; coop = false; }
+  if (fresh) { try { localStorage.removeItem(OW_KEY()); } catch (_) {} }
+  begin('ow');
+}
+function owStart() {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(OW_KEY())); } catch (_) {}
+  OWS = saved && saved.v === 1 ? Object.assign(owFresh(), saved) : owFresh();
+  OWR = { chunks: new Map(), pois: new Map(), saveT: 60, spawnT: 1, poiDirty: true, lastPos: null, hazT: 0, realm: -1, mapT: 0, labels: new Map(), raid: null, skyLord: null, skyT: 40, edgeT: 0, stam: 0, stamT: 0, trial: null };
+  OWR.stam = owStamMax();
+  ARENA_R = 99999; edgeRing.visible = false; ground.visible = false; voidFloor.visible = false;
+  for (const o of arenaDecor) o.visible = false;
+  scene.fog.near = 40; scene.fog.far = 125;
+  scene.add(sun.target);
+  pLight.userData.owBase = pLight.userData.base; pLight.userData.base = 0.45;
+  p2g.visible = false;
+  $('#owUi').hidden = false; $('#owMap').hidden = false; $('#owJournalBtn').hidden = false; $('#owMapBtn').hidden = false; $('#owJumpBtn').hidden = !touchMode; $('#owSaveBtn').hidden = false; $('#owSaveNow').hidden = false;
+  $('#bankBtn').hidden = true;
+  owApply();
+  if (!OWS.introDone) {
+    OWS.introDone = true;
+    owCutscene(OW_CUTS.intro(), () => { owTalk('maren'); owToast('Controls', 'Space: jump, and again in the air to glide · E: talk or use · J: journal · N: map · K: save', ''); });
+  } else banner('Welcome back', `Level ${OWS.level} · ${OW_REALMS[owRealmAt(P1.pos.x, P1.pos.z)].name}`);
+}
+function owEnd() {
+  if (!OWR) return;
+  for (const ch of OWR.chunks.values()) owDropChunk(ch);
+  for (const pg2 of OWR.pois.values()) scene.remove(pg2.g);
+  for (const l of OWR.labels.values()) l.remove();
+  if (OWR.skyLord) scene.remove(OWR.skyLord.g);
+  if (OWR.wx) { scene.remove(OWR.wx); OWR.wx.geometry.dispose(); }
+  if (OWR.trial) scene.remove(OWR.trial.ring);
+  if (OWR.wing) pg.remove(OWR.wing);
+  for (const m of OWR.skyG?.values() || []) scene.remove(m);
+  P1.air = false; P1.glide = false; hemi.intensity = 0.75; sun.intensity = 1.05; $('#owStam').hidden = true; $('#owJumpBtn').hidden = true;
+  if (OWR.arrow) scene.remove(OWR.arrow);
+  if (OWR.beam) scene.remove(OWR.beam);
+  OWR = null; OWS = null; owCut = null; document.body.classList.remove('ow-cut');
+  obstacles = [];
+  ground.visible = true; voidFloor.visible = true;
+  voidFloor.position.x = 0; voidFloor.position.z = 0; motes.position.set(0, motes.position.y, 0);
+  sun.position.set(14, 32, 10); sun.target.position.set(0, 0, 0);
+  if ('owBase' in pLight.userData) { pLight.userData.base = pLight.userData.owBase; delete pLight.userData.owBase; }
+  $('#owUi').hidden = true; $('#owMap').hidden = true; $('#owJournalBtn').hidden = true; $('#owMapBtn').hidden = true; $('#owSaveBtn').hidden = true; $('#owSaveNow').hidden = true; $('#intros').style.top = ''; $('#owTalk').hidden = true; $('#owScreen').hidden = true; $('#owCutUi').hidden = true; $('#owDead').hidden = true;
+  applyArenaTheme(0);
+  if (owPrevCoop) { coop = true; owPrevCoop = false; }
+}
+
+/* falling: back to the last save */
+function owDied() {
+  state = 'owdead';
+  burst(P.pos.x, 1, P.pos.z, 0x6fe3d6, 30, 8); sfx('gameOver'); pg.visible = false;
+  $('#owDead').hidden = false;
+  setTimeout(() => {
+    if (!ow || state !== 'owdead') return;
+    let saved = null;
+    try { saved = JSON.parse(localStorage.getItem(OW_KEY())); } catch (_) {}
+    const deaths = (OWS.deaths || 0) + 1;
+    OWS = saved ? Object.assign(owFresh(), saved) : owFresh();
+    OWS.deaths = Math.max(OWS.deaths || 0, deaths);
+    clearEnemies();
+    for (const g of gems) scene.remove(g.m); gems.length = 0;
+    for (const b of bolts) scene.remove(b.m); bolts.length = 0;
+    OWR.raid = null;
+    if (OWR.trial) { scene.remove(OWR.trial.ring); OWR.trial = null; }
+    P1.air = false; P1.glide = false; OWR.lastG = undefined;
+    owApply(); OWR.stam = owStamMax(); pg.visible = true; P.invuln = 2;
+    $('#owDead').hidden = true;
+    state = 'play';
+    banner('Back to your last save', 'Everything since then is undone');
+    owAch(); owSave(true);
+  }, 2400);
+}
+
+/* the world, every frame */
+function owSpawnPack() {
+  const a = rand(0, TAU), d = rand(30, 44), x = P1.pos.x + Math.sin(a) * d, z = P1.pos.z + Math.cos(a) * d;
+  if (Math.abs(x) > OW_HALF - 6 || Math.abs(z) > OW_HALF - 6) return;
+  if (OW_POIS.some(p => p.kind === 'village' && Math.hypot(x - p.x, z - p.z) < p.r + 2)) return;
+  if (obstacles.some(o => Math.hypot(x - o.x, z - o.z) < o.r + 1)) return;
+  const realm = owRealmAt(x, z), dist = Math.hypot(x, z);
+  const own = MAP_INFO[realm].mobs.slice(0, realm === 0 && dist < 160 ? 2 : 4);
+  const pool = [...MAP_COMMON, ...own, ...own];
+  const n = Math.random() < 0.3 ? 3 : Math.random() < 0.5 ? 2 : 1;
+  for (let i = 0; i < n; i++) {
+    const t = pool[Math.floor(Math.random() * pool.length)];
+    const e = spawnEnemy(t, 1 + dist / 400, 1 + dist / 900, { x: x + rand(-2.5, 2.5), z: z + rand(-2.5, 2.5) });
+    e.owWild = true;
+  }
+}
+function owTick(dt) {
+  const R = OWR;
+  OWS.time += dt;
+  // keep everyone inside the world
+  for (const o of [P1, ...enemies]) { if (o.dead) continue; const lim = OW_HALF - 2; if (Math.abs(o.pos.x) > lim || Math.abs(o.pos.z) > lim) { o.pos.x = Math.max(-lim, Math.min(lim, o.pos.x)); o.pos.z = Math.max(-lim, Math.min(lim, o.pos.z)); if (o === P1 && R.edgeT <= 0) { R.edgeT = 8; banner('The edge of the world', 'Nothing but mist beyond the mountains'); } } }
+  R.edgeT -= dt;
+  // how far you've walked
+  if (R.lastPos) { const d = Math.hypot(P1.pos.x - R.lastPos.x, P1.pos.z - R.lastPos.z); if (d < 5) OWS.dist += d; R.tp = d >= 5; R.lastPos.copy(P1.pos); }
+  owStream(false);
+  R.poiT = (R.poiT || 0) - dt;
+  if (R.poiT <= 0) { R.poiT = 0.5; owStreamPois(); if (R.poiDirty) owColliders(); }
+  // the light follows you, so shadows work everywhere
+  sun.position.set(P1.pos.x + 14, 32, P1.pos.z + 10); sun.target.position.set(P1.pos.x, 0, P1.pos.z);
+  voidFloor.position.x = P1.pos.x; voidFloor.position.z = P1.pos.z; motes.position.x = P1.pos.x; motes.position.z = P1.pos.z;
+  // which realm you're in: the sky and fog drift toward its colours
+  const realm = owRealmAt(P1.pos.x, P1.pos.z), th = ARENA_THEMES[realm], k = 1 - Math.exp(-dt * 1.2);
+  const dark = (R.raid?.storm > 0 ? 0.45 : 1) * (0.45 + 0.55 * owDayLight());
+  scene.background.lerp(owCol.setHex(th.bg).multiplyScalar(dark), k); scene.fog.color.copy(scene.background);
+  hemi.color.lerp(owCol.setHex(th.hemi[0]), k); hemi.groundColor.lerp(owCol.setHex(th.hemi[1]), k); sun.color.lerp(owCol.setHex(th.sun).multiplyScalar(dark), k);
+  skyMat.color.lerp(owCol.setHex(th.sky).multiplyScalar(dark), k); motes.material.color.lerp(owCol.setHex(th.mote), k);
+  if (realm !== R.realm) {
+    R.realm = realm;
+    if (!OWS.realms.includes(realm)) { OWS.realms.push(realm); banner(OW_REALMS[realm].name, OW_REALMS[realm].blurb); sfx('waveClear'); owAch(); owSave(); }
+  }
+  // named places: discovering them, reaching quest spots
+  let here2 = null;
+  for (const p of OW_POIS) {
+    const d = Math.hypot(P1.pos.x - p.x, P1.pos.z - p.z);
+    if (d < (p.r || 12) + 6) {
+      here2 = p;
+      if (!OWS.seen.includes(p.id) && !(p.final && !OWS.active.includes('m_sky'))) { OWS.seen.push(p.id); owToast(`Discovered: ${p.name}`, OW_REALMS[p.realm].name); owCheckQuests(); owAch(); }
+    }
+  }
+  const label = (here2 ? `${here2.name} · ${OW_REALMS[realm].name}` : OW_REALMS[realm].name) + ` · ${owDayName()}`;
+  if (R.label !== label) { R.label = label; $('#roomName').textContent = label; $('#roomName').hidden = false; }
+  // special ground: lava and void burn
+  const zn = owZoneAt(P1.pos.x, P1.pos.z), Z = zn && OW_ZONES[zn.kind];
+  R.hazT -= dt;
+  if (Z?.dps && R.hazT <= 0 && P1.dashT <= 0) { R.hazT = 0.5; hurtPlayer(Math.round(Z.dps * 0.5 * (1 + Math.hypot(P1.pos.x, P1.pos.z) / 900))); burst(P1.pos.x, 0.3, P1.pos.z, zn.kind === 'lava' ? 0xff6a2a : 0x8a3aff, 5, 3); }
+  for (const e of enemies) if (!e.dead && !e.float && !e.boss) { const s = owSlowAt(e.pos); if (s) { e.slowT = Math.max(e.slowT, 0.2); e.slowAmt = Math.max(e.slowAmt || 0, s); } }
+  // wild monsters come and go around you; the near ones stay
+  R.spawnT -= dt;
+  const wild = enemies.filter(e => !e.dead && e.owWild).length, cap = 9 + Math.min(9, Math.floor(OWS.level / 2)) + (R.night ? 5 : 0);
+  if (R.spawnT <= 0) { R.spawnT = rand(1.2, 2.4); if (wild < cap && !owCut && !R.trial) owSpawnPack(); }
+  for (const e of enemies) if (!e.dead && e.owWild && Math.hypot(e.pos.x - P1.pos.x, e.pos.z - P1.pos.z) > 75) despawn(e);
+  R.dt = dt; R.slipT = (R.slipT || 0) - dt;
+  owTickBody(dt); owTickTrial(dt); owTickSkylings(dt); owTickDay();
+  owTickLairs(dt); owTickCamps(dt); owTickRaid(dt); owTickSkyLord(dt); owTickNpcs(dt); owTickActs(); owTickArrow(dt);
+  // saving
+  R.saveT -= dt;
+  if (R.saveSoon || R.saveT <= 0) { R.saveSoon = false; if (!enemies.some(e => e.boss && !e.dead)) owSave(); else R.saveT = 10; }
+  R.mapT -= dt;
+  if (R.mapT <= 0) { R.mapT = 0.5; owExMark(P1.pos.x, P1.pos.z); owDrawMini(); owRenderTrack(); }
+}
+// guardians wake when you step into their lair; leave and they go back to sleep
+function owTickLairs(dt) {
+  for (const p of OW_POIS) {
+    if (p.kind !== 'lair' || OWS.bosses.includes(p.id)) continue;
+    const d = Math.hypot(P1.pos.x - p.x, P1.pos.z - p.z), live = enemies.find(e => !e.dead && e.owLair === p.id);
+    const pg2 = OWR.pois.get(p.id);
+    if (p.sealed && pg2?.seal) pg2.seal.visible = OWS.bosses.filter(b => b !== 'sky').length < 5;
+    if (p.final && pg2) pg2.g.visible = OWS.active.includes('m_sky');
+    if (!live && d < p.r - 4) {
+      if (p.final && !OWS.active.includes('m_sky')) continue;
+      if (p.sealed && OWS.bosses.filter(b => b !== 'sky').length < 5) {
+        P1.pos.x = p.x + (P1.pos.x - p.x) / d * (p.r + 2); P1.pos.z = p.z + (P1.pos.z - p.z) / d * (p.r + 2);
+        if (!(OWR.sealT > 0)) { OWR.sealT = 4; banner('A wall of void blocks the way', `It hums at the Heartshards you carry: ${OWS.bosses.filter(b => b !== 'sky').length} / 5`); }
+        continue;
+      }
+      owSave();   // before a big fight
+      const held = OWS.bosses.filter(b => b !== 'sky').length;
+      const e = spawnEnemy(p.boss, p.final ? 2.2 : 0.8 + 0.25 * held, p.final ? 1.6 : 1 + 0.1 * held, { x: p.x, z: p.z });
+      // the guardian fights inside its own lair: its crystals, spikes and rings of bolts are placed around the lair, not the middle of the world
+      e.owLair = p.id; e.lair = { x: p.x, z: p.z, r: OW_LAIR_R }; e.spawn = 1; e.g.scale.setScalar(e.size || 1);
+      owCutscene(OW_CUTS.guardian(p, e));
+    } else if (live && d > 110) { despawn(live); owToast(`${bossName(p.boss)} returns to its lair`, 'It will be waiting'); }
+  }
+  OWR.sealT = (OWR.sealT || 0) - dt;
+}
+// monster camps: a pack guards a caged pet, and only spawns when its quest is on
+function owTickCamps(dt) {
+  for (const p of OW_POIS) {
+    if (p.kind !== 'camp' || OWS.camps.includes(p.id)) continue;
+    const q = Object.keys(OW_QUESTS).find(k => OW_QUESTS[k].goal.poi === p.id), on = q && OWS.active.includes(q);
+    const d = Math.hypot(P1.pos.x - p.x, P1.pos.z - p.z);
+    const pg2 = OWR.pois.get(p.id); if (pg2?.orb) pg2.orb.position.y = 1.1 + Math.sin(T * 3) * 0.15;
+    if (!on) continue;
+    if (!OWR['camp_' + p.id] && d < 45) {
+      OWR['camp_' + p.id] = true; owSave();
+      const mobs = MAP_INFO[p.realm].mobs, held = OWS.bosses.length;
+      for (let i = 0; i < 7; i++) { const a = i / 7 * TAU; const e = spawnEnemy(i === 0 ? 'brute' : mobs[i % mobs.length], (1 + Math.hypot(p.x, p.z) / 400) * (i === 0 ? 2 : 1) * (1 + 0.1 * held), 1 + Math.hypot(p.x, p.z) / 900, { x: p.x + Math.sin(a) * 6, z: p.z + Math.cos(a) * 6 }); e.owCamp = p.id; }
+      banner(p.name, 'Defeat the guards to open the cage');
+    }
+    if (OWR['camp_' + p.id] && !enemies.some(e => !e.dead && e.owCamp === p.id)) {
+      OWS.camps.push(p.id);
+      if (pg2?.cage) { burst(p.x, 1.4, p.z - 2, PET[p.pet]?.color || 0xffffff, 30, 6); pg2.cage.visible = false; }
+      sfx('fuse'); owCheckQuests();
+    } else if (OWR['camp_' + p.id] && d > 120) { for (const e of enemies) if (!e.dead && e.owCamp === p.id) despawn(e); OWR['camp_' + p.id] = false; }
+  }
+}
+// when something dies in the open world
+function owKilled(e) {
+  if (!e.boss) { OWS.kills++; if (!OWS.kinds.includes(e.type)) OWS.kinds.push(e.type); owXP(Math.max(1, Math.round((TYPES[e.type].shards || 2) * 3 * (1 + Math.hypot(e.pos.x, e.pos.z) / 600)))); owProgress('kill', e.type); }
+  if (e.owRaid && OWR.raid) OWR.raid.left--;
+  if (e.owLair) {
+    const p = OW_POI[e.owLair];
+    OWS.bosses.push(p.id);
+    if (p.final) owCheckQuests();
+    else {
+      const n = OWS.bosses.filter(b => b !== 'sky').length;
+      owXP(250 + 100 * n);
+      const pg2 = OWR.pois.get(p.id); if (pg2?.altar) pg2.altar.material.color.setHex(0xffd36e);
+      owCutscene(OW_CUTS.shard(p, n), () => { owCheckQuests(); owAch(); owSave(); });
+    }
+  }
+  owAch();
+}
+
+/* weather: snow, embers, fireflies, dust and void motes, drifting around you in each realm */
+const OW_WEATHER = [
+  { c: 0xffc56e, v: [0, 0.25, 0], wob: 0.6, size: 0.24 },   // dusk: slow golden motes
+  { c: 0xff7a2a, v: [0, 2.2, 0], wob: 0.8, size: 0.28 },    // embers rising
+  { c: 0xffffff, v: [0.6, -2.4, 0.3], wob: 0.9, size: 0.34 }, // snow
+  { c: 0xc8ff7a, v: [0, 0.1, 0], wob: 1.4, size: 0.3 },    // fireflies
+  { c: 0xe8c890, v: [5.5, -0.2, 1.5], wob: 0.4, size: 0.2 }, // blowing sand
+  { c: 0xc77dff, v: [0, 0.9, 0], wob: 1, size: 0.26 },      // void motes
+];
+function owFx(dt) {
+  const R = OWR;
+  OW_WIND.value += dt;
+  if (owMats.glow) owMats.glow.color.setScalar(0.88 + Math.sin(OW_WIND.value * 2.2) * 0.12);
+  if (lowGfx()) { if (R.wx) R.wx.visible = false; return; }
+  if (!R.wx) {
+    const n = gfx === 'ultra' ? 1600 : gfx === 'high' ? 1000 : 500, pos = new Float32Array(n * 3), ph = new Float32Array(n);
+    for (let i = 0; i < n; i++) { pos.set([rand(-35, 35), rand(0, 22), rand(-35, 35)], i * 3); ph[i] = rand(0, TAU); }
+    const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const dot = document.createElement('canvas'); dot.width = dot.height = 64;
+    { const x = dot.getContext('2d'), gr = x.createRadialGradient(32, 32, 0, 32, 32, 32); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.35, 'rgba(255,255,255,.8)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = gr; x.fillRect(0, 0, 64, 64); }
+    R.wx = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xffffff, size: 0.3, map: new THREE.CanvasTexture(dot), transparent: true, opacity: 0.9, depthWrite: false, blending: THREE.AdditiveBlending }));
+    R.wx.frustumCulled = false; R.wxPh = ph; scene.add(R.wx);
+  }
+  const realm = R.realm < 0 ? 0 : R.realm, w = OW_WEATHER[realm], m = R.wx.material;
+  m.color.lerp(owCol.setHex(w.c), 1 - Math.exp(-dt * 2)); m.size += (w.size - m.size) * Math.min(1, dt * 2);
+  const blend = realm === 2 || realm === 4 ? THREE.NormalBlending : THREE.AdditiveBlending;
+  if (m.blending !== blend) { m.blending = blend; m.needsUpdate = true; }
+  // the cloud of specks follows you; specks that leave the box come back in on the other side
+  const p = R.wx.geometry.attributes.position, a = p.array, cx = P1.pos.x, cz = P1.pos.z, t = OW_WIND.value;
+  for (let i = 0; i < p.count; i++) {
+    const k = i * 3, ph = R.wxPh[i];
+    a[k] += (w.v[0] + Math.sin(t * 1.3 + ph) * w.wob) * dt; a[k + 1] += (w.v[1] + Math.cos(t * 1.1 + ph * 2) * w.wob * 0.4) * dt; a[k + 2] += (w.v[2] + Math.cos(t * 0.9 + ph) * w.wob) * dt;
+    if (a[k] < cx - 35) a[k] += 70; else if (a[k] > cx + 35) a[k] -= 70;
+    if (a[k + 2] < cz - 35) a[k + 2] += 70; else if (a[k + 2] > cz + 35) a[k + 2] -= 70;
+    if (a[k + 1] < 0) a[k + 1] += 22; else if (a[k + 1] > 22) a[k + 1] -= 22;
+  }
+  p.needsUpdate = true;
+}
+
+/* the Dark Lord: it flies over the land, and now and then it raids a village */
+function owLordMesh(scale) {
+  const g = new THREE.Group();
+  const m = new THREE.Mesh(monsterGeo('darklord', TYPES.darklord), new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.6, emissive: 0x2a0a3a }));
+  m.scale.set(TYPES.darklord.r, TYPES.darklord.r * TYPES.darklord.sy, TYPES.darklord.r); g.add(m);
+  // great tattered wings
+  for (const s of [-1, 1]) { const w = new THREE.Mesh(new THREE.ConeGeometry(2.4, 7, 3), new THREE.MeshStandardMaterial({ color: 0x1a0a24, roughness: 0.8, flatShading: true })); w.rotation.set(0, 0, s * 1.9); w.position.set(s * 4.2, 1.5, -0.5); w.scale.z = 0.15; g.add(w); g.userData['w' + s] = w; }
+  g.scale.setScalar(scale); scene.add(g);
+  return g;
+}
+function owTickSkyLord(dt) {
+  // a shadow crossing the sky every so often, so you never forget who rules it
+  const R = OWR;
+  if (OWS.ended) return;
+  if (!R.skyLord) {
+    R.skyT -= dt;
+    if (R.skyT <= 0 && !owCut) {
+      R.skyT = rand(80, 140);
+      const a = rand(0, TAU);
+      R.skyLord = { g: owLordMesh(2.6), a, t: 0, dur: 16, x0: P1.pos.x + Math.sin(a) * 120, z0: P1.pos.z + Math.cos(a) * 120 - 30 };
+      owToast('A shadow passes over the land', 'The Dark Lord is out hunting');
+      sfx('bossAppear');
+    }
+    return;
+  }
+  const L2 = R.skyLord; L2.t += dt;
+  const f = L2.t / L2.dur, x = L2.x0 - Math.sin(L2.a) * 240 * f, z = L2.z0 - Math.cos(L2.a) * 240 * f;
+  L2.g.position.set(x, 28 + Math.sin(L2.t * 0.8) * 2, z); L2.g.rotation.y = L2.a + Math.PI;
+  for (const s of [-1, 1]) L2.g.userData['w' + s].rotation.z = s * (1.9 + Math.sin(L2.t * 3) * 0.3);
+  if (L2.t >= L2.dur) { scene.remove(L2.g); R.skyLord = null; }
+}
+function owTickRaid(dt) {
+  const R = OWR;
+  if (OWS.ended || !OWS.bosses.includes('throne')) return;
+  if (!R.raid) {
+    OWS.raidT -= dt;
+    if (OWS.raidT <= 0 && !owCut && !enemies.some(e => e.boss && !e.dead)) {
+      OWS.raidT = rand(300, 420);
+      // it goes for the village nearest you that you've found
+      const vs = OW_POIS.filter(p => p.kind === 'village' && (OWS.seen.includes(p.id) || p.id === 'lantern')).sort((a, b) => Math.hypot(a.x - P1.pos.x, a.z - P1.pos.z) - Math.hypot(b.x - P1.pos.x, b.z - P1.pos.z));
+      const v = vs[0];
+      R.raid = { v, left: 0, spawned: 0, t: 360, storm: 22, stormT: 0, started: false };
+      owCutscene(OW_CUTS.raid(v), () => { banner(`${v.name} is under attack!`, 'The Dark Lord sent its army. Defend the village'); owSave(); });
+    }
+    return;
+  }
+  const r = R.raid, v = r.v, d = Math.hypot(P1.pos.x - v.x, P1.pos.z - v.z);
+  r.t -= dt;
+  // dark meteors rain around you while the storm lasts
+  if (r.storm > 0) {
+    r.storm -= dt; r.stormT -= dt;
+    if (r.stormT <= 0) { r.stormT = rand(0.6, 1.1); const a = rand(0, TAU), rr = rand(2, 12); telegraph(P1.pos.x + Math.sin(a) * rr, P1.pos.z + Math.cos(a) * rr, 2.4, 1.2, Math.round(16 * (1 + Math.hypot(P1.pos.x, P1.pos.z) / 900)), 0x8a3aff, sl => { burst(sl.x, 0.6, sl.z, 0xc77dff, 14, 6); sfx('boom', 0.4); }); }
+  }
+  // the army waits at the village until you arrive
+  if (!r.started && d < 70) {
+    r.started = true;
+    const mobs = [...MAP_INFO[v.realm].mobs, 'brute'], held = OWS.bosses.length;
+    for (let i = 0; i < 14; i++) { const a = rand(0, TAU), rr = rand(8, v.r + 6); const e = spawnEnemy(mobs[i % mobs.length], (1 + Math.hypot(v.x, v.z) / 400) * (1.2 + 0.1 * held), 1.2 + Math.hypot(v.x, v.z) / 900, { x: v.x + Math.sin(a) * rr, z: v.z + Math.cos(a) * rr }); e.owRaid = true; r.left++; }
+    banner(`Defend ${v.name}`, `${r.left} raiders`);
+  }
+  if (r.started && r.left <= 0) {
+    OWS.raids++; OWS.boxes++; R.raid = null;
+    banner(`${v.name} is safe`, '+1 box · +300 XP · the villagers cheer');
+    owXP(300); sfx('waveClear'); owAch(); owSave();
+  } else if (r.t <= 0) {
+    for (const e of enemies) if (!e.dead && e.owRaid) despawn(e);
+    R.raid = null; owToast(`The raid on ${v.name} is over`, 'The villagers hid until the army left');
+  }
+}
+
+/* people: names over their heads, a marker when they have something new, and talking */
+function owNpcHasNews(id) {
+  if (id === 'maren') return !OWS.metMaren || OWS.active.includes('m_return') || (OWS.bosses.includes('throne') && !OWS.done.includes('s_tower') && !OWS.active.includes('s_tower'));
+  if (id === 'oda') return shards >= owShrineCost() || OWS.seeds >= 4;
+  const qs = Object.keys(OW_QUESTS).filter(k => OW_QUESTS[k].giver === id);
+  const next = qs.find(k => !OWS.done.includes(k));
+  return !!next && !OWS.active.includes(next);
+}
+function owTickNpcs(dt) {
+  let near = null, nd = 4;
+  for (const pg2 of OWR.pois.values()) for (const n of pg2.npcs || []) {
+    const d = Math.hypot(P1.pos.x - n.wx, P1.pos.z - n.wz);
+    n.mark.visible = owNpcHasNews(n.n.id); n.mark.rotation.y += dt * 2; n.mark.position.y = 3.4 + Math.sin(T * 3) * 0.12;
+    n.g.rotation.y = Math.atan2(P1.pos.x - n.wx, P1.pos.z - n.wz) * (d < 12 ? 1 : 0);
+    if (d < nd) { nd = d; near = n; }
+    let lab = OWR.labels.get(n.n.id);
+    if (d < 26) {
+      if (!lab) { lab = document.createElement('div'); lab.className = 'ow-label'; lab.innerHTML = `<b>${n.n.name}</b><small>${n.n.title}</small>`; $('#owLabels').append(lab); OWR.labels.set(n.n.id, lab); }
+      const s = toScreen(n.wx, 3.9, n.wz); lab.style.transform = `translate(${s.x}px, ${s.y}px) translate(-50%, -100%)`;
+    } else if (lab) { lab.remove(); OWR.labels.delete(n.n.id); }
+  }
+  for (const [id, lab] of OWR.labels) if (![...OWR.pois.values()].some(pg2 => (pg2.npcs || []).some(n => n.n.id === id))) { lab.remove(); OWR.labels.delete(id); }
+  OWR.near = near;
+  const pr = $('#owPrompt');
+  pr.hidden = !near;
+  if (near) { const t = `Talk to ${near.n.name}`; if (pr.dataset.t !== t) { pr.dataset.t = t; pr.innerHTML = `<kbd>E</kbd> ${t}`; } }
+}
+let owTalkState = null;
+function owTalk(id) {
+  if (!ow || (state !== 'play' && state !== 'owcut')) return;
+  const n = OW_NPC[id], L2 = owLines(id);
+  owTalkState = { id, pages: L2.pages.filter(Boolean), opts: L2.opts, i: 0 };
+  state = 'owtalk'; mouse.down = false;
+  $('#owTalk').hidden = false;
+  $('#owTalkName').textContent = n.name; $('#owTalkTitle').textContent = n.title;
+  $('#owTalkPic').style.background = '#' + n.color.toString(16).padStart(6, '0');
+  sfx('babble');
+  owTalkRender();
+}
+function owTalkRender() {
+  const s = owTalkState, last = s.i >= s.pages.length - 1;
+  $('#owTalkText').textContent = s.pages[s.i];
+  const btns = [];
+  const mk = (label, fn, main) => { const b = document.createElement('button'); b.type = 'button'; b.className = main ? 'btn' : 'btn ghost'; b.textContent = label; b.addEventListener('click', fn); btns.push(b); };
+  if (!last) mk('Next', () => { s.i++; sfx('babble'); owTalkRender(); }, true);
+  else {
+    for (const o of s.opts) mk(o.label, () => { owTalkClose(); o.fn(); }, true);
+    mk(s.opts.length ? 'Not now' : 'Goodbye', owTalkClose, !s.opts.length);
+  }
+  $('#owTalkBtns').replaceChildren(...btns);
+  btns[0]?.focus({ preventScroll: true });
+}
+function owTalkClose() { if (state !== 'owtalk') return; $('#owTalk').hidden = true; state = 'play'; owTalkState = null; }
+
+/* cutscenes: the camera flies, the bars come in, words appear */
+const OW_CUTS = {
+  intro() {
+    const star = { m: null };
+    return [
+      { dur: 6.5, text: OW_INTRO[0].t, cam: t => ({ p: [Math.sin(t * 0.25) * 40, 34 - t * 2.5, 46 + Math.cos(t * 0.25) * 10], l: [0, 2, 0] }) },
+      { dur: 6, text: OW_INTRO[1].t, start: () => { star.m = owMesh(new THREE.SphereGeometry(2.4, 14, 10), glowM(0xc77dff), 0, 120, -200, scene); }, cam: t => {
+        if (star.m) { const f = Math.min(1, t / 5); star.m.position.set(0, 120 - 120 * f, -200 + 200 * f); if (Math.random() < 0.6) burst(star.m.position.x, star.m.position.y, star.m.position.z, 0xc77dff, 2, 3); if (f >= 1 && !star.boom) { star.boom = true; shake = 1; sfx('finaleBoom'); flash(0, 2, 0, 0xc77dff, 30, 0.6); } }
+        return { p: [40, 20, 60], l: star.m ? [star.m.position.x, star.m.position.y * 0.6, star.m.position.z] : [0, 0, 0] }; }, end: () => { if (star.m) scene.remove(star.m); } },
+      { dur: 6, text: OW_INTRO[2].t, cam: t => ({ p: [Math.sin(t * 0.4 + 1) * 18, 9, Math.cos(t * 0.4 + 1) * 18], l: [0, 5, 0] }) },
+      { dur: 6.5, text: OW_INTRO[3].t, start: () => { star.lord = owLordMesh(3); star.lord.position.set(-60, 30, -120); }, cam: t => {
+        if (star.lord) { star.lord.position.set(-60 + t * 22, 30 + Math.sin(t) * 2, -120 + t * 6); star.lord.rotation.y = Math.PI / 2; }
+        return { p: [0, 6, 10], l: star.lord ? [star.lord.position.x, star.lord.position.y, star.lord.position.z] : [0, 20, -100] }; }, end: () => { if (star.lord) scene.remove(star.lord); } },
+      { dur: 5, text: OW_INTRO[4].t, cam: t => ({ p: [P1.pos.x + 3 - t * 0.4, 2.5 + t * 2.5, P1.pos.z + 6 + t * 1.5], l: [P1.pos.x, 1, P1.pos.z] }) },
+    ];
+  },
+  guardian(p, e) {
+    const line = { king: 'Who dares wake the Hollow King?', owlboss: 'The snow remembers your footsteps. So do I.', colossus: 'FORGE. BURN. CRUSH.', brood: 'My children are hungry, little light.', warden: 'The tomb is sealed. You will stay inside it.', stalker: 'You smell of shards. Give them to me.', darklord: 'Six little shards. Thank you for gathering them for me.' }[p.boss];
+    return [{ dur: 3.2, text: `${bossName(p.boss)}`, sub: `"${line}"`, cam: t => { const f = Math.min(1, t / 1.2); return { p: [e.pos.x + 4 + 10 * (1 - f), 4 + e.r * 1.6, e.pos.z + 9 + e.r], l: [e.pos.x, e.r * 1.2, e.pos.z] }; } }];
+  },
+  shard(p, n) {
+    let orb = null;
+    return [{ dur: 4, text: `Heartshard restored · ${n} / 6`, sub: n < 6 ? `${p.name} is free. Its guardian remembers who it was.` : 'All six Heartshards! Take them home to Elder Maren.',
+      start: () => { orb = owMesh(new THREE.OctahedronGeometry(0.8, 0), glowM(0xffd36e), p.x, 1, p.z, scene); sfx('fuse'); },
+      cam: t => { if (orb) { orb.position.y = 1 + t * 1.6; orb.rotation.y = t * 3; if (Math.random() < 0.5) burst(p.x, orb.position.y, p.z, 0xffd36e, 2, 2); } return { p: [p.x + 7, 4 + t * 0.8, p.z + 9], l: [p.x, 2 + t * 1.2, p.z] }; },
+      end: () => { if (orb) { burst(orb.position.x, orb.position.y, orb.position.z, 0xffd36e, 30, 6); scene.remove(orb); } } }];
+  },
+  raid(v) {
+    let lord = null;
+    return [{ dur: 5, text: 'The Dark Lord darkens the sky', sub: `Its army marches on ${v.name}`,
+      start: () => { lord = owLordMesh(3.2); sfx('bossAppear'); },
+      cam: t => { const x = P1.pos.x - 60 + t * 26, z = P1.pos.z - 50; if (lord) { lord.position.set(x, 26, z); lord.rotation.y = Math.PI / 2; for (const s of [-1, 1]) lord.userData['w' + s].rotation.z = s * (1.9 + Math.sin(t * 4) * 0.3); } return { p: [P1.pos.x, 5, P1.pos.z + 8], l: [x, 26, z] }; },
+      end: () => { if (lord) scene.remove(lord); } }];
+  },
+  lordComes() {
+    let lord = null;
+    return [
+      { dur: 4, text: 'The Great Lantern flickers', sub: 'Six Heartshards, back where they belong', cam: t => ({ p: [Math.sin(t * 0.5) * 14, 6, 14 + Math.cos(t * 0.5) * 3], l: [0, 6, 0] }), start: () => { if (OWR.lanternGlow) OWR.lanternGlow.material.color.setHex(0xffe08a); } },
+      { dur: 5.5, text: 'The Dark Lord descends', sub: '"Six little shards. Thank you for gathering them for me."', start: () => { lord = owLordMesh(3.6); sfx('bossAppear'); shake = 0.6; },
+        cam: t => { if (lord) { lord.position.set(0, Math.max(6, 50 - t * 10), -80); lord.rotation.y = 0; } return { p: [8, 5, -20], l: lord ? [0, lord.position.y, -80] : [0, 10, -80] }; }, end: () => { if (lord) scene.remove(lord); } },
+    ];
+  },
+  ending() {
+    return [
+      { dur: 5, text: 'The Dark Lord is gone', sub: 'And the Great Lantern burns again', cam: t => ({ p: [Math.sin(t * 0.4) * 16, 7 + t, 16], l: [0, 6, 0] }), start: () => { if (OWR.lanternGlow) OWR.lanternGlow.material.color.setHex(0xfff4c0); flash(0, 8, 0, 0xffe08a, 40, 1); sfx('finaleBoom'); } },
+      { dur: 6, text: 'Light spills across the six realms', sub: 'You are the Lightbringer of Aelvar. The world is still open: go and see it.', cam: t => ({ p: [0, 30 + t * 8, 40 + t * 6], l: [0, 0, 0] }) },
+    ];
+  },
+};
+function owCutscene(shots, then) {
+  if (!shots.length) { then?.(); return; }
+  owCut = { shots, i: -1, t: 0, then, prev: state };
+  state = 'owcut'; mouse.down = false;
+  $('#owCutUi').hidden = false; $('#owCutUi').classList.add('on'); document.body.classList.add('ow-cut');
+  owNextShot();
+}
+function owNextShot() {
+  const c = owCut;
+  c.shots[c.i]?.end?.();
+  c.i++; c.t = 0;
+  if (c.i >= c.shots.length) { owEndCut(); return; }
+  const s = c.shots[c.i];
+  s.start?.();
+  $('#owCutText').textContent = s.text || ''; $('#owCutSub').textContent = s.sub || '';
+  const box = $('#owCutCap'); box.classList.remove('show'); void box.offsetWidth; box.classList.add('show');
+}
+function owEndCut() {
+  const c = owCut; if (!c) return;
+  owCut = null; $('#owCutUi').hidden = true; $('#owCutUi').classList.remove('on'); document.body.classList.remove('ow-cut');
+  if (state === 'owcut') state = 'play';
+  c.then?.();
+}
+function owSkipCut() { if (!owCut) return; while (owCut && owCut.i < owCut.shots.length) owNextShot(); }
+function owCutTick(dt) {
+  const c = owCut, s = c.shots[c.i];
+  if (!s) return;
+  c.t += dt;
+  const v = s.cam(c.t);
+  camera.position.set(...v.p); camera.lookAt(...v.l);
+  if (c.t >= s.dur) owNextShot();
+}
+
+/* the arrow at your feet that points to your quest, and a pillar of light over the target */
+function owTickArrow(dt) {
+  const k = OWS.track && OWS.active.includes(OWS.track) ? OWS.track : OWS.active.find(q => OW_QUESTS[q].main) || OWS.active[0];
+  const tg = k && owQuestTarget(k);
+  if (!OWR.arrow) {
+    const g = new THREE.Group(); const m = new THREE.Mesh(new THREE.ConeGeometry(0.42, 1.1, 3), glowM(0xffd36e, 0.85)); m.rotation.x = Math.PI / 2; m.position.z = 0.4; g.add(m); scene.add(g); OWR.arrow = g;
+    OWR.beam = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 60, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xffd36e, transparent: true, opacity: 0.16, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, fog: false }));
+    scene.add(OWR.beam);
+  }
+  const d = tg ? Math.hypot(tg.x - P1.pos.x, tg.z - P1.pos.z) : 0;
+  OWR.arrow.visible = !!tg && d > 14; OWR.beam.visible = !!tg && d < 220;
+  if (!tg) return;
+  const a = Math.atan2(tg.x - P1.pos.x, tg.z - P1.pos.z);
+  const ax2 = P1.pos.x + Math.sin(a) * 2.6, az2 = P1.pos.z + Math.cos(a) * 2.6;
+  OWR.arrow.position.set(ax2, 0.25 + owH(ax2, az2), az2); OWR.arrow.rotation.y = a;
+  OWR.beam.position.set(tg.x, 30, tg.z); OWR.beam.material.opacity = 0.1 + Math.sin(T * 2) * 0.04;
+}
+const owDir = (dx, dz) => ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][Math.round(((Math.atan2(dx, -dz) + TAU) % TAU) / (TAU / 8)) % 8];
+function owRenderTrack() {
+  const el = $('#owTrack'); if (!el) return;
+  const main = OWS.active.find(k => OW_QUESTS[k].main), side = OWS.active.filter(k => !OW_QUESTS[k].main).slice(0, 2);
+  const row = k => { const tg = owQuestTarget(k), d = tg ? Math.hypot(tg.x - P1.pos.x, tg.z - P1.pos.z) : 0; return `<div class="ow-q${OW_QUESTS[k].main ? ' main' : ''}"><b>${OW_QUESTS[k].name}</b> <span>${owProgressText(k)}${tg && d > 14 ? ` · ${Math.round(d)} m ${owDir(tg.x - P1.pos.x, tg.z - P1.pos.z)}` : ''}</span></div>`; };
+  const need = owNeed(OWS.level), html = `<div class="ow-xp"><span>Level ${OWS.level}</span><i style="--f:${(OWS.xp / need).toFixed(3)}"></i></div>${main ? row(main) : OWS.ended ? '<div class="ow-q main"><b>Free roam</b> <span>The world is yours</span></div>' : ''}${side.map(row).join('')}${OWR.raid ? `<div class="ow-q raid"><b>Defend ${OWR.raid.v.name}</b> <span>${OWR.raid.started ? OWR.raid.left + ' raiders left' : Math.round(Math.hypot(OWR.raid.v.x - P1.pos.x, OWR.raid.v.z - P1.pos.z)) + ' m ' + owDir(OWR.raid.v.x - P1.pos.x, OWR.raid.v.z - P1.pos.z)}</span></div>` : ''}${OWS.boxes ? `<div class="ow-q box"><b>${OWS.boxes} box${OWS.boxes > 1 ? 'es' : ''} to open</b> <span>J</span></div>` : ''}`;
+  if (el.dataset.h !== html) { el.dataset.h = html; el.innerHTML = html; }
+  // the new-monster cards go under the quest list instead of on top of it
+  $('#intros').style.top = Math.round(el.getBoundingClientRect().bottom + 8) + 'px';
+}
+
+/* maps */
+function owPoiShown(p) { return p.kind === 'village' || p.kind === 'beacon' || (p.kind === 'lair' && !p.final) || OWS.seen.includes(p.id) || OWS.active.some(k => OW_QUESTS[k].goal.poi === p.id) || (p.final && OWS.active.includes('m_sky')); }
+const OW_POI_COL = { village: '#ffc56e', lair: '#ff5a6a', mark: '#6fe3d6', camp: '#ff8a3d' };
+function owDrawPois(ctx, toX, toY, size, only) {
+  const k = OWS.track && OWS.active.includes(OWS.track) ? OWS.track : OWS.active.find(q => OW_QUESTS[q].main);
+  const tg = k && owQuestTarget(k);
+  for (const p of OW_POIS) {
+    if (!owPoiShown(p)) continue;
+    const x = toX(p.x), y = toY(p.z);
+    // a place you haven't reached yet but your quest points to: just a gold ring with a question mark
+    if (only && !only(p)) { if (tg === p) { ctx.strokeStyle = '#ffd36e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, size * 1.7, 0, TAU); ctx.stroke(); ctx.fillStyle = '#ffd36e'; ctx.font = 'bold 12px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillText('?', x, y + 4); } continue; }
+    ctx.fillStyle = OWS.bosses.includes(p.id) || OWS.camps.includes(p.id) ? '#7fe08a' : OW_POI_COL[p.kind];
+    ctx.beginPath();
+    if (p.kind === 'lair') { ctx.moveTo(x, y - size); ctx.lineTo(x + size, y); ctx.lineTo(x, y + size); ctx.lineTo(x - size, y); } else ctx.arc(x, y, size * 0.75, 0, TAU);
+    ctx.fill();
+    if (tg === p) { ctx.strokeStyle = '#ffd36e'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(x, y, size * 1.7, 0, TAU); ctx.stroke(); }
+  }
+}
+function owDrawRoads(ctx, toX, toY, w) {
+  ctx.strokeStyle = '#e8d8b066'; ctx.lineWidth = w; ctx.lineCap = 'round'; ctx.beginPath();
+  for (const s2 of OW_ROADS) { ctx.moveTo(toX(s2[0]), toY(s2[1])); ctx.lineTo(toX(s2[2]), toY(s2[3])); }
+  ctx.stroke();
+}
+function owDrawPlayer(ctx, x, y, s) {
+  const a = Math.atan2(P1.face.x, P1.face.z);
+  ctx.save(); ctx.translate(x, y); ctx.rotate(-a + Math.PI);
+  ctx.fillStyle = '#6fe3d6'; ctx.strokeStyle = '#000'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(0, -s); ctx.lineTo(s * 0.7, s * 0.8); ctx.lineTo(-s * 0.7, s * 0.8); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.restore();
+}
+function owDrawMini() {
+  const cv = $('#owMap'); if (!cv) return;
+  const ctx = cv.getContext('2d'), W2 = cv.width, span = 360, cell = 8, n = W2 / cell, s = span / n;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+    const x = P1.pos.x - span / 2 + (i + 0.5) * s, z = P1.pos.z - span / 2 + (j + 0.5) * s;
+    ctx.fillStyle = Math.abs(x) > OW_HALF || Math.abs(z) > OW_HALF ? '#05040a' : '#' + owCol.setHex(OW_REALMS[owRealmAt(x, z)].ground).multiplyScalar(1.05 + Math.min(1, owH(x, z) / 30) * 0.9).getHexString();
+    ctx.fillRect(i * cell, j * cell, cell, cell);
+  }
+  const toX = x => (x - P1.pos.x + span / 2) / span * W2, toY = z => (z - P1.pos.z + span / 2) / span * W2;
+  owDrawRoads(ctx, toX, toY, 3);
+  owDrawPois(ctx, toX, toY, 9);
+  ctx.fillStyle = '#ff5a6a';
+  for (const e of enemies) if (!e.dead && Math.abs(e.pos.x - P1.pos.x) < span / 2 && Math.abs(e.pos.z - P1.pos.z) < span / 2) ctx.fillRect(toX(e.pos.x) - 2, toY(e.pos.z) - 2, e.boss ? 8 : 4, e.boss ? 8 : 4);
+  owDrawPlayer(ctx, W2 / 2, W2 / 2, 11);
+}
+const OW_EX = 20, OW_EXN = Math.ceil(OW_HALF * 2 / OW_EX);
+const owExIdx = (x, z) => { const i = Math.floor((x + OW_HALF) / OW_EX), j = Math.floor((z + OW_HALF) / OW_EX); return i < 0 || j < 0 || i >= OW_EXN || j >= OW_EXN ? -1 : j * OW_EXN + i; };
+const owBeen = (x, z) => { const k = owExIdx(x, z); return k >= 0 && !!OWR?.ex?.[k]; };
+// you see about 45 m around you as you walk; everything you've seen is drawn on the map from then on
+function owExMark(x, z, rr = 45) {
+  const ex = OWR.ex, n = Math.ceil(rr / OW_EX);
+  const ci = Math.floor((x + OW_HALF) / OW_EX), cj = Math.floor((z + OW_HALF) / OW_EX);
+  let added = 0;
+  for (let j = cj - n; j <= cj + n; j++) for (let i = ci - n; i <= ci + n; i++) {
+    if (i < 0 || j < 0 || i >= OW_EXN || j >= OW_EXN) continue;
+    const k = j * OW_EXN + i;
+    if (ex[k] || Math.hypot((i + 0.5) * OW_EX - OW_HALF - x, (j + 0.5) * OW_EX - OW_HALF - z) > rr) continue;
+    ex[k] = 1; added++;
+  }
+  if (added) { OWR.exCount += added; OWS.exPct = Math.round(OWR.exCount / ex.length * 1000) / 10; }
+}
+function owExLoad() {
+  OWR.ex = new Uint8Array(OW_EXN * OW_EXN); OWR.exCount = 0;
+  try { if (OWS.ex) { const b = atob(OWS.ex); for (let k = 0; k < OWR.ex.length; k++) { const v = b.charCodeAt(k >> 3) >> (k & 7) & 1; OWR.ex[k] = v; OWR.exCount += v; } } } catch (_) {}
+}
+function owExPack() {
+  const ex = OWR.ex, bytes = new Uint8Array(Math.ceil(ex.length / 8));
+  for (let k = 0; k < ex.length; k++) if (ex[k]) bytes[k >> 3] |= 1 << (k & 7);
+  let str = ''; for (let i = 0; i < bytes.length; i += 4096) str += String.fromCharCode.apply(null, bytes.subarray(i, i + 4096));
+  return btoa(str);
+}
+let owWorldImg = null;
+function owDrawWorld(cv) {
+  const ctx = cv.getContext('2d'), W2 = cv.width, n = 200, cell = W2 / n, span = OW_HALF * 2;
+  if (!owWorldImg) {
+    const off = document.createElement('canvas'); off.width = off.height = W2; const o = off.getContext('2d');
+    for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) { const x = -OW_HALF + (i + 0.5) / n * span, z = -OW_HALF + (j + 0.5) / n * span; o.fillStyle = '#' + owCol.setHex(OW_REALMS[owRealmAt(x, z)].ground).multiplyScalar(1.1 + Math.min(1, owHRaw(x, z) / 30) * 0.9).getHexString(); o.fillRect(i * cell, j * cell, cell + 0.5, cell + 0.5); }
+    o.font = 'bold 15px system-ui, sans-serif'; o.textAlign = 'center'; o.fillStyle = '#ffffffcc';
+    for (const r of OW_REALMS) o.fillText(r.name, (r.x + OW_HALF) / span * W2, (r.z + OW_HALF) / span * W2 + (r.i ? 0 : -60));
+    owWorldImg = off;
+  }
+  ctx.drawImage(owWorldImg, 0, 0);
+  const toX = x => (x + OW_HALF) / span * W2, toY = z => (z + OW_HALF) / span * W2;
+  owDrawRoads(ctx, toX, toY, 2);
+  // unexplored land stays hidden under fog
+  const ec = W2 / OW_EXN;
+  ctx.fillStyle = '#0a0812';
+  for (let j = 0; j < OW_EXN; j++) for (let i = 0; i < OW_EXN; i++) if (!OWR.ex[j * OW_EXN + i]) ctx.fillRect(Math.floor(i * ec), Math.floor(j * ec), Math.ceil(ec) + 1, Math.ceil(ec) + 1);
+  owDrawPois(ctx, toX, toY, 7, p => owBeen(p.x, p.z) || p.kind === 'beacon');
+  ctx.font = '11px system-ui, sans-serif'; ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
+  for (const p of OW_POIS) if (owPoiShown(p) && owBeen(p.x, p.z)) ctx.fillText(p.name.replace('The ', ''), toX(p.x), toY(p.z) - 11);
+  owDrawPlayer(ctx, toX(P1.pos.x), toY(P1.pos.z), 10);
+}
+
+/* the journal: quests, story, achievements, gear and the map */
+let owTab = 'quests', owBoxShown = null;
+function owOpenJournal(tab) {
+  if (!ow || state !== 'play') return;
+  owTab = tab || owTab; owBoxShown = null;
+  state = 'owjournal'; mouse.down = false;
+  $('#owScreen').hidden = false;
+  owRenderJournal();
+  $('#owClose').focus({ preventScroll: true });
+}
+function owCloseJournal() { if (state !== 'owjournal') return; $('#owScreen').hidden = true; state = 'play'; owSave(true); }
+function owRenderJournal() {
+  document.querySelectorAll('#owTabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === owTab));
+  const body = $('#owBody');
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  if (owTab === 'quests') {
+    const q = k => { const Q = OW_QUESTS[k], tracked = OWS.track === k; return `<div class="ow-card${Q.main ? ' main' : ''}"><div class="ow-card-h"><b>${esc(Q.name)}</b><span>${Q.main ? 'Main story' : 'From ' + esc(OW_NPC[Q.giver].name)}</span></div><p>${esc(Q.desc)} ${owProgressText(k)}</p>${Q.pet ? `<small>Reward: ${esc(PET[Q.pet]?.name || 'a pet')}</small>` : ''}<button class="sb-btn" data-track="${k}" type="button"${tracked ? ' disabled' : ''}>${tracked ? 'Tracking' : 'Track'}</button></div>`; };
+    body.innerHTML = `<h3>Active</h3>${OWS.active.map(q).join('') || '<p class="mode-note">No quests right now. Talk to people in the villages (look for the gold marker).</p>'}<h3>Finished</h3><p class="mode-note">${OWS.done.map(k => esc(OW_QUESTS[k].name)).join(' · ') || 'None yet.'}</p>`;
+    body.querySelectorAll('[data-track]').forEach(b => b.addEventListener('click', () => { OWS.track = b.dataset.track; owRenderJournal(); }));
+  } else if (owTab === 'story') {
+    body.innerHTML = `<h3>The Shardfall</h3>${OW_INTRO.map(s => `<p>${esc(s.t)}</p>`).join('')}<h3>Your journey</h3>${OWS.lore.map(s => `<p class="ow-lore">${esc(s)}</p>`).join('') || '<p class="mode-note">Your story is just beginning.</p>'}<h3>Heartshards</h3><p>${OWS.bosses.filter(b => b !== 'sky').length} of 6 restored.</p>`;
+  } else if (owTab === 'achievements') {
+    body.innerHTML = `<p class="mode-note">${OWS.achs.length} of ${OW_ACHS.length} unlocked. Every achievement gives an Achievement Box.</p><div class="ow-grid">${OW_ACHS.map(a => `<div class="ow-ach${OWS.achs.includes(a.id) ? ' on' : ''}"><b>${esc(a.name)}</b><span>${esc(a.desc)}</span></div>`).join('')}</div>`;
+  } else if (owTab === 'gear') {
+    const reveal = owBoxShown ? `<div class="ow-reveal" style="--tier: var(--${owBoxShown.tier})"><div class="eyebrow">${esc(owBoxShown.kind)}</div><b>${esc(owBoxShown.name)}</b><p>${esc(owBoxShown.desc)}</p></div>` : '';
+    body.innerHTML = `<h3>Boxes</h3><div class="ow-row"><span>${OWS.boxes} box${OWS.boxes === 1 ? '' : 'es'} waiting</span><button class="btn" id="owOpenBox" type="button"${OWS.boxes ? '' : ' disabled'}>Open a box</button></div>${reveal}
+      <h3>Weapons</h3><div class="ow-grid">${OWS.weapons.map(id => { const w = OW_WEAPON[id]; return `<div class="ow-item" style="--tier: var(--${w.tier})"><b>${esc(w.name)}</b><span>${esc(w.desc)}</span><button class="sb-btn" data-weapon="${id}" type="button"${OWS.weapon === id ? ' disabled' : ''}>${OWS.weapon === id ? 'Equipped' : 'Equip'}</button></div>`; }).join('')}</div>
+      <h3>Pets</h3><div class="ow-grid">${OWS.pets.map(id => `<div class="ow-item" style="--tier: var(--${PET[id].tier || 'rare'})"><b>${esc(PET[id].name)}</b><span>${esc(PET[id].desc)}</span><button class="sb-btn" data-pet="${id}" type="button">${OWS.pet === id ? 'With you · send home' : 'Bring along'}</button></div>`).join('') || '<p class="mode-note">No pets yet. Some quests free them, and boxes can hold them.</p>'}</div>
+      <h3>Abilities</h3><p class="mode-note">${Object.keys(levels).filter(id => AB[id]).map(id => `${esc(AB[id].name)} ${ROMAN[L(id)]}`).join(' · ') || 'None yet.'} Choose which ones you use in the Loadout (Q).</p>`;
+    $('#owOpenBox')?.addEventListener('click', () => { if (OWS.boxes <= 0) return; OWS.boxes--; owBoxShown = owRollBox(); sfx('fuse'); owSave(true); owRenderJournal(); });
+    body.querySelectorAll('[data-weapon]').forEach(b => b.addEventListener('click', () => { OWS.weapon = b.dataset.weapon; recompute(); renderBar(); sfx('gem'); owRenderJournal(); }));
+    body.querySelectorAll('[data-pet]').forEach(b => b.addEventListener('click', () => { OWS.pet = OWS.pet === b.dataset.pet ? null : b.dataset.pet; refreshPet(); sfx('gem'); owRenderJournal(); }));
+  } else if (owTab === 'map') {
+    const spots = owTravelSpots();
+    body.innerHTML = `<p class="ow-row"><span>Explored <b>${OWS.exPct || 0}%</b> · Lightspires <b>${OWS.beacons.length} / 6</b> · Trials <b>${OWS.sanctums.length} / 12</b> · Light Seeds <b>${OWS.seeds}</b> · Skylings <b>${OWS.skylings.length} / ${owSkylings().length}</b></span></p>
+      <div class="ow-travel"><span>Travel to:</span>${spots.map(p => `<button class="sb-btn" data-go="${p.id}" type="button">${p.name}</button>`).join('')}</div><canvas id="owWorld" class="ow-world" width="600" height="600"></canvas><p class="mode-note">Gold circles are villages, red diamonds are guardian lairs (green once freed), teal are landmarks, orange are camps. A gold ring marks where your quest leads, with a ? if you haven't been there yet.</p>`;
+    owDrawWorld($('#owWorld'));
+    body.querySelectorAll('[data-go]').forEach(b => b.addEventListener('click', () => owTravel(OW_POI[b.dataset.go])));
+  }
+}
+
+/* the page bits */
+{
+  const css = document.createElement('style');
+  css.textContent = `
+#owUi { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
+body.ow-cut #hud, body.ow-cut #owUi, body.ow-cut #intros, body.ow-cut #owToasts { visibility: hidden; }
+#owTrack { position: fixed; left: calc(16px + env(safe-area-inset-left, 0px)); top: calc(124px + env(safe-area-inset-top, 0px)); width: min(300px, 44vw); display: grid; gap: 5px; font-size: 12px; }
+body.touch #owTrack { top: 104px; }
+.ow-q { background: #0d0b16cc; border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; color: var(--muted); }
+.ow-q b { color: var(--bone); display: block; font-size: 12.5px; }
+.ow-q.main b { color: #ffd36e; } .ow-q.raid { border-color: #ff5a6a; } .ow-q.raid b { color: #ff8a8a; } .ow-q.box b { color: #c77dff; }
+.ow-xp { display: flex; align-items: center; gap: 8px; color: #ffd36e; font-weight: 700; font-size: 12px; }
+.ow-xp i { flex: 1; height: 6px; background: #ffffff1a; border-radius: 3px; position: relative; overflow: hidden; }
+.ow-xp i::after { content: ''; position: absolute; inset: 0; background: #ffd36e; transform-origin: left; transform: scaleX(var(--f)); }
+#owSaved { position: fixed; right: 14px; bottom: 14px; font-size: 12px; color: #7fe08a; opacity: 0; }
+#owSaved.on { animation: owSaved 2.2s ease; }
+@keyframes owSaved { 0%, 100% { opacity: 0; } 15%, 70% { opacity: 1; } }
+#owPrompt { position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); pointer-events: auto; background: #0d0b16ee; border: 1px solid #ffd36e; color: var(--bone); border-radius: 8px; padding: 8px 14px; font: inherit; font-size: 14px; cursor: pointer; }
+#owPrompt kbd { color: #ffd36e; margin-right: 4px; }
+#owLabels { position: fixed; inset: 0; pointer-events: none; }
+.ow-label { position: absolute; left: 0; top: 0; text-align: center; white-space: nowrap; text-shadow: 0 1px 3px #000; }
+.ow-label b { display: block; font-size: 13px; color: var(--bone); } .ow-label small { font-size: 11px; color: var(--muted); }
+#owToasts { position: fixed; left: 50%; top: 150px; transform: translateX(-50%); display: grid; gap: 6px; justify-items: center; width: min(460px, 92vw); z-index: 6; pointer-events: none; }
+.ow-toast { background: #0d0b16ee; border: 1px solid var(--line); border-radius: 8px; padding: 7px 14px; text-align: center; animation: owToast 4.5s ease forwards; }
+.ow-toast b { display: block; color: var(--bone); font-size: 14px; } .ow-toast span { font-size: 12px; color: var(--muted); }
+.ow-toast.gold { border-color: #ffd36e; } .ow-toast.gold b { color: #ffd36e; } .ow-toast.ach { border-color: #c77dff; } .ow-toast.ach b { color: #d8a0ff; }
+@keyframes owToast { 0% { opacity: 0; transform: translateY(-6px); } 8%, 82% { opacity: 1; transform: none; } 100% { opacity: 0; } }
+#owMap { justify-self: end; margin-top: 6px; width: 150px; height: 150px; border: 1px solid var(--line); border-radius: 50%; }
+body.touch #owMap { width: 110px; height: 110px; }
+#owTalk { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(640px, calc(100vw - 32px)); background: #0d0b16f2; border: 1px solid #ffd36e88; border-radius: 12px; padding: 16px; z-index: 30; display: grid; grid-template-columns: 52px 1fr; gap: 6px 14px; }
+#owTalkPic { width: 52px; height: 52px; border-radius: 50%; grid-row: span 2; box-shadow: inset 0 -10px 0 #0004; }
+#owTalkName { font-weight: 800; color: #ffd36e; font-size: 17px; } #owTalkTitle { font-size: 12px; color: var(--muted); margin-left: 6px; font-weight: 400; }
+#owTalkText { margin: 0; color: var(--bone); line-height: 1.5; font-size: 15px; }
+#owTalkBtns { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; }
+#owCutUi { position: fixed; inset: 0; z-index: 25; pointer-events: auto; cursor: pointer; }
+#owCutUi::before, #owCutUi::after { content: ''; position: absolute; left: 0; right: 0; height: 0; background: #000; transition: height .6s ease; }
+#owCutUi::before { top: 0; } #owCutUi::after { bottom: 0; }
+#owCutUi.on::before, #owCutUi.on::after { height: 11vh; }
+#owCutCap { position: absolute; left: 50%; bottom: 13vh; transform: translateX(-50%); width: min(760px, 90vw); text-align: center; text-shadow: 0 2px 8px #000; opacity: 0; }
+#owCutCap.show { animation: owCap 1s ease forwards; }
+@keyframes owCap { to { opacity: 1; } }
+#owCutText { font-size: clamp(17px, 2.4vw, 24px); color: var(--bone); font-weight: 700; line-height: 1.4; }
+#owCutSub { font-size: 15px; color: #ffd36e; margin-top: 6px; font-style: italic; }
+#owCutSkip { position: absolute; right: 16px; bottom: calc(11vh + 10px); font-size: 12px; color: #ffffff99; }
+#owDead { position: fixed; inset: 0; display: grid; place-content: center; text-align: center; background: radial-gradient(#0008, #000c); z-index: 30; }
+#owDead b { font-size: 40px; color: var(--bone); } #owDead span { color: var(--muted); }
+#owScreen .panel { width: min(860px, calc(100vw - 24px)); max-height: calc(100vh - 40px); overflow: auto; }
+#owTabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0 12px; }
+#owTabs button.on { background: var(--bone); color: #0d0b16; }
+#owBody h3 { margin: 14px 0 8px; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+#owBody p { line-height: 1.55; }
+.ow-card { border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+.ow-card.main { border-color: #ffd36e88; }
+.ow-card-h { display: flex; justify-content: space-between; gap: 8px; } .ow-card-h span { font-size: 12px; color: var(--muted); }
+.ow-card p { margin: 6px 0; font-size: 14px; } .ow-card small { color: #7fe08a; display: block; margin-bottom: 6px; }
+.ow-lore { font-style: italic; border-left: 3px solid #ffd36e66; padding-left: 10px; }
+.ow-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.ow-ach, .ow-item { border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; display: grid; gap: 4px; align-content: start; }
+.ow-ach { opacity: .45; } .ow-ach.on { opacity: 1; border-color: #c77dff; }
+.ow-ach b, .ow-item b { font-size: 13.5px; } .ow-ach span, .ow-item span { font-size: 12px; color: var(--muted); }
+.ow-item { border-color: var(--tier, var(--line)); } .ow-item b { color: var(--tier, var(--bone)); }
+.ow-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.ow-reveal { margin-top: 10px; border: 2px solid var(--tier); border-radius: 10px; padding: 12px 14px; animation: owCap .5s ease both; }
+.ow-reveal b { font-size: 20px; color: var(--tier); } .ow-reveal p { margin: 6px 0 0; }
+.ow-world { width: 100%; max-width: 600px; aspect-ratio: 1; display: block; margin: 0 auto; border-radius: 8px; border: 1px solid var(--line); }
+#owJournalBtn { pointer-events: auto; }
+#owStam { position: absolute; left: 0; top: 0; transform-origin: center; }
+#owStam circle { fill: none; stroke-width: 5; transform: rotate(-90deg); transform-origin: 20px 20px; }
+#owStam .b { stroke: #00000066; } #owStam .f { stroke: #7fe08a; stroke-dasharray: 100; transition: stroke .2s; }
+#owStam.low .f { stroke: #ff5a6a; }
+#owJumpBtn { pointer-events: auto; position: absolute; right: calc(110px + env(safe-area-inset-right, 0px)); bottom: calc(190px + env(safe-area-inset-bottom, 0px)); width: 64px; height: 64px; border-radius: 50%; border: 2px solid #ffd36e; background: #ffd36e1f; color: #ffd36e; font: 700 13px var(--display); letter-spacing: .08em; text-transform: uppercase; }
+.ow-travel { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0 10px; } .ow-travel span { color: var(--muted); font-size: 13px; }
+`;
+  document.head.append(css);
+  const ui = document.createElement('div');
+  ui.innerHTML = `
+<div id="owUi" hidden><div id="owTrack"></div><svg id="owStam" hidden viewBox="0 0 40 40" width="34" height="34"><circle cx="20" cy="20" r="15.9" pathLength="100" class="b"/><circle cx="20" cy="20" r="15.9" pathLength="100" class="f"/></svg><button id="owJumpBtn" type="button" hidden>Jump</button><div id="owSaved">Game saved</div><button id="owPrompt" type="button" hidden></button><div id="owLabels"></div></div>
+<div id="owToasts" aria-live="polite"></div>
+<div id="owTalk" hidden role="dialog" aria-label="Conversation"><div id="owTalkPic"></div><div><span id="owTalkName"></span><span id="owTalkTitle"></span></div><p id="owTalkText"></p><div id="owTalkBtns"></div></div>
+<div id="owCutUi" hidden><div id="owCutCap"><div id="owCutText"></div><div id="owCutSub"></div></div><div id="owCutSkip">Click or press Enter to skip</div></div>
+<div id="owDead" hidden><b>You fell</b><span>Returning to your last save…</span></div>
+<section class="screen" id="owScreen" hidden><div class="panel"><div class="lo-head"><div><div class="eyebrow">Open world · game paused</div><h2 class="lo-title">Journal</h2></div><button class="btn" id="owClose" type="button">Back to the world</button></div>
+<div id="owTabs"><button class="sb-btn" data-tab="quests" type="button">Quests</button><button class="sb-btn" data-tab="story" type="button">Story</button><button class="sb-btn" data-tab="achievements" type="button">Achievements</button><button class="sb-btn" data-tab="gear" type="button">Gear and boxes</button><button class="sb-btn" data-tab="map" type="button">World map</button></div><div id="owBody"></div></div></section>`;
+  document.body.append(...ui.children);
+  const mm = document.createElement('canvas'); mm.id = 'owMap'; mm.width = mm.height = 300; mm.hidden = true; $('#roomName').after(mm);
+  // the mode card and a journal button
+  const card = document.createElement('button');
+  card.className = 'mode-card'; card.id = 'owBtn'; card.type = 'button';
+  card.innerHTML = '<b>Open World</b><span>Explore a huge world of six realms: quests, a story, pets to find and achievements. Your progress saves every minute.</span>';
+  $('#titleModes .mode-grid').append(card);
+  const fresh = document.createElement('button');
+  fresh.className = 'btn ghost'; fresh.id = 'owNewBtn'; fresh.type = 'button'; fresh.textContent = 'Start a new open world';
+  $('#modeBack').before(fresh);
+  card.addEventListener('click', () => owBegin(false));
+  fresh.addEventListener('click', () => { if (!owHasSave() || confirm('Start a new open world? Your current open world save will be erased.')) owBegin(true); });
+  const jb = document.createElement('button');
+  jb.className = 'lo-btn'; jb.id = 'owJournalBtn'; jb.type = 'button'; jb.innerHTML = '<kbd>J</kbd> Journal'; jb.hidden = true;
+  $('#loadoutBtn').after(jb);
+  jb.addEventListener('click', () => owOpenJournal());
+  const mb = document.createElement('button');
+  mb.className = 'lo-btn'; mb.id = 'owMapBtn'; mb.type = 'button'; mb.innerHTML = '<kbd>N</kbd> Map'; mb.hidden = true;
+  jb.after(mb);
+  const sb = document.createElement('button');
+  sb.className = 'lo-btn'; sb.id = 'owSaveBtn'; sb.type = 'button'; sb.innerHTML = '<kbd>K</kbd> Save'; sb.hidden = true;
+  mb.after(sb);
+  sb.addEventListener('click', e => { e.currentTarget.blur(); owManualSave(); });
+  // and on the pause screen
+  const ps = document.createElement('button');
+  ps.className = 'btn ghost'; ps.id = 'owSaveNow'; ps.type = 'button'; ps.textContent = 'Save game'; ps.hidden = true;
+  $('#quitBtn').before(ps);
+  ps.addEventListener('click', owManualSave);
+  mb.addEventListener('click', () => owOpenJournal('map'));
+  $('#owMap').style.pointerEvents = 'auto'; $('#owMap').style.cursor = 'pointer'; $('#owMap').title = 'Open the map of everywhere you\'ve been';
+  $('#owMap').addEventListener('click', () => owOpenJournal('map'));
+  $('#owPrompt').addEventListener('click', owInteract);
+  $('#owJumpBtn').addEventListener('pointerdown', e => { e.preventDefault(); owJump(); });
+  $('#owClose').addEventListener('click', owCloseJournal);
+  document.querySelectorAll('#owTabs button').forEach(b => b.addEventListener('click', () => { owTab = b.dataset.tab; owBoxShown = null; owRenderJournal(); }));
+  $('#owCutUi').addEventListener('click', owSkipCut);
+  addEventListener('keydown', e => {
+    if (!ow || e.repeat) return;
+    const k = e.key.toLowerCase();
+    if (state === 'owcut' && (k === 'enter' || k === 'escape' || k === ' ')) { e.preventDefault(); owSkipCut(); }
+    else if (state === 'owtalk' && k === 'escape') owTalkClose();
+    else if (state === 'owjournal' && (k === 'j' || k === 'escape')) owCloseJournal();
+    else if (state === 'play' && k === 'j') owOpenJournal();
+    else if (state === 'play' && k === 'n') owOpenJournal('map');
+    else if ((state === 'play' || state === 'paused') && k === 'k') owManualSave();
+    else if (state === 'owjournal' && k === 'n') owCloseJournal();
+    else if (state === 'play' && k === 'e') owInteract();
+  });
+  addEventListener('beforeunload', () => { if (ow && state !== 'owdead') owSave(true); });
+}
+function owToast(title, sub, kind = '') {
+  const t = document.createElement('div');
+  t.className = 'ow-toast ' + kind;
+  t.innerHTML = '<b></b><span></span>';
+  t.querySelector('b').textContent = title; t.querySelector('span').textContent = sub || '';
+  $('#owToasts').append(t);
+  while ($('#owToasts').children.length > 4) $('#owToasts').firstChild.remove();
+  setTimeout(() => t.remove(), 4600);
+}
+function owRefreshTitle() {
+  const has = owHasSave();
+  $('#owBtn span').textContent = has ? 'Continue your journey through the six realms of Aelvar. Your progress saves every minute.' : 'Explore a huge world of six realms: quests, a story, pets to find and achievements. Your progress saves every minute.';
+  $('#owBtn b').textContent = has ? 'Open World · continue' : 'Open World';
+  $('#owNewBtn').hidden = !has;
+}
+owRefreshTitle();
+
+/* ---------- open world: exploring like a real adventure ---------- */
+// Stamina, jumping and a glider, steep slopes that tire you out, Lightspires that reveal the map and let you
+// travel back, Trial Sanctums that give Light Seeds (four buy you more health or stamina), Skylings hiding
+// on the mountain tops, and days that turn into nights.
+const OW_STAM = 100, OW_GRAV = 24;
+const owStamMax = () => OW_STAM + 25 * (OWS?.stamUp || 0);
+const owPY = pl => ow && OWR && pl.air ? pl.ay : gy(pl.pos.x, pl.pos.z);   // how high a player stands (or flies)
+
+/* jumping, gliding, falling */
+function owJump() {
+  if (!ow || !OWR || state !== 'play' || P1.down) return;
+  const g0 = owH(P1.pos.x, P1.pos.z);
+  if (!P1.air) { P1.air = true; P1.ay = g0; P1.avy = 9.5; P1.glide = false; sfx('boing'); return; }
+  // in the air: open or close the glider
+  if (P1.glide) { P1.glide = false; return; }
+  if (P1.ay - g0 > 1.2 && OWR.stam > 0) { P1.glide = true; sfx('dash'); burst(P1.pos.x, P1.ay - g0 + 2, P1.pos.z, 0xe8e0d0, 8, 2); }
+}
+function owTickBody(dt) {
+  const R = OWR, P0 = P1, g0 = owH(P0.pos.x, P0.pos.z);
+  if (P0.air) {
+    P0.avy -= OW_GRAV * dt;
+    if (P0.glide) { P0.avy = Math.max(P0.avy, -1.1); R.stam -= 9 * dt; R.stamT = 0.8; if (R.stam <= 0) { R.stam = 0; P0.glide = false; owToast('Out of stamina', 'The glider folds up'); } }
+    P0.ay += P0.avy * dt;
+    if (P0.ay <= g0) {
+      const fall = -P0.avy;
+      P0.air = false; P0.glide = false; P0.ay = g0;
+      if (fall > 17) { const d = Math.min(Math.round((fall - 17) * 3.5), Math.round(S.maxHp * 0.7));   // a long fall hurts a lot, but never kills you outright
+ hurtPlayer(d); floatNum(P0.pos.x, 2, P0.pos.z, 'Ouch!'); }
+      if (fall > 6) { burst(P0.pos.x, 0.3, P0.pos.z, 0xb8a888, 8, 3); sfx('thud'); }
+    }
+  } else if (!R.tp && R.lastG !== undefined && R.lastG - g0 > 0.9) {
+    // ran off a drop: you're falling now (and can open the glider)
+    P0.air = true; P0.ay = R.lastG; P0.avy = 0;
+  }
+  R.lastG = P0.air ? P0.ay : g0;
+  // the glider: a cloth wing over your head
+  if (!R.wing) {
+    const w = new THREE.Group();
+    const cloth = new THREE.Mesh(new THREE.ConeGeometry(1.9, 0.5, 3), new THREE.MeshStandardMaterial({ color: 0xc8b8a0, roughness: 0.8, flatShading: true, side: THREE.DoubleSide }));
+    cloth.rotation.set(0, Math.PI, 0); cloth.scale.set(1.4, 1, 0.55); cloth.position.y = 3; w.add(cloth);
+    for (const s of [-1, 1]) { const rope = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.6, 4), lit(0x5a4a3a)); rope.position.set(s * 0.8, 2.2, 0); rope.rotation.z = s * 0.45; w.add(rope); }
+    pg.add(w); R.wing = w;
+  }
+  R.wing.visible = !!P0.glide;
+  // stamina comes back once you've rested on the ground for a moment
+  R.stamT -= dt;
+  if (!P0.air && R.stamT <= 0) R.stam = Math.min(owStamMax(), R.stam + 35 * dt);
+  owDrawStam();
+}
+// slopes: gentle ones just slow you, steep ones are climbing and use stamina; run out and you slide back down
+function owSlope(pl, mx, mz) {
+  if (!ow || !OWR || (!mx && !mz)) return 1;
+  if (pl.air) return pl.glide ? 1.7 : 1.1;
+  const l = Math.hypot(mx, mz) || 1, rise = owH(pl.pos.x + mx / l * 0.7, pl.pos.z + mz / l * 0.7) - owH(pl.pos.x, pl.pos.z);
+  if (rise <= 0) return 1;
+  if (rise > 0.5) {
+    pl.climbing = true; OWR.stamT = 0.8;
+    if (OWR.stam > 0) { OWR.stam = Math.max(0, OWR.stam - 18 * (OWR.dt || 0.016)); return 0.5; }
+    if (OWR.slipT === undefined || OWR.slipT <= 0) { OWR.slipT = 2; owToast('Too tired to climb', 'Rest on flatter ground to get your stamina back'); }
+    return -0.7;
+  }
+  return Math.max(0.55, 1 - rise * 0.8);
+}
+// the stamina wheel beside you, only while it isn't full
+function owDrawStam() {
+  const el = $('#owStam'), R = OWR, max = owStamMax(), f = R.stam / max;
+  const show = f < 0.999 && state === 'play';
+  el.hidden = !show;
+  if (!show) return;
+  const sp = toScreen(P1.pos.x, owPY(P1) + 1.6, P1.pos.z);
+  el.style.transform = `translate(${sp.x + 34}px, ${sp.y}px) translate(-50%, -50%)`;
+  el.querySelector('circle.f').style.strokeDashoffset = String(100 - f * 100);
+  el.classList.toggle('low', f < 0.25);
+}
+
+/* Lightspires and Trial Sanctums: more places in the world */
+const OW_BEACONS = [
+  { id: 'b_dusk', x: -130, z: -130, realm: 0 }, { id: 'b_ember', x: 650, z: 130, realm: 1 }, { id: 'b_frost', x: 190, z: -660, realm: 2 },
+  { id: 'b_verdant', x: -600, z: -200, realm: 3 }, { id: 'b_sands', x: 250, z: 640, realm: 4 }, { id: 'b_abyss', x: 650, z: -730, realm: 5 },
+];
+const OW_SANCTUMS = [
+  [90, -120, 0], [-160, 60, 0], [560, -40, 1], [780, 220, 1], [-120, -560, 2], [130, -800, 2],
+  [-560, 90, 3], [-800, -180, 3], [-120, 560, 4], [200, 820, 4], [560, -640, 5], [780, -500, 5],
+].map(([x, z, realm], i) => ({ id: 'sanct' + i, x, z, realm }));
+for (const b of OW_BEACONS) OW_POIS.push(OW_POI[b.id] = { id: b.id, kind: 'beacon', name: `${OW_REALMS[b.realm].name.replace('The ', '')} Lightspire`, realm: b.realm, x: b.x, z: b.z, r: 10 });
+for (const t of OW_SANCTUMS) OW_POIS.push(OW_POI[t.id] = { id: t.id, kind: 'sanctum', name: `Trial Sanctum`, realm: t.realm, x: t.x, z: t.z, r: 15 });
+OW_POI_COL.beacon = '#6fc8ff'; OW_POI_COL.sanctum = '#9fe8ff';
+function owBuildBeacon(p, g, col) {
+  const on = OWS.beacons.includes(p.id);
+  owMesh(new THREE.CylinderGeometry(4.5, 5.5, 1.2, 10), lit(0x4a4a58), 0, 0.6, 0, g);
+  const tower = owMesh(new THREE.CylinderGeometry(1.6, 2.6, 26, 8), lit(0x5a5a6a), 0, 13, 0, g);
+  for (let i = 0; i < 6; i++) owMesh(new THREE.TorusGeometry(2.2 - i * 0.12, 0.14, 6, 16), lit(0x3a3a48), 0, 3 + i * 4, 0, g).rotation.x = Math.PI / 2;
+  const crown = owMesh(new THREE.OctahedronGeometry(1.6, 0), glowM(on ? 0x6fc8ff : 0x3a1a24), 0, 28, 0, g);
+  const panel = owMesh(new THREE.BoxGeometry(1.6, 1.2, 0.3), glowM(on ? 0x6fc8ff : 0xff5a6a), 0, 1.8, 2.7, g);
+  const beam = owMesh(new THREE.CylinderGeometry(0.9, 0.9, 120, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0x6fc8ff, transparent: true, opacity: 0.18, depthWrite: false, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, fog: false }), 0, 88, 0, g);
+  beam.visible = on;
+  col(0, 0, 3);
+  return { crown, panel, beam, tower };
+}
+function owBuildSanctum(p, g, col) {
+  const done = OWS.sanctums.includes(p.id);
+  const base = owMesh(new THREE.CylinderGeometry(5, 5.4, 0.5, 16), lit(0x5a6070), 0, 0.25, 0, g);
+  const rune = owMesh(new THREE.RingGeometry(3.6, 4, 40), glowM(done ? 0x7fe08a : 0x9fe8ff, 0.8), 0, 0.52, 0, g); rune.rotation.x = -Math.PI / 2;
+  for (let i = 0; i < 4; i++) { const a = i / 4 * TAU + Math.PI / 4; owMesh(new THREE.BoxGeometry(0.8, 4.5, 0.8), lit(0x6a7080), Math.sin(a) * 4.4, 2.5, Math.cos(a) * 4.4, g); }
+  const orb = owMesh(new THREE.IcosahedronGeometry(0.7, 0), glowM(done ? 0x7fe08a : 0x9fe8ff), 0, 2.6, 0, g);
+  return { orb, rune };
+}
+
+/* the Skylings: little star spirits sitting on the highest peaks. Climb up and catch them */
+let OW_SKY = null;
+function owSkylings() {
+  if (OW_SKY) return OW_SKY;
+  const pts = [], st = 40;
+  for (let x = -1060; x <= 1060; x += st) for (let z = -1060; z <= 1060; z += st) {
+    const h = owHRaw(x, z);
+    if (h < 15) continue;
+    let top = true;
+    for (const [a, b] of [[st, 0], [-st, 0], [0, st], [0, -st], [st, st], [-st, -st], [st, -st], [-st, st]]) if (owHRaw(x + a, z + b) > h) { top = false; break; }
+    if (!top) continue;
+    // nudge to the very top
+    let bx = x, bz = z, bh = h;
+    for (let k = 0; k < 24; k++) { const nx = bx + rand(-6, 6), nz = bz + rand(-6, 6), nh = owHRaw(nx, nz); if (nh > bh) { bx = nx; bz = nz; bh = nh; } }
+    pts.push({ id: 'sky' + pts.length, x: Math.round(bx), z: Math.round(bz), h: bh });
+  }
+  OW_SKY = pts.sort((a, b) => b.h - a.h).slice(0, 40).map((p, i) => ({ ...p, id: 'sky' + i }));
+  return OW_SKY;
+}
+function owTickSkylings(dt) {
+  const R = OWR;
+  R.skyG ||= new Map();
+  for (const s of owSkylings()) {
+    const d = Math.hypot(P1.pos.x - s.x, P1.pos.z - s.z), got = OWS.skylings.includes(s.id);
+    let m = R.skyG.get(s.id);
+    if (!got && d < 140 && !m) {
+      m = new THREE.Group(); m.position.set(s.x, s.h + 1.6, s.z); scene.add(m);
+      m.add(new THREE.Mesh(new THREE.OctahedronGeometry(0.45, 0), glowM(0xfff1a8)));
+      for (let k = 0; k < 4; k++) { const sp = new THREE.Mesh(new THREE.OctahedronGeometry(0.12, 0), glowM(0xffffff)); sp.position.set(Math.sin(k * 1.57) * 0.8, 0, Math.cos(k * 1.57) * 0.8); m.add(sp); }
+      R.skyG.set(s.id, m);
+    }
+    if (m && (got || d > 170)) { scene.remove(m); R.skyG.delete(s.id); continue; }
+    if (!m) continue;
+    m.rotation.y += dt * 1.5; m.position.y = s.h + 1.6 + Math.sin(T * 2.5) * 0.25;
+    if (d < 2.6 && Math.abs(owPY(P1) - s.h) < 4) {
+      OWS.skylings.push(s.id); scene.remove(m); R.skyG.delete(s.id);
+      burst(s.x, 1.6, s.z, 0xfff1a8, 24, 5); ring(s.x, s.z, 0.3, 3, 0.4, 0xfff1a8); sfx('yay');
+      shards += 40; shardsTotal += 40; owXP(40);
+      owToast(`Skyling caught! (${OWS.skylings.length} / ${owSkylings().length})`, 'It giggles and gives you 40 shards', 'gold');
+      owAch(); owSave(true);
+    }
+  }
+}
+
+/* towers: wake one and it shows you the land around it, and you can travel back to it */
+function owActivateBeacon(p) {
+  if (OWS.beacons.includes(p.id)) return;
+  OWS.beacons.push(p.id);
+  const pg2 = OWR.pois.get(p.id);
+  owCutscene([{ dur: 4.5, text: `${p.name} awakens`, sub: 'The land around it appears on your map. You can travel here from the map',
+    start: () => { sfx('fuse'); if (pg2?.bc) { pg2.bc.crown.material.color.setHex(0x6fc8ff); pg2.bc.panel.material.color.setHex(0x6fc8ff); pg2.bc.beam.visible = true; } },
+    cam: t => { if (Math.random() < 0.5) burst(p.x + rand(-2, 2), 1 + t * 6, p.z + rand(-2, 2), 0x6fc8ff, 2, 2); return { p: [p.x + Math.sin(t * 0.6) * 22, 6 + t * 7, p.z + Math.cos(t * 0.6) * 22], l: [p.x, 10 + t * 4, p.z] }; },
+    end: () => { owExMark(p.x, p.z, 330); flash(p.x, 28, p.z, 0x6fc8ff, 14, 0.8); } }], () => { owAch(); owSave(); });
+}
+// travel to a woken tower or a village you've been to
+function owTravelSpots() {
+  return OW_POIS.filter(p => (p.kind === 'beacon' && OWS.beacons.includes(p.id)) || (p.kind === 'village' && OWS.seen.includes(p.id)) || p.id === 'lantern');
+}
+function owTravel(p) {
+  if (enemies.some(e => e.boss && !e.dead) || OWR.trial) { owToast('Can\'t travel now', 'Finish the fight first'); sfx('hmm'); return; }
+  owCloseJournal();
+  for (const e of enemies) if (!e.dead && (e.owWild || e.owCamp)) despawn(e);
+  P1.pos.set(p.x + 3, 0, p.z + (p.kind === 'village' ? 12 : 9)); P1.air = false; P1.glide = false; P1.vx = P1.vz = 0;
+  OWR.lastPos.copy(P1.pos); OWR.lastG = undefined;
+  owStream(true); owStreamPois(); owColliders();
+  camBase.set(P1.pos.x, 20 + owH(P1.pos.x, P1.pos.z), P1.pos.z + 13); camH = owH(P1.pos.x, P1.pos.z);
+  flash(P1.pos.x, 1.5, P1.pos.z, 0x6fc8ff, 6, 0.6); burst(P1.pos.x, 1, P1.pos.z, 0x6fc8ff, 24, 6); sfx('cast', 'blink');
+  banner(p.name, 'You travel in a flash of light');
+  P1.invuln = 2; owSave(true);
+}
+
+/* trial sanctums: step in, survive three waves, earn a Light Seed */
+function owStartTrial(p) {
+  if (OWS.sanctums.includes(p.id) || OWR.trial) return;
+  owSave();
+  const ring2 = new THREE.Mesh(new THREE.CylinderGeometry(14, 14, 4, 48, 1, true), new THREE.MeshBasicMaterial({ color: 0x9fe8ff, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false }));
+  ring2.position.set(p.x, owH(p.x, p.z) + 2, p.z); scene.add(ring2);
+  OWR.trial = { p, wave: 0, ring: ring2, t: 1.5 };
+  for (const e of enemies) if (!e.dead && Math.hypot(e.pos.x - p.x, e.pos.z - p.z) < 20 && !e.boss) despawn(e);
+  banner('Trial Sanctum', 'Survive three waves to earn a Light Seed');
+  sfx('bossAppear');
+}
+function owTickTrial(dt) {
+  const tr = OWR.trial; if (!tr) return;
+  const p = tr.p, d = Math.hypot(P1.pos.x - p.x, P1.pos.z - p.z);
+  // the light wall keeps you in
+  if (d > 13.4) { P1.pos.x = p.x + (P1.pos.x - p.x) / d * 13.4; P1.pos.z = p.z + (P1.pos.z - p.z) / d * 13.4; }
+  for (const e of enemies) if (!e.dead && e.owTrial) { const ed = Math.hypot(e.pos.x - p.x, e.pos.z - p.z); if (ed > 13) { e.pos.x = p.x + (e.pos.x - p.x) / ed * 13; e.pos.z = p.z + (e.pos.z - p.z) / ed * 13; } }
+  tr.ring.material.opacity = 0.12 + Math.sin(T * 3) * 0.05;
+  if (enemies.some(e => !e.dead && e.owTrial)) return;
+  tr.t -= dt;
+  if (tr.t > 0) return;
+  if (tr.wave >= 3) {
+    scene.remove(tr.ring); OWR.trial = null;
+    OWS.sanctums.push(p.id); OWS.seeds = (OWS.seeds || 0) + 1;
+    const pg2 = OWR.pois.get(p.id); if (pg2?.sc) { pg2.sc.orb.material.color.setHex(0x7fe08a); pg2.sc.rune.material.color.setHex(0x7fe08a); }
+    owXP(200); sfx('waveClear'); burst(p.x, 2, p.z, 0x9fe8ff, 40, 7);
+    banner('Trial complete!', `+1 Light Seed (you have ${OWS.seeds}) · Oda in Lantern Village trades four for more health or stamina`);
+    owAch(); owSave();
+    return;
+  }
+  tr.wave++; tr.t = 1.2;
+  const mobs = [...MAP_INFO[p.realm].mobs, 'brute'], n = 3 + tr.wave, dist = Math.hypot(p.x, p.z);
+  for (let i = 0; i < n; i++) { const a = i / n * TAU; const e = spawnEnemy(mobs[(i + tr.wave) % mobs.length], (1 + dist / 400) * 1.5, 1 + dist / 900, { x: p.x + Math.sin(a) * 10, z: p.z + Math.cos(a) * 10 }); e.owTrial = true; }
+  banner(`Wave ${tr.wave} of 3`, '');
+}
+
+/* day and night: a day lasts 10 minutes; nights are darker and busier */
+const owDayLight = () => { const t = ((OWS?.time || 0) / 600 + 0.15) % 1; return 0.5 + 0.5 * Math.cos(t * TAU); };
+const owDayName = () => { const t = ((OWS?.time || 0) / 600 + 0.15) % 1; return t < 0.2 || t > 0.85 ? 'Day' : t < 0.32 ? 'Dusk' : t < 0.7 ? 'Night' : 'Dawn'; };
+function owTickDay() {
+  const l = owDayLight();
+  hemi.intensity = 0.75 * (0.5 + 0.5 * l); sun.intensity = 1.05 * (0.35 + 0.65 * l);
+  OWR.night = l < 0.35;
+}
+
+/* E: talk, wake a tower, or start a trial */
+function owNearAct() {
+  for (const p of OW_POIS) {
+    if (p.kind !== 'beacon' && p.kind !== 'sanctum') continue;
+    const d = Math.hypot(P1.pos.x - p.x, P1.pos.z - (p.z + (p.kind === 'beacon' ? 2.7 : 0)));
+    if (p.kind === 'beacon' && d < 4.5 && !OWS.beacons.includes(p.id)) return { label: `Wake the ${p.name}`, fn: () => owActivateBeacon(p) };
+    if (p.kind === 'sanctum' && d < 5.5 && !OWS.sanctums.includes(p.id) && !OWR.trial) return { label: 'Begin the trial', fn: () => owStartTrial(p) };
+  }
+  return null;
+}
+function owInteract() {
+  if (!ow || !OWR || state !== 'play') return false;
+  if (OWR.near) { owTalk(OWR.near.n.id); return true; }
+  if (OWR.act) { OWR.act.fn(); return true; }
+  return false;
+}
+function owTickActs() {
+  OWR.act = OWR.near ? null : owNearAct();
+  if (OWR.act) { const pr = $('#owPrompt'); pr.hidden = false; const t = OWR.act.label; if (pr.dataset.t !== t) { pr.dataset.t = t; pr.innerHTML = `<kbd>E</kbd> ${t}`; } }
 }
 
 frame();
