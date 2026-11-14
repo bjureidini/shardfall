@@ -180,6 +180,28 @@ body.split .split-line { display: block; }
 .bank-btn[hidden] { display: none; }
 .lo-btn:focus-visible { outline: 2px solid var(--bolt); outline-offset: 2px; }
 .touch-on .lo-btn kbd { display: none; }
+#menuBtn { display: none; }
+.touch-on #menuBtn { display: inline-flex; border-color: var(--shard); }
+/* phones: the rarely used buttons live in the Menu, so the corner stays clear */
+.touch-on #fpBtn, .touch-on #owMapBtn, .touch-on #owSaveBtn { display: none !important; }
+.touch-on .hud-tr .lo-btn { padding: 7px 11px; margin-top: 4px; }
+/* phone layout: Dash (and Jump) in the bottom-right corner, abilities along the bottom middle, menu buttons in a row */
+.touch-on #dashBtn { right: calc(16px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: 70px; height: 70px; }
+.touch-on #owJumpBtn { right: calc(96px + env(safe-area-inset-right, 0px)); bottom: calc(16px + env(safe-area-inset-bottom, 0px)); width: 62px; height: 62px; }
+.touch-on .bar { left: 50%; right: auto; transform: translateX(-50%); bottom: calc(12px + env(safe-area-inset-bottom, 0px)); flex-direction: column-reverse; align-items: center; }
+.touch-on .hud-tr { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; max-width: min(340px, 46vw); }
+.touch-on .hud-tr > * { flex-basis: 100%; }
+.touch-on .hud-tr > .lo-btn { flex-basis: auto; margin-left: 6px; }
+.touch-on .hud-tr > canvas#owMap { flex-basis: auto; }
+@media (orientation: portrait) {
+  .touch-on .bar { bottom: calc(100px + env(safe-area-inset-bottom, 0px)); }
+}
+/* short landscape phones: only the active abilities, in one row, and a smaller map */
+@media (max-height: 560px) {
+  .touch-on #bar .group:nth-child(2) { display: none; }
+  .touch-on .hud-tr .kills { display: none; }
+  .touch-on #owMap { width: 84px !important; height: 84px !important; }
+}
 .touch-on .prompt { bottom: auto; top: calc(130px + env(safe-area-inset-top, 0px)); }
 .prompt {
   pointer-events: auto;
@@ -873,6 +895,7 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
     <canvas class="lab-map" id="labMap" width="336" height="336" hidden></canvas>
     <div class="mode-tag" id="sandboxTag" hidden>Sandbox</div>
     <div class="autofire" id="autoTag" hidden>Auto-fire on</div>
+    <button class="lo-btn" id="menuBtn" type="button">Menu</button>
     <button class="lo-btn" id="loadoutBtn" type="button"><kbd>Q</kbd> Loadout</button>
     <button class="lo-btn" id="fpBtn" type="button" title="Switch between the overhead view and first person"><kbd>V</kbd> <span>1st person</span></button>
   </div>
@@ -969,6 +992,9 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
       <dt><kbd>Slots</kbd></dt><dd>Tap an active slot to cast it</dd>
       <dt><kbd>Loadout</kbd></dt><dd>Button, top right, to choose which abilities to equip</dd>
       <dt><kbd>Tap</kbd></dt><dd>The box prompt to open it</dd>
+      <dt><kbd>Menu</kbd></dt><dd>Button, top right: pause, bank shards, auto-fire, first person, sound, and in the open world the map and saving</dd>
+      <dt><kbd>First person</kbd></dt><dd>Turn it on from the Menu. Your left thumb walks, your right thumb looks around and shoots</dd>
+      <dt><kbd>Open world</kbd></dt><dd>Jump button to jump (tap again in the air to glide), the gold button to talk or use things, Journal for quests and boxes</dd>
     </dl>
     <div class="odds">
       <div style="--tier: var(--common)"><b>54%</b><span>Common</span></div>
@@ -1015,6 +1041,12 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
     </div>
     <div class="btn-row">
       <button class="btn" id="resumeBtn" type="button">Resume</button>
+      <button class="btn ghost" id="pLoadout" type="button">Loadout</button>
+      <button class="btn ghost" id="pBank" type="button">Bank shards</button>
+      <button class="btn ghost" id="pAuto" type="button">Auto-fire: off</button>
+      <button class="btn ghost" id="pFp" type="button">First person: off</button>
+      <button class="btn ghost" id="pJournal" type="button" hidden>Journal</button>
+      <button class="btn ghost" id="pMap" type="button" hidden>Map</button>
       <button class="btn ghost" id="dmgBtn" type="button" aria-expanded="false" aria-controls="dmgMeter">Damage</button>
       <button class="btn ghost" id="padSetupBtn2" type="button">Controller setup</button>
       <button class="btn ghost" id="quitBtn" type="button">Quit to title</button>
@@ -1034,6 +1066,7 @@ body.pad-nav .screen :focus { outline: 2px solid var(--bolt); outline-offset: 2p
       <div class="bar-label">Sandbox tools</div>
       <div class="sb-row">
         <label class="sb-toggle"><input type="checkbox" id="sbGod"> Invincible</label>
+        <label class="sb-toggle"><input type="checkbox" id="sbNoCd"> No ability cooldowns</label>
         <button class="sb-btn" id="sbHeal" type="button">Full heal</button>
         <div class="sb-wave">
           <span>Jump to wave</span>
@@ -1790,6 +1823,8 @@ const Sound = (() => {
     setMusic(v) { prefs.music = v; apply(); save(); },
     setSfx(v) { prefs.sfx = v; apply(); save(); },
     toggleMute(v) { prefs.muted = v ?? !prefs.muted; apply(); save(); return prefs.muted; },
+    // the game's sound as a stream, for sending to an online friend
+    stream() { init(); if (!ctx) return null; const d = ctx.createMediaStreamDestination(); master.connect(d); return d.stream; },
   };
 })();
 const sfx = (name, arg) => Sound.play(name, arg);
@@ -2741,6 +2776,10 @@ const flail = new THREE.Group(); flail.name = 'flail'; flail.position.set(0, 1.2
 scene.add(pg);
 // Player 2 (co-op): a second hero on the controller, sharing the build, shards and boxes
 let coop = false;
+// online two-player (see the online section near the end): who we are and whether we're connected
+let net = null;   // { role: 'host'|'guest', peer, conn, open, code, ... }
+const netHost = () => net?.role === 'host' && net.open;
+const netGuest = () => net?.role === 'guest' && net.open;
 // in co-op, which player the controller drives (the other uses keyboard and mouse)
 let padPlayer = 2;
 // style: goofy (googly eyes, comic words, wave quips, boss cutscenes) or normal
@@ -4494,6 +4533,7 @@ let dungeon = false, D = null;
 let progress = { dungeon: false, bestFloor: 0 };
 try { Object.assign(progress, JSON.parse(localStorage.getItem('shardfall-progress')) || {}); } catch (_) {}
 const saveProgress = () => { try { localStorage.setItem('shardfall-progress', JSON.stringify(progress)); } catch (_) {} syncActiveSave(); };
+let sbNoCd = false;   // sandbox: abilities are ready again straight away
 let sandbox = false, godMode = false, sbWave = 1, tutHold = false, tutActive = false, ow = false;   // ow: the open world
 let T = 0, shards = 0, shardsTotal = 0, kills = 0, boxesOpened = 0, autoFire = false, shake = 0;
 const W = { n: 0, queue: [], spawnT: 0, active: false, inter: 2, hpMul: 1, dmgMul: 1 };
@@ -7481,12 +7521,13 @@ Object.assign(ACTIVE, {
   },
 });
 function useActive(i) {
+  if (netGuest()) { netSend({ t: 'cast', i }); return; }
   if (state !== 'play') return;
   const id = slots.active[i];
   if (!id || (cds[id] || 0) > 0) return;
   const l = L(id);
   if (withSrc(id, () => ACTIVE[id](l)) === false) return;
-  cds[id] = AB[id].cd(l) * (PV('pu_quickhands', 'cd') || 1) * (S.cdMul || 1);
+  cds[id] = sandbox && sbNoCd ? 0 : AB[id].cd(l) * (PV('pu_quickhands', 'cd') || 1) * (S.cdMul || 1);
   if (hasPower('pw_double') && Math.random() < 0.25) { cds[id] = 0; burst(P.pos.x, 1.6, P.pos.z, 0x6fe3a0, 10, 3); }   // Double Cast
   CH()?.cast?.(id);
   sfx('cast', AB[id].sound || id);
@@ -8012,9 +8053,10 @@ addEventListener('mousemove', () => document.body.classList.remove('pad-nav'));
 
 const stickEl = $('#stick'), knobEl = $('#knob'), aimStickEl = $('#aimStick'), aimKnobEl = $('#aimKnob');
 addEventListener('touchstart', e => {
-  if (state !== 'play') return;
+  const remote = state === 'remote' && netGuest();
+  if (state !== 'play' && !remote) return;
   for (const t of e.changedTouches) {
-    if (t.target !== canvas) continue;
+    if (t.target !== canvas && !(remote && t.target.closest?.('#netView'))) continue;
     const left = t.clientX < innerWidth / 2, j = left ? joy : aimJoy, el = left ? stickEl : aimStickEl;
     if (j.id !== null) continue;
     j.id = t.identifier; j.ox = t.clientX; j.oy = t.clientY; j.x = j.y = 0;
@@ -8113,6 +8155,7 @@ $('#labBtn').addEventListener('click', () => { if (dungeonOpen()) begin('lab'); 
 $('#titleBtn').addEventListener('click', toTitle);
 $('#quitBtn').addEventListener('click', toTitle);
 $('#sbGod').addEventListener('change', e => { godMode = e.target.checked; });
+$('#sbNoCd').addEventListener('change', e => { sbNoCd = e.target.checked; if (sbNoCd) { for (const k in cds) cds[k] = 0; for (const k in P2.build.cds || {}) P2.build.cds[k] = 0; } renderBar(); });
 $('#sbHeal').addEventListener('click', () => { P.hp = S.maxHp; });
 $('#sbWaveDown').addEventListener('click', () => { sbWave = Math.max(1, sbWave - 1); $('#sbWaveNum').textContent = sbWave; });
 $('#sbWaveUp').addEventListener('click', () => { sbWave = Math.min(99, sbWave + 1); $('#sbWaveNum').textContent = sbWave; });
@@ -8159,6 +8202,14 @@ $('#sbClear').addEventListener('click', () => {
   $('#sbSumNote').textContent = 'Cleared every monster from the arena.';
 });
 $('#resumeBtn').addEventListener('click', () => pause(false));
+// the pause screen's action buttons: everything you'd otherwise need a key for
+$('#menuBtn').addEventListener('click', e => { e.currentTarget.blur(); pause(true); });
+$('#pLoadout').addEventListener('click', () => { pause(false); openLoadout(); });
+$('#pBank').addEventListener('click', () => { pause(false); bankShards(P1); });
+$('#pAuto').addEventListener('click', () => { autoFire = !autoFire; $('#autoTag').hidden = !autoFire; pauseActs(); });
+$('#pFp').addEventListener('click', () => { setFirstPerson(!firstPerson); pauseActs(); });
+$('#pJournal').addEventListener('click', () => { pause(false); owOpenJournal(); });
+$('#pMap').addEventListener('click', () => { pause(false); owOpenJournal('map'); });
 
 /* ---------- flow ---------- */
 function clearEnemies() {
@@ -8198,7 +8249,7 @@ function begin(mode) {
   sandboxPet = petSave.equipped; sandboxAsc = false;
   seenTypes.clear();
   for (const c of introCards) c.el.remove(); introCards = [];
-  $('#sbGod').checked = false;
+  $('#sbGod').checked = false; $('#sbNoCd').checked = false; sbNoCd = false;
   $('#sandboxTag').hidden = !sandbox;
   $('#bankBtn').hidden = sandbox || !!trial;
   for (const pl of [P1, P2]) { clearCharFx(pl); pl.ch = {}; setCharOf(pl, charForRun(pl)); }
@@ -8227,7 +8278,7 @@ function begin(mode) {
   hideHalfReveals();
   for (const pl of [P1, P2]) { pl.down = false; pl.reviveT = 0; pl.downT = 0; if (pl.reviveRing) pl.reviveRing.visible = false; }
   pg.rotation.z = 0; p2g.rotation.z = 0;
-  setSplit(coop);
+  setSplit(coop && !netHost());
   camBase2.set(P2.pos.x, 20, P2.pos.z + 13);
   renderBar();
   refreshPet(); refreshPet2();
@@ -8286,7 +8337,7 @@ const saveActiveSlot = () => { try { localStorage.setItem('shardfall-active-slot
 let p2Slot = -1;
 try { const v = localStorage.getItem('shardfall-p2-slot'); if (v !== null && +v >= 0 && +v <= 2) p2Slot = +v; } catch (_) {}
 const p2Save = () => (coop && p2Slot >= 0 && p2Slot !== activeSlot && petSlots[p2Slot]) || null;
-const p2PetId = () => { const sv = p2Save(); return !trial && sv && sv.equipped && PET[sv.equipped] ? sv.equipped : null; };
+const p2PetId = () => { if (netHost()) return !trial && net.guest.pet && PET[net.guest.pet] ? net.guest.pet : null; const sv = p2Save(); return !trial && sv && sv.equipped && PET[sv.equipped] ? sv.equipped : null; };
 const dungeonOpen = () => progress.dungeon || !!p2Save()?.dungeon;
 function syncActiveSave() {
   try {
@@ -8823,7 +8874,7 @@ const charKey = pl => pl === P2 && !p2Save() ? 'pick2' : 'pick';
 const charPick = pl => { const id = charData(charSaveOf(pl))[charKey(pl)]; return id && charOwned(id, pl) ? id : 'wanderer'; };
 let sbTry = null, sbTryWho = P1, charWho = P1, charShown = null;
 // in the open world everyone is the plain Wanderer: no character traits or starting abilities
-const charForRun = pl => ow ? 'wanderer' : sandbox && sbTry && sbTryWho === pl ? sbTry : charPick(pl);
+const charForRun = pl => ow ? 'wanderer' : pl === P2 && netHost() ? net.guest.char : sandbox && sbTry && sbTryWho === pl ? sbTry : charPick(pl);
 function setCharOf(pl, id) {
   pl.charId = id;
   const c = CHAR[id], other = pl === P2 ? P1 : P2;
@@ -8832,7 +8883,7 @@ function setCharOf(pl, id) {
   if (coop && other.charId === id && pl === P2 && c.look.cloak) p2g.traverse(o => { if (o.userData.cloak) o.material = clothFor(shadeHex(c.look.cloak, 1.35)); });
 }
 const shadeHex = (h, k) => new THREE.Color(h).multiplyScalar(k).getHex();
-function refreshHeroes() { setCharOf(P1, charPick(P1)); setCharOf(P2, charPick(P2)); renderCharBtn(); }
+function refreshHeroes() { setCharOf(P1, charPick(P1)); setCharOf(P2, netHost() ? net.guest.char : charPick(P2)); renderCharBtn(); }
 function renderCharBtn() {
   const n = charData(petSave).owned.length, c = CHAR[charPick(P1)];
   $('#charBtn').textContent = `Characters ${n} / ${LOCKABLE.length} · ${c.name.replace('The ', '')}`;
@@ -11042,7 +11093,14 @@ function showDmgMeter(on) {
   if (on) renderDmgMeter();
 }
 $('#dmgBtn').addEventListener('click', () => showDmgMeter($('#dmgMeter').hidden));
+function pauseActs() {
+  $('#pLoadout').hidden = !!trial; $('#pBank').hidden = sandbox || !!trial || ow;
+  $('#pAuto').textContent = `Auto-fire: ${autoFire ? 'on' : 'off'}`;
+  $('#pFp').hidden = coop || splitView; $('#pFp').textContent = `First person: ${firstPerson ? 'on' : 'off'}`;
+  $('#pJournal').hidden = !ow; $('#pMap').hidden = !ow;
+}
 function pause(on) {
+  if (on && state === 'play') pauseActs();
   if (on && state === 'play') { if ($('#owSaveNow')) $('#owSaveNow').textContent = 'Save game'; state = 'paused'; showDmgMeter(false); $('#pauseScreen').hidden = false; $('#resumeBtn').focus({ preventScroll: true }); }
   else if (!on && state === 'paused') { state = 'play'; $('#pauseScreen').hidden = true; }
 }
@@ -11386,6 +11444,7 @@ function updateP2(dt) {
     } else {
       fire = !p.boxing && (p2in.trigger || p2in.auto);
       if (p2in.aimOn && !p.boxing) { p.face.set(p2in.ax, 0, p2in.az); fire = true; }
+      else if (p2in.lookOn && !p.boxing) p.face.set(p2in.ax, 0, p2in.az);   // an online friend aiming with the mouse
       else if (ml > 0.1) p.face.set(mx / ml, 0, mz / ml);
     }
     p.fireT -= dt;
@@ -11673,6 +11732,12 @@ function updateWorld(dt, pass) {
       fpYaw -= lx * Math.abs(lx) * dt * 3.2;
       fpPitch = Math.max(-1.2, Math.min(0.7, fpPitch - ly * Math.abs(ly) * dt * 2));
       wantFire = pad.trigger || autoFire;
+    } else if (touchMode) {
+      // phone: the right thumb turns your head (further = faster) and fires while held
+      const lx = aimJoy.x, ly = aimJoy.y;
+      if (aimJoy.id !== null) { fpYaw -= lx * Math.abs(lx) * dt * 3; fpPitch = Math.max(-1.2, Math.min(0.7, fpPitch - ly * Math.abs(ly) * dt * 1.8)); }
+      aimJoy.tapT -= dt;
+      wantFire = aimJoy.id !== null || aimJoy.tapT > 0 || autoFire;
     } else wantFire = (mouse.down && !!document.pointerLockElement) || autoFire;
     ax = Math.sin(fpYaw); az = Math.cos(fpYaw);
     if (pad.active) {
@@ -12230,7 +12295,7 @@ function updateWorld(dt, pass) {
   if (pass === 2) return;
   const tall = camera.aspect < 1 ? 1.45 : 1;
   let fx = P.pos.x, fz = P.pos.z, zoomTo = 1;
-  if (coop && !splitView) {
+  if (coop && !splitView && !netHost()) {
     const a = P.down ? P2 : P, b = P2.down ? P : P2;
     fx = (a.pos.x + b.pos.x) / 2; fz = (a.pos.z + b.pos.z) / 2;
     zoomTo = 1 + Math.min(0.7, Math.max(0, (Math.hypot(a.pos.x - b.pos.x, a.pos.z - b.pos.z) - 8) / 25));
@@ -12238,7 +12303,7 @@ function updateWorld(dt, pass) {
   camZoom += (zoomTo - camZoom) * (1 - Math.exp(-dt * 3));
   camH += ((ow && P1.air ? P1.ay : gy(fx, fz)) - camH) * (1 - Math.exp(-dt * 6));
   camBase.lerp(new THREE.Vector3(fx, 20 * tall * camZoom + camH, fz + 13 * tall * camZoom), 1 - Math.exp(-dt * 6));
-  if (splitView) camBase2.lerp(new THREE.Vector3(P2.pos.x, 20 * tall, P2.pos.z + 13 * tall), 1 - Math.exp(-dt * 6));
+  if (splitView || netHost()) camBase2.lerp(new THREE.Vector3(P2.pos.x, 20 * tall, P2.pos.z + 13 * tall), 1 - Math.exp(-dt * 6));
   shake = Math.max(0, shake - dt);
 }
 
@@ -12514,7 +12579,7 @@ function fixFov() {
   const base = camera.aspect < 1 ? 62 : 50;
   camera.fov = splitView ? base : base + (75 - base) * fpEase(); camera.updateProjectionMatrix();
 }
-const fpOn = () => firstPerson && !splitView && !coop && !touchMode && state !== 'title';
+const fpOn = () => firstPerson && !splitView && !coop && state !== 'title';
 function setFirstPerson(on) {
   firstPerson = on;
   try { localStorage.setItem('shardfall-fp', on ? '1' : '0'); } catch (_) {}
@@ -12641,6 +12706,7 @@ function frame() {
   requestAnimationFrame(frame);
   const dt = Math.min(clock.getDelta(), 0.05);
   pollPad(dt);
+  if (netHost()) netApplyInput();
   updateStress(dt);
   Sound.setMood(state === 'play' || state === 'paused' || state === 'loadout' || state === 'reveal' || state === 'cutscene'
     ? (enemies.some(e => e.boss) ? 2 : W.active || (dungeon && enemies.length) ? 1 : 0) : 0,
@@ -12689,7 +12755,7 @@ function frame() {
   }
   // your own body disappears as the camera reaches your head, so it doesn't block the view
   if (fe > 0.85) { pg.visible = false; fpHid = true; } else if (fpHid) { pg.visible = true; fpHid = false; }
-  if (splitView) {
+  if (splitView || netHost()) {
     camera2.position.copy(camBase2);
     if (shake > 0 && !reduceMotion) { camera2.position.x += rand(-1, 1) * shake * 1.4; camera2.position.z += rand(-1, 1) * shake * 1.4; }
     camera2.lookAt(camBase2.x, 0, camBase2.z - 13 * (camera2.aspect < 1 ? 1.45 : 1));
@@ -12702,6 +12768,7 @@ function frame() {
   if (owCut) owCutTick(dt);
   updateHUD();
   updateBar();
+  if (net) { netHostTick(dt); netGuestTick(dt); }
   const p2h = $('#hudP2'), pe2 = $('#prompt2');
   p2h.hidden = !coop || state === 'title';
   pe2.hidden = true;
@@ -14206,6 +14273,7 @@ function owApply() {
 
 /* starting and stopping */
 function owBegin(fresh) {
+  if (net) { $('#owBtn span').textContent = 'The open world is one player only. Leave the online game first (Players screen).'; return; }
   if (coop) { owPrevCoop = true; coop = false; }
   if (fresh) { try { localStorage.removeItem(OW_KEY()); } catch (_) {} }
   begin('ow');
@@ -14227,7 +14295,7 @@ function owStart() {
   owApply();
   if (!OWS.introDone) {
     OWS.introDone = true;
-    owCutscene(OW_CUTS.intro(), () => { owTalk('maren'); owToast('Controls', 'Space: jump, and again in the air to glide · E: talk or use · J: journal · N: map · K: save', ''); });
+    owCutscene(OW_CUTS.intro(), () => { owTalk('maren'); owToast('Controls', touchMode ? 'Jump button: jump, and again in the air to glide · tap the gold button to talk or use things · Journal and Menu buttons for the rest' : 'Space: jump, and again in the air to glide · E: talk or use · J: journal · N: map · K: save', ''); });
   } else banner('Welcome back', `Level ${OWS.level} · ${OW_REALMS[owRealmAt(P1.pos.x, P1.pos.z)].name}`);
 }
 function owEnd() {
@@ -14828,7 +14896,7 @@ function owRenderJournal() {
 #owUi { position: fixed; inset: 0; pointer-events: none; z-index: 5; }
 body.ow-cut #hud, body.ow-cut #owUi, body.ow-cut #intros, body.ow-cut #owToasts { visibility: hidden; }
 #owTrack { position: fixed; left: calc(16px + env(safe-area-inset-left, 0px)); top: calc(124px + env(safe-area-inset-top, 0px)); width: min(300px, 44vw); display: grid; gap: 5px; font-size: 12px; }
-body.touch #owTrack { top: 104px; }
+body.touch-on #owTrack { top: 104px; }
 .ow-q { background: #0d0b16cc; border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; color: var(--muted); }
 .ow-q b { color: var(--bone); display: block; font-size: 12.5px; }
 .ow-q.main b { color: #ffd36e; } .ow-q.raid { border-color: #ff5a6a; } .ow-q.raid b { color: #ff8a8a; } .ow-q.box b { color: #c77dff; }
@@ -14849,7 +14917,7 @@ body.touch #owTrack { top: 104px; }
 .ow-toast.gold { border-color: #ffd36e; } .ow-toast.gold b { color: #ffd36e; } .ow-toast.ach { border-color: #c77dff; } .ow-toast.ach b { color: #d8a0ff; }
 @keyframes owToast { 0% { opacity: 0; transform: translateY(-6px); } 8%, 82% { opacity: 1; transform: none; } 100% { opacity: 0; } }
 #owMap { justify-self: end; margin-top: 6px; width: 150px; height: 150px; border: 1px solid var(--line); border-radius: 50%; }
-body.touch #owMap { width: 110px; height: 110px; }
+body.touch-on #owMap { width: 110px; height: 110px; }
 #owTalk { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); width: min(640px, calc(100vw - 32px)); background: #0d0b16f2; border: 1px solid #ffd36e88; border-radius: 12px; padding: 16px; z-index: 30; display: grid; grid-template-columns: 52px 1fr; gap: 6px 14px; }
 #owTalkPic { width: 52px; height: 52px; border-radius: 50%; grid-row: span 2; box-shadow: inset 0 -10px 0 #0004; }
 #owTalkName { font-weight: 800; color: #ffd36e; font-size: 17px; } #owTalkTitle { font-size: 12px; color: var(--muted); margin-left: 6px; font-weight: 400; }
@@ -14895,6 +14963,7 @@ body.touch #owMap { width: 110px; height: 110px; }
 .ow-travel { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 4px 0 10px; } .ow-travel span { color: var(--muted); font-size: 13px; }
 `;
   document.head.append(css);
+  if (touchMode) setTimeout(() => { const el = $('#owCutSkip'); if (el) el.textContent = 'Tap to skip'; });
   const ui = document.createElement('div');
   ui.innerHTML = `
 <div id="owUi" hidden><div id="owTrack"></div><svg id="owStam" hidden viewBox="0 0 40 40" width="34" height="34"><circle cx="20" cy="20" r="15.9" pathLength="100" class="b"/><circle cx="20" cy="20" r="15.9" pathLength="100" class="f"/></svg><button id="owJumpBtn" type="button" hidden>Jump</button><div id="owSaved">Game saved</div><button id="owPrompt" type="button" hidden></button><div id="owLabels"></div></div>
@@ -15214,6 +15283,347 @@ function owInteract() {
 function owTickActs() {
   OWR.act = OWR.near ? null : owNearAct();
   if (OWR.act) { const pr = $('#owPrompt'); pr.hidden = false; const t = OWR.act.label; if (pr.dataset.t !== t) { pr.dataset.t = t; pr.innerHTML = `<kbd>E</kbd> ${t}`; } }
+}
+
+/* ---------- online two-player ---------- */
+// Play with a friend anywhere. One player HOSTS and gets a 4-character room code; the friend JOINS with it.
+// The public PeerJS service only helps the two browsers find each other by the code; after that they talk directly
+// (WebRTC), like a video call. The host's game runs everything: the friend is Player 2 in it. The host's computer
+// draws Player 2's own view and streams it, with the game's sound, to the friend, and the friend's keys, mouse or
+// touches come back to steer Player 2. The friend's own health, abilities and box cards are shown on their screen.
+const NET_PREFIX = 'shardfall-room-', NET_W = 960, NET_H = 540, NET_HUD_HZ = 10, NET_IN_HZ = 30;
+const NET_CODE_CHARS = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';   // no 0/O or 1/I/L to mix up
+// How the two computers find a path to each other. STUN gets through most home routers. A few strict networks
+// (some school or office wifi) also need a TURN relay: add one here as { urls, username, credential } if you have it.
+const NET_TURN = [];
+const NET_ICE = [{ urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:stun.cloudflare.com:3478' }, ...NET_TURN];
+function netLoadPeer() {
+  if (window.Peer) return Promise.resolve(window.Peer);
+  return new Promise((res, rej) => {
+    const s = document.createElement('script');
+    s.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+    s.onload = () => res(window.Peer); s.onerror = () => rej(new Error('Could not load the connection library. Are you online?'));
+    document.head.append(s);
+  });
+}
+const netCode = () => Array.from({ length: 4 }, () => NET_CODE_CHARS[Math.floor(Math.random() * NET_CODE_CHARS.length)]).join('');
+function netStatus(t) { const el = $('#netStatus'); if (el) el.textContent = t; }
+function netSend(m) { try { if (net?.conn?.open) net.conn.send(m); } catch (_) {} }
+
+/* hosting */
+async function netHostStart() {
+  if (net) return;
+  if (state !== 'players' && state !== 'title') return;
+  let Peer;
+  try { Peer = await netLoadPeer(); } catch (e) { netStatus(e.message); return; }
+  const code = netCode();
+  net = { role: 'host', code, open: false, peer: new Peer(NET_PREFIX + code, { config: { iceServers: NET_ICE }, debug: 0 }) };
+  netStatus('Making a room…'); netRenderPanel();
+  net.peer.on('open', () => { netStatus(`Room code: ${code}. Tell your friend to press Join online and type it in.`); netRenderPanel(); });
+  net.peer.on('error', err => {
+    if (err.type === 'unavailable-id') { netLeave(true); netHostStart(); return; }   // that code was taken: try another
+    netStatus('Connection problem: ' + (err.type || err.message));
+  });
+  net.peer.on('connection', conn => {
+    if (net.conn) { conn.on('open', () => { conn.send({ t: 'full' }); setTimeout(() => conn.close(), 500); }); return; }
+    net.conn = conn;
+    conn.on('open', () => netHostOpen(conn));
+    conn.on('data', d => netHostData(d));
+    conn.on('close', () => netLost('Your friend left the game'));
+    conn.on('error', () => netLost('Lost the connection to your friend'));
+  });
+}
+function netHostOpen(conn) {
+  const md = conn.metadata || {};
+  net.open = true;
+  net.guest = { name: String(md.name || 'Friend').slice(0, 20), char: CHAR[md.char] ? md.char : 'wanderer', pet: PET[md.pet] ? md.pet : null };
+  net.prevCoop = coop; net.prevPad = padPlayer;
+  coop = true; padPlayer = 2;
+  renderCoopBtn?.(); if (state === 'players') renderPlayers();
+  refreshHeroes(); refreshPet2();
+  // Player 2's own camera, drawn by a second renderer into a small canvas we stream
+  if (!net.cv) {
+    net.cv = document.createElement('canvas'); net.cv.width = NET_W; net.cv.height = NET_H;
+    net.r = new THREE.WebGLRenderer({ canvas: net.cv, antialias: true, powerPreference: 'high-performance' });
+    net.r.setPixelRatio(1); net.r.setSize(NET_W, NET_H, false); net.r.shadowMap.enabled = false;
+  }
+  const stream = net.cv.captureStream(30);
+  try { const a = Sound.stream?.(); if (a) for (const tr of a.getAudioTracks()) stream.addTrack(tr); } catch (_) {}
+  for (const tr of stream.getVideoTracks()) tr.contentHint = 'motion';   // a fast game: keep it smooth rather than sharp
+  net.call = net.peer.call(conn.peer, stream);
+  // allow plenty of picture quality once the call is up
+  setTimeout(() => { try { for (const sd of net?.call?.peerConnection?.getSenders() || []) if (sd.track?.kind === 'video') { const pr = sd.getParameters(); pr.encodings = pr.encodings?.length ? pr.encodings : [{}]; pr.encodings[0].maxBitrate = 4_000_000; pr.encodings[0].maxFramerate = 30; pr.degradationPreference = 'maintain-framerate'; sd.setParameters(pr).catch(() => {}); } } catch (_) {} }, 1500);
+  net.hudT = 0;
+  netStatus(`${net.guest.name} joined! Start a game: they play as Player 2.`);
+  netRenderPanel();
+  banner(`${net.guest.name} joined`, 'They play as Player 2');
+  sfx('fuse');
+}
+function netHostData(d) {
+  if (!d || typeof d !== 'object') return;
+  if (d.t === 'in') {
+    // the friend's sticks: where they move, where they aim, and whether they're shooting
+    const n = v => (Number.isFinite(+v) ? Math.max(-1, Math.min(1, +v)) : 0);
+    net.input = { mx: n(d.mx), mz: n(d.mz), ax: n(d.ax), az: n(d.az), look: !!d.look, fire: !!d.fire, auto: !!d.auto, at: performance.now() };
+    return;
+  }
+  if (state !== 'play' || !coop) return;
+  const i = Math.floor(+d.i);
+  if (d.t === 'dash') dashHero(P2, P2.mx || 0, P2.mz || 0);
+  else if (d.t === 'cast' && i >= 0 && i < 3) castAs(P2, i);
+  else if (d.t === 'box') withWorld(worldOf(P2), () => { const b = nearBox(P2.pos); if (b) openBox(b, P2); });
+  else if (d.t === 'pick' && i >= 0 && i < 10) revealPick(P2, i);
+}
+// the friend's input steers Player 2 (applied every frame, after the gamepad is read)
+function netApplyInput() {
+  const n = net.input;
+  if (!n || performance.now() - n.at > 1500) { p2in.mx = p2in.mz = 0; p2in.aimOn = false; p2in.lookOn = false; return; }
+  p2in.mx = n.mx; p2in.mz = n.mz; P2.mx = n.mx; P2.mz = n.mz;
+  const al = Math.hypot(n.ax, n.az);
+  if (al > 0.05) { p2in.ax = n.ax / al; p2in.az = n.az / al; }
+  p2in.aimOn = n.fire && al > 0.05; p2in.lookOn = n.look && al > 0.05; p2in.auto = n.auto; p2in.trigger = n.fire;
+}
+// what the friend needs to see that isn't in the picture: their health, abilities, the box card and so on
+function netHostTick(dt) {
+  if (!netHost()) return;
+  if (net.cv) {
+    camera2.aspect = NET_W / NET_H; camera2.updateProjectionMatrix();
+    if (state === 'title') { camera2.position.copy(camBase); camera2.lookAt(camBase.x, 0, camBase.z - 13); }
+    net.r.render(sceneOf(worldOf(P2)), camera2);
+  }
+  net.hudT -= dt;
+  if (net.hudT > 0) return;
+  net.hudT = 1 / NET_HUD_HZ;
+  const m = { t: 'hud', st: state, mode: dungeon ? 'Floor' : lab ? 'Floor' : trial ? 'Trial' : 'Wave', wave: $('#waveNum').textContent, kills, foes: $('#enemyCount').textContent, room: $('#roomName').hidden ? '' : $('#roomName').textContent };
+  withPlayer(P2, () => {
+    m.hp = Math.ceil(P2.hp); m.max = S.maxHp; m.dash = Math.min(1, 1 - Math.max(0, P2.dashCd) / (S.dashCd || 1.8)); m.shards = shards; m.down = !!P2.down;
+    m.act = slots.active.map(id => id ? [id, L(id), Math.max(0, cds[id] || 0)] : null);
+    m.pas = slots.passive.map(id => id ? [id, L(id)] : null);
+    const b = state === 'play' && !P2.boxing ? withWorld(worldOf(P2), () => nearBox(P2.pos)) : null;
+    m.box = b ? (b.price ?? boxCost()) : -1;
+  });
+  m.bosses = enemies.filter(e => e.boss && !e.dead && !e.sleep).slice(0, 2).map(e => [bossName(e.type), Math.max(0, e.hp / e.maxHp)]);
+  // the box card Player 2 is choosing from
+  if (P2.boxing && P2.revealReady) {
+    const c = $('#half2 .card');
+    m.card = c ? { rarity: c.querySelector('.rarity')?.textContent || '', name: c.querySelector('h2')?.textContent || '', desc: c.querySelector('p')?.textContent || '', lvl: c.querySelector('.lvl')?.textContent || '', tier: P2.pending?.tier || 'common', opts: (P2.revealOpts || []).map(o => o.label) } : null;
+  } else m.card = P2.boxing ? 'opening' : null;
+  netSend(m);
+}
+function netLost(msg) {
+  if (!net) return;
+  const wasHost = net.role === 'host', open = net.open;
+  netLeave(true);
+  if (wasHost && open && state !== 'title' && state !== 'players') { toTitle(); }
+  if (open) banner(msg, wasHost ? 'Back to one player' : 'Back to the title screen');
+  netStatus(msg);
+}
+function netLeave(quiet) {
+  if (!net) return;
+  const n = net; net = null;
+  try { n.call?.close(); } catch (_) {}
+  try { n.conn?.close(); } catch (_) {}
+  try { n.peer?.destroy(); } catch (_) {}
+  if (n.role === 'host' && n.open) { coop = n.prevCoop; padPlayer = n.prevPad; p2in.lookOn = false; renderCoopBtn?.(); refreshHeroes(); refreshPet2(); }
+  if (n.role === 'guest') netGuestStop();
+  if (n.r) { n.r.dispose(); }
+  netRenderPanel();
+  if (!quiet) netStatus('Left the online game.');
+}
+
+/* joining */
+async function netJoin(code) {
+  code = String(code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if (net) return;
+  if (code.length !== 4) { netStatus('Type the 4-character room code first.'); return; }
+  let Peer;
+  try { Peer = await netLoadPeer(); } catch (e) { netStatus(e.message); return; }
+  net = { role: 'guest', code, open: false, peer: new Peer({ config: { iceServers: NET_ICE }, debug: 0 }) };
+  netStatus(`Looking for room ${code}…`); netRenderPanel();
+  net.peer.on('error', err => { const msg = err.type === 'peer-unavailable' ? `No room with code ${code}. Check the code and try again.` : 'Connection problem: ' + (err.type || err.message); netLeave(true); netStatus(msg); });
+  net.peer.on('call', call => {
+    call.answer();
+    call.on('stream', s => { const v = $('#netVideo'); v.srcObject = s; v.muted = false; v.play().catch(() => { v.muted = true; v.play().catch(() => {}); netGuestNote('Click anywhere to turn on the sound'); }); });
+  });
+  net.peer.on('open', () => {
+    const conn = net.conn = net.peer.connect(NET_PREFIX + code, { reliable: true, metadata: { name: netName(), char: charPick(P1), pet: petSave.equipped || null } });
+    const slow = setTimeout(() => { if (net && !net.open) netStatus('Still connecting… Some networks (like school wifi) block direct connections. If it doesn\'t work, try another network.'); }, 9000);
+    conn.on('open', () => { clearTimeout(slow); net.open = true; netGuestStart(); });
+    conn.on('data', d => netGuestData(d));
+    conn.on('close', () => netLost('The host ended the game'));
+    conn.on('error', () => netLost('Lost the connection to the host'));
+  });
+}
+const netName = () => { const v = ($('#netName')?.value || '').trim(); try { if (v) localStorage.setItem('shardfall-net-name', v); } catch (_) {} return v || 'Friend'; };
+function netGuestStart() {
+  for (const id of ['#startScreen', '#playersScreen', '#overScreen', '#pauseScreen']) $(id).hidden = true;
+  state = 'remote';
+  document.body.classList.add('net-guest');
+  $('#netView').hidden = false;
+  net.hudKey = ''; net.sent = 0;
+  $('#netLeaveBtn').hidden = false;
+  netGuestNote(`Connected to room ${net.code}! Waiting for the host to start a game…`);
+}
+function netGuestStop() {
+  document.body.classList.remove('net-guest');
+  $('#netView').hidden = true; $('#half1').hidden = true; $('#half1').classList.remove('net-card'); $('#netLeaveBtn').hidden = true; $('#netPrompt').hidden = true; netGuestNote('');
+  const v = $('#netVideo'); try { v.srcObject = null; } catch (_) {}
+  levels = {}; slots = { active: [null, null, null], passive: [null, null, null, null, null, null] }; cds = {}; renderBar();
+  if (state === 'remote') { state = 'title'; $('#startScreen').hidden = false; showModes(false); }
+}
+function netGuestNote(t) { const el = $('#netNote'); el.textContent = t || ''; el.hidden = !t; }
+function netGuestData(d) {
+  if (!d || typeof d !== 'object') return;
+  const txt = v => String(v ?? '');
+  if (d.t === 'full') { netLeave(true); netStatus('That room already has two players.'); return; }
+  if (d.t === 'ban') { banner(txt(d.a).slice(0, 80), txt(d.b).slice(0, 140)); return; }
+  if (d.t === 'intro' && TYPES[d.type]) { if (!seenTypes.has(d.type)) { seenTypes.add(d.type); announce(d.type); } return; }
+  if (d.t !== 'hud') return;
+  const st = txt(d.st);
+  netGuestNote(st === 'title' || st === 'players' || st === 'chars' || st === 'pets' || st === 'skills' || st === 'codex' || st === 'powerups' ? 'Waiting for the host to start a game…'
+    : st === 'paused' || st === 'loadout' || st === 'padsetup' ? 'The host paused the game' : st === 'over' ? 'Game over! Waiting for the host…' : st === 'powerpick' ? 'The host is picking powers…' : d.down ? 'You\'re down! Your partner can revive you by standing next to you' : '');
+  // health, dash, shards, wave, kills
+  const hp = Math.max(0, +d.hp || 0), max = Math.max(1, +d.max || 100);
+  $('#hpFill').style.transform = `scaleX(${hp / max})`; $('#hpText').textContent = `${hp} / ${max}`;
+  $('#dashFill').style.transform = `scaleX(${Math.max(0, Math.min(1, +d.dash || 0))})`;
+  $('#shardCount').textContent = String(Math.floor(+d.shards || 0));
+  $('#waveLabel').textContent = txt(d.mode).slice(0, 12); $('#waveNum').textContent = txt(d.wave).slice(0, 8);
+  $('#killCount').textContent = String(Math.floor(+d.kills || 0)); $('#enemyCount').textContent = txt(d.foes).slice(0, 6);
+  const room = $('#roomName'); room.hidden = !d.room; room.textContent = txt(d.room).slice(0, 80);
+  // abilities: copy Player 2's into this page so the usual ability bar shows them, cooldowns and all
+  const act = Array.isArray(d.act) ? d.act.slice(0, 3) : [], pas = Array.isArray(d.pas) ? d.pas.slice(0, 6) : [];
+  const key = JSON.stringify([act.map(a => a && [a[0], a[1]]), pas]);
+  levels = {}; cds = {};
+  slots = { active: [0, 1, 2].map(i => act[i] && AB[act[i][0]] ? act[i][0] : null), passive: [0, 1, 2, 3, 4, 5].map(i => pas[i] && AB[pas[i][0]] ? pas[i][0] : null) };
+  for (const a of [...act, ...pas]) if (a && AB[a[0]]) levels[a[0]] = Math.max(1, Math.min(5, a[1] | 0));
+  for (const a of act) if (a && AB[a[0]]) cds[a[0]] = Math.max(0, +a[2] || 0);
+  if (key !== net.hudKey) { net.hudKey = key; renderBar(); }
+  updateBar();
+  // bosses
+  const bb = $('#bossBar'), bosses = Array.isArray(d.bosses) ? d.bosses : [];
+  bb.hidden = !bosses.length;
+  if (bosses.length) bb.replaceChildren(...bosses.map(([n, f]) => { const w = document.createElement('div'); w.className = 'net-boss'; const b = document.createElement('b'); b.textContent = txt(n).slice(0, 40); const i = document.createElement('i'); i.style.setProperty('--f', String(Math.max(0, Math.min(1, +f || 0)))); w.append(b, i); return w; }));
+  // a box to open nearby
+  const pr = $('#netPrompt');
+  pr.hidden = !(+d.box >= 0) || !!d.card;
+  if (!pr.hidden) pr.innerHTML = `<kbd>E</kbd> Open box · ${Math.floor(+d.box)} shards`;
+  netGuestCard(d.card);
+}
+// the ability card you're choosing from, built on this page
+function netGuestCard(c) {
+  const root = $('#half1');
+  if (!c) { if (!root.hidden) { root.hidden = true; root.classList.remove('net-card'); net.cardKey = ''; } return; }
+  const key = JSON.stringify(c);
+  if (key === net.cardKey) return;
+  net.cardKey = key;
+  root.classList.add('net-card'); root.hidden = false;
+  if (c === 'opening') { root.innerHTML = '<div class="crate"><i class="ce l"></i><i class="ce r"></i><i class="cm"></i><i class="cf l"></i><i class="cf r"></i></div>'; return; }
+  const card = document.createElement('div'); card.className = 'card';
+  card.style.setProperty('--tier', TIER_COLOR[c.tier] || TIER_COLOR.common);
+  for (const [cls, tag, v] of [['rarity', 'div', c.rarity], ['', 'h2', c.name], ['', 'p', c.desc], ['lvl', 'div', c.lvl]]) { const el = document.createElement(tag); if (cls) el.className = cls; el.textContent = String(v || '').slice(0, 300); card.append(el); }
+  const box = document.createElement('div'); box.className = 'choices';
+  (Array.isArray(c.opts) ? c.opts.slice(0, 8) : []).forEach((label, i) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'btn'; b.textContent = `${i + 1}. ${String(label).slice(0, 60)}`; b.addEventListener('click', () => netSend({ t: 'pick', i })); box.append(b); });
+  const hint = document.createElement('small'); hint.className = 'hint'; hint.textContent = 'Click, or press 1, 2, 3…';
+  card.append(box, hint);
+  root.replaceChildren(card);
+}
+// the friend's controls: keyboard and mouse, or the touch sticks
+function netGuestTick(dt) {
+  if (!netGuest() || state !== 'remote') return;
+  net.inT = (net.inT || 0) - dt;
+  if (net.inT > 0) return;
+  net.inT = 1 / NET_IN_HZ;
+  let mx = 0, mz = 0;
+  if (keys.w || keys.arrowup) mz -= 1; if (keys.s || keys.arrowdown) mz += 1;
+  if (keys.a || keys.arrowleft) mx -= 1; if (keys.d || keys.arrowright) mx += 1;
+  mx += joy.x; mz += joy.y;
+  const ml = Math.hypot(mx, mz); if (ml > 1) { mx /= ml; mz /= ml; }
+  let ax = net.mouseX ?? 0, az = net.mouseY ?? 0, fire = mouse.down, look = true;
+  if (touchMode) {
+    const al = Math.hypot(aimJoy.x, aimJoy.y);
+    look = aimJoy.id !== null && al > 0.25; fire = look || aimJoy.tapT > 0; aimJoy.tapT -= 1 / NET_IN_HZ;
+    ax = aimJoy.x; az = aimJoy.y;
+    if (!look && ml > 0.1) { ax = mx; az = mz; look = true; }
+  }
+  netSend({ t: 'in', mx: +mx.toFixed(3), mz: +mz.toFixed(3), ax: +ax.toFixed(3), az: +az.toFixed(3), look, fire, auto: autoFire });
+}
+
+/* the panel on the Players screen */
+function netRenderPanel() {
+  const host = $('#netHost'), join = $('#netJoin'), leave = $('#netLeave'), code = $('#netCode');
+  if (!host) return;
+  const busy = !!net;
+  host.disabled = busy; join.disabled = busy; code.disabled = busy; leave.hidden = !busy;
+  $('#netCodeShow').hidden = !(net?.role === 'host');
+  $('#netCodeShow').textContent = net?.role === 'host' ? net.code : '';
+}
+{
+  const css = document.createElement('style');
+  css.textContent = `
+.net-panel { border: 1px solid var(--line); border-radius: 8px; padding: 12px; margin-top: 14px; display: grid; gap: 8px; }
+.net-panel h3 { margin: 0; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.net-panel input { font: inherit; padding: 7px 10px; border-radius: 6px; border: 1px solid var(--line); background: #0d0b16; color: var(--bone); width: 9em; }
+.net-panel #netCode { text-transform: uppercase; letter-spacing: .2em; width: 6em; }
+#netCodeShow { font: 800 30px var(--display); letter-spacing: .25em; color: #ffd36e; }
+#netView { position: fixed; inset: 0; z-index: 1; background: #000; }
+#netVideo { width: 100%; height: 100%; object-fit: cover; display: block; }
+body.net-guest #game { visibility: hidden; }
+body.net-guest #menuBtn { display: none !important; }
+body.net-guest #hudP2, body.net-guest #bankBtn, body.net-guest #loadoutBtn, body.net-guest #fpBtn, body.net-guest #sandboxTag { display: none !important; }
+#netNote { position: fixed; left: 50%; top: 42%; transform: translate(-50%, -50%); z-index: 6; background: #0d0b16dd; border: 1px solid var(--line); border-radius: 10px; padding: 14px 20px; color: var(--bone); font-size: 16px; text-align: center; max-width: 80vw; }
+#netPrompt { position: fixed; left: 50%; bottom: 120px; transform: translateX(-50%); z-index: 6; background: #0d0b16ee; border: 1px solid #ffb547; color: var(--bone); border-radius: 8px; padding: 8px 14px; font: inherit; pointer-events: auto; }
+#netLeaveBtn { position: fixed; right: 14px; bottom: 14px; z-index: 6; }
+.half-reveal.net-card { left: 50%; }
+.net-boss { display: grid; gap: 4px; min-width: min(420px, 70vw); } .net-boss b { text-align: center; font-size: 14px; }
+.net-boss i { height: 8px; border-radius: 4px; background: #ffffff22; position: relative; overflow: hidden; } .net-boss i::after { content: ''; position: absolute; inset: 0; background: #ff5a6a; transform-origin: left; transform: scaleX(var(--f)); }
+`;
+  document.head.append(css);
+  const panel = document.createElement('div');
+  panel.className = 'net-panel';
+  panel.innerHTML = `<h3>Online · play with a friend far away</h3>
+    <p class="mode-note" style="margin:0">One of you hosts and gets a room code. The other joins with it. The host's game runs both players, and the friend sees their own view streamed live.</p>
+    <div class="sb-row"><label class="mode-note" for="netName">Your name</label><input id="netName" maxlength="20" placeholder="Friend"></div>
+    <div class="sb-row"><button class="btn" id="netHost" type="button">Host online game</button><span id="netCodeShow" hidden></span></div>
+    <div class="sb-row"><input id="netCode" maxlength="4" placeholder="CODE" autocomplete="off"><button class="btn ghost" id="netJoin" type="button">Join online</button><button class="sb-btn" id="netLeave" type="button" hidden>Leave online game</button></div>
+    <p class="mode-note" id="netStatus" style="margin:0"></p>`;
+  $('#playersScreen .panel').append(panel);
+  try { $('#netName').value = localStorage.getItem('shardfall-net-name') || ''; } catch (_) {}
+  const view = document.createElement('div');
+  view.id = 'netView'; view.hidden = true;
+  view.innerHTML = '<video id="netVideo" playsinline autoplay></video>';
+  document.body.prepend(view);
+  const extra = document.createElement('div');
+  extra.innerHTML = '<div id="netNote" hidden></div><button id="netPrompt" type="button" hidden></button><button class="btn ghost" id="netLeaveBtn" type="button" hidden>Leave</button>';
+  document.body.append(...extra.children);
+  $('#netHost').addEventListener('click', netHostStart);
+  $('#netJoin').addEventListener('click', () => netJoin($('#netCode').value));
+  $('#netCode').addEventListener('input', e => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''); });
+  $('#netCode').addEventListener('keydown', e => { if (e.key === 'Enter') netJoin(e.target.value); });
+  $('#netLeave').addEventListener('click', () => netLeave());
+  $('#netLeaveBtn').addEventListener('click', () => netLeave());
+  $('#netPrompt').addEventListener('click', () => netSend({ t: 'box' }));
+  // the friend's keys and mouse
+  addEventListener('keydown', e => {
+    if (!netGuest() || state !== 'remote' || e.target.matches?.('input')) return;
+    const k = e.key.toLowerCase();
+    if (e.repeat) return;
+    if (k === ' ' || k === 'shift') { e.preventDefault(); netSend({ t: 'dash' }); }
+    else if (k === 'e') netSend({ t: 'box' });
+    else if (k === 'f') { autoFire = !autoFire; $('#autoTag').hidden = !autoFire; }
+    else if (/^[1-9]$/.test(k)) netSend($('#half1').classList.contains('net-card') && !$('#half1').hidden ? { t: 'pick', i: +k - 1 } : { t: 'cast', i: +k - 1 });
+    else if (k === 'escape') { if (confirm('Leave the online game?')) netLeave(); }
+  });
+  addEventListener('pointermove', e => { if (!net || net.role !== 'guest' || e.pointerType === 'touch') return; net.mouseX = (e.clientX - innerWidth / 2) / innerWidth; net.mouseY = (e.clientY - innerHeight / 2) / innerHeight * 1.35; });
+  addEventListener('pointerdown', e => { if (netGuest() && state === 'remote' && e.pointerType !== 'touch' && e.button === 0 && !e.target.closest('button')) mouse.down = true; });
+  $('#dashBtn').addEventListener('pointerdown', () => { if (netGuest() && state === 'remote') netSend({ t: 'dash' }); });
+  addEventListener('beforeunload', () => { try { net?.peer?.destroy(); } catch (_) {} });
+}
+// the host tells the friend about banners and new monsters, so they see the same messages
+{
+  const ban0 = banner;
+  banner = (text, sub) => { ban0(text, sub); if (netHost()) netSend({ t: 'ban', a: String(text ?? ''), b: sub ? String(sub) : '' }); };
+  const ann0 = announce;
+  announce = type => { ann0(type); if (netHost()) netSend({ t: 'intro', type }); };
 }
 
 frame();
